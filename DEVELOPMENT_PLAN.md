@@ -137,6 +137,41 @@ The [original high-level architecture diagram](docs/high-level-architecure.pdf)
 is retained as the source design artifact. The Mermaid diagram above is the
 evolving logical architecture.
 
+### Recommended implementation stack
+
+Application and automation code should use .NET or PowerShell. The recommended
+starting stack is:
+
+| Component | Technology |
+| --- | --- |
+| Exam Device Agent | .NET 10 Worker Service hosted as a Windows Service |
+| Normal-session launcher | WPF on .NET 10 |
+| Restricted exam client | WPF on .NET 10 |
+| Teacher portal | ASP.NET Core Blazor Web App on .NET 10 |
+| Exam API | ASP.NET Core Web API on .NET 10 |
+| Background service jobs | .NET 10 Worker Services |
+| Shared contracts and policy models | .NET class libraries using `System.Text.Json` |
+| Assigned Access XML generation | .NET using `XDocument` or `XmlWriter` |
+| SharePoint integration | Microsoft Graph SDK for .NET |
+| State-store access | Entity Framework Core with the database provider selected during implementation |
+| Windows client-to-agent IPC | Authenticated named pipes with explicit access control |
+| Packaging | WiX Toolset MSI or Intune Win32 packaging for machine-wide installation |
+| Provisioning, diagnostics, and recovery automation | Signed PowerShell scripts deployed and controlled by district IT |
+
+The two WPF clients are separate executables because they run in different
+Windows accounts and at different stages of the workflow. They may share .NET
+libraries for contracts, validation, logging, and IPC, but they must not share
+student credentials or Microsoft 365 tokens across sessions.
+
+The Exam Device Agent must not host interactive UI. It runs as a Windows
+Service, with only operations that require the MDM Bridge executing as
+`LocalSystem`. WPF clients send narrowly scoped requests over authenticated
+IPC, and the agent independently authorizes and validates every request.
+
+PowerShell is reserved for installation, Intune detection and remediation,
+feasibility testing, diagnostics, and administrator recovery. The API must
+never provide arbitrary PowerShell for the agent to execute as `SYSTEM`.
+
 ## 5. Component Responsibilities
 
 ### Teacher portal
@@ -764,5 +799,5 @@ The following decisions should be resolved before or during feasibility work:
 3. Define a test district's exam SSID/VLAN and endpoint allowlist.
 4. Write short architecture decision records for the shared local account,
    Assigned Access ownership, district extension trust, and network layering.
-5. Execute Phase 0 feasibility spikes before selecting the final application
-   technology stack.
+5. Execute Phase 0 feasibility spikes before committing to the recommended
+  application stack and its production packaging details.

@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ExamKiosk.Contracts/ExamKiosk.Contracts.csproj" />
+    <Project Path="src/ExamKiosk.DeviceAgent/ExamKiosk.DeviceAgent.csproj" />
+    <Project Path="src/ExamKiosk.Launcher/ExamKiosk.Launcher.csproj" />
+    <Project Path="src/ExamKiosk.RestrictedClient/ExamKiosk.RestrictedClient.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ExamKiosk.DeviceAgent.Tests/ExamKiosk.DeviceAgent.Tests.csproj" />
+  </Folder>
+</Solution>

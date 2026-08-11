@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AssignedAccessConfiguration
+    xmlns="http://schemas.microsoft.com/AssignedAccess/2017/config"
+    xmlns:rs5="http://schemas.microsoft.com/AssignedAccess/201810/config"
+    xmlns:v5="http://schemas.microsoft.com/AssignedAccess/2022/config">
+    <Profiles>
+        <Profile Id="{9A2A490F-10F6-4764-974A-43B19E722C23}" Name="Bogus exam">
+            <AllAppsList>
+                <AllowedApps>
+                    <App DesktopAppPath="%ProgramFiles%\ExamKiosk\RestrictedClient\ExamKiosk.RestrictedClient.exe"
+                         rs5:AutoLaunch="true" />
+                    <App AppUserModelId="Microsoft.WindowsCalculator_8wekyb3d8bbwe!App" />
+                    <App DesktopAppPath="%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe" />
+                    <App DesktopAppPath="%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge_proxy.exe" />
+                    <App AppUserModelId="Microsoft.MicrosoftEdge.Stable_8wekyb3d8bbwe!App" />
+                </AllowedApps>
+            </AllAppsList>
+            <v5:StartPins>
+                <![CDATA[
+                {
+                    "pinnedList": [
+                        {"packagedAppId": "Microsoft.WindowsCalculator_8wekyb3d8bbwe!App"},
+                        {"desktopAppLink": "%ALLUSERSPROFILE%\\Microsoft\\Windows\\Start Menu\\Programs\\Microsoft Edge.lnk"}
+                    ]
+                }
+                ]]>
+            </v5:StartPins>
+            <Taskbar ShowTaskbar="true" />
+        </Profile>
+    </Profiles>
+    <Configs>
+        <Config>
+            <AutoLogonAccount rs5:DisplayName="Exam Kiosk" />
+            <DefaultProfile Id="{9A2A490F-10F6-4764-974A-43B19E722C23}" />
+        </Config>
+    </Configs>
+</AssignedAccessConfiguration>

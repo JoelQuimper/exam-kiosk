@@ -1,0 +1,101 @@
+﻿<Window x:Class="ExamKiosk.RestrictedClient.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Bogus exam"
+        Width="760"
+        Height="520"
+        MinWidth="620"
+        MinHeight="440"
+        WindowStartupLocation="CenterScreen"
+        Background="#F4F6F8">
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="MinWidth" Value="150" />
+            <Setter Property="Padding" Value="22,12" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.55" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="#12332E" Padding="32,24">
+            <StackPanel>
+                <TextBlock Foreground="#9FD4C8"
+                           FontSize="13"
+                           FontWeight="SemiBold"
+                           Text="EXAM IN PROGRESS" />
+                <TextBlock Margin="0,6,0,0"
+                           Foreground="White"
+                           FontSize="28"
+                           FontWeight="SemiBold"
+                           Text="Bogus exam" />
+            </StackPanel>
+        </Border>
+
+        <StackPanel Grid.Row="1"
+                    MaxWidth="620"
+                    Margin="32"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+            <TextBlock HorizontalAlignment="Center"
+                       Foreground="#18211F"
+                       FontSize="22"
+                       FontWeight="SemiBold"
+                       Text="Restricted exam session" />
+            <TextBlock Margin="0,12,0,28"
+                       HorizontalAlignment="Center"
+                       Foreground="#53605D"
+                       FontSize="15"
+                       Text="Open the placeholder exam in Edge. When your work is complete, return here and finish the exam."
+                       TextAlignment="Center"
+                       TextWrapping="Wrap" />
+            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                <Button Margin="0,0,12,0"
+                        Background="#176B5B"
+                        Foreground="White"
+                        Click="OpenExamButton_Click"
+                        Content="Open exam" />
+                <Button x:Name="FinishExamButton"
+                        Background="#A33A32"
+                        Foreground="White"
+                        Click="FinishExamButton_Click"
+                        Content="Exam done" />
+            </StackPanel>
+        </StackPanel>
+
+        <Border Grid.Row="2"
+                BorderBrush="#D8DEDC"
+                BorderThickness="0,1,0,0"
+                Padding="32,18">
+            <TextBlock x:Name="StatusText"
+                       Foreground="#53605D"
+                       FontSize="13"
+                       Text="Connected to the restricted exam session." />
+        </Border>
+    </Grid>
+</Window>
