@@ -107,10 +107,12 @@ The PoC states are `available`, `enteringExam`, `inExam`, `exitingExam`, and
 `failed`. The agent remains in `enteringExam` or `exitingExam` throughout the
 restart countdown, so the opposite command is rejected. On service startup it
 queries the Assigned Access CSP and reconciles every persisted state to
-`inExam` when the profile is configured or `available` when it is absent. A
-transition failure that does not restart the device moves the agent to
-`failed`. For this disposable PoC, replace or restore the test device rather
-than attempting an in-place repair.
+`inExam` when this PoC's profile is configured or `available` when Assigned
+Access is absent. It enters `failed` rather than replacing an unrelated
+Assigned Access configuration. Starting from `inExam` is idempotent: the agent
+reapplies its profile and schedules the restart. A transition failure that does
+not restart the device moves the agent to `failed`. For this disposable PoC,
+replace or restore the test device rather than attempting an in-place repair.
 
 ### Uninstall
 

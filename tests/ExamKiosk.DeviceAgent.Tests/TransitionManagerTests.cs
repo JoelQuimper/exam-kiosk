@@ -5,6 +5,19 @@ namespace ExamKiosk.DeviceAgent.Tests;
 public sealed class TransitionManagerTests
 {
     [Theory]
+    [InlineData(AgentState.Available, true)]
+    [InlineData(AgentState.EnteringExam, false)]
+    [InlineData(AgentState.InExam, true)]
+    [InlineData(AgentState.ExitingExam, false)]
+    [InlineData(AgentState.Failed, false)]
+    public void CanStartExam_ReturnsExpectedResult(AgentState state, bool expected)
+    {
+        var result = TransitionManager.CanStartExam(state);
+
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
     [InlineData(AgentState.Available)]
     [InlineData(AgentState.EnteringExam)]
     [InlineData(AgentState.InExam)]

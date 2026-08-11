@@ -1,5 +1,9 @@
 [CmdletBinding()]
-param()
+param(
+    [Parameter(Mandatory)]
+    [ValidatePattern('^\{[0-9A-Fa-f-]{36}\}$')]
+    [string]$ExpectedProfileId
+)
 
 $ErrorActionPreference = 'Stop'
 
@@ -15,5 +19,11 @@ if ([string]::IsNullOrWhiteSpace($assignedAccess.Configuration)) {
     Write-Output 'NotConfigured'
 }
 else {
-    Write-Output 'Configured'
+    $configuration = [System.Net.WebUtility]::HtmlDecode($assignedAccess.Configuration)
+    if ($configuration.IndexOf($ExpectedProfileId, [StringComparison]::OrdinalIgnoreCase) -ge 0) {
+        Write-Output 'Configured'
+    }
+    else {
+        Write-Output 'ForeignConfiguration'
+    }
 }

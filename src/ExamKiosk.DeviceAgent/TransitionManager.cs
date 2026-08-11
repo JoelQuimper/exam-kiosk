@@ -6,6 +6,7 @@ namespace ExamKiosk.DeviceAgent;
 
 public sealed class TransitionManager
 {
+    private const string ProfileId = "{9A2A490F-10F6-4764-974A-43B19E722C23}";
     private readonly SemaphoreSlim transitionLock = new(1, 1);
     private readonly ILogger<TransitionManager> logger;
     private readonly string statePath;
@@ -91,7 +92,7 @@ public sealed class TransitionManager
         AgentRequest request,
         CancellationToken cancellationToken)
     {
-        if (CurrentState != AgentState.Available)
+        if (!CanStartExam(CurrentState))
         {
             return Failure(request, $"An exam cannot start while the agent state is {CurrentState}.");
         }
@@ -150,17 +151,22 @@ public sealed class TransitionManager
         return examModeConfigured ? AgentState.InExam : AgentState.Available;
     }
 
+    internal static bool CanStartExam(AgentState state) =>
+        state is AgentState.Available or AgentState.InExam;
+
     private async Task<bool> IsExamModeConfiguredAsync(CancellationToken cancellationToken)
     {
         var output = await RunPowerShellAsync(
             "Get-ExamMode.ps1",
-            [],
+            ["-ExpectedProfileId", ProfileId],
             cancellationToken);
 
         return output.Trim() switch
         {
             "Configured" => true,
             "NotConfigured" => false,
+            "ForeignConfiguration" => throw new InvalidOperationException(
+                "Assigned Access is configured by another profile. The Exam Kiosk PoC will not replace it."),
             _ => throw new InvalidDataException(
                 $"Get-ExamMode.ps1 returned an unexpected result: {output.Trim()}")
         };
