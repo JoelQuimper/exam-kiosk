@@ -4,26 +4,30 @@ param()
 
 $ErrorActionPreference = 'Stop'
 
-function Set-RegistryDword {
-    param(
-        [Parameter(Mandatory)] [string]$Path,
-        [Parameter(Mandatory)] [string]$Name,
-        [Parameter(Mandatory)] [int]$Value
-    )
+Write-Host 'Applying the device-wide Windows policy for the kiosk flow...'
 
-    if (-not (Test-Path -LiteralPath $Path)) {
-        New-Item -Path $Path -Force | Out-Null
-    }
+$windowsSystemPath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System'
+$legacyWindowsSystemPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System'
 
-    Set-ItemProperty -Path $Path -Name $Name -Type DWord -Value $Value -Force
+if (Test-Path -LiteralPath $legacyWindowsSystemPath) {
+    Remove-ItemProperty `
+        -LiteralPath $legacyWindowsSystemPath `
+        -Name 'EnableFirstLogonAnimation' `
+        -ErrorAction SilentlyContinue
+    Write-Host 'Removed the obsolete first-sign-in animation policy entry.'
 }
 
-Write-Host 'Applying the safe device-wide Windows policy for the kiosk flow...'
+# Suppress the first-sign-in animation shown while Windows initializes the exam session.
+if (-not (Test-Path -LiteralPath $windowsSystemPath)) {
+    New-Item -Path $windowsSystemPath -Force | Out-Null
+}
 
-$windowsSystemPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System'
-
-# Safe machine-wide Windows policy: suppress first-user sign-in animation.
-Set-RegistryDword -Path $windowsSystemPath -Name 'EnableFirstLogonAnimation' -Value 0
+Set-ItemProperty `
+    -LiteralPath $windowsSystemPath `
+    -Name 'EnableFirstLogonAnimation' `
+    -Type DWord `
+    -Value 0 `
+    -Force
 
 Write-Host 'Windows policy changes applied.'
 Write-Host 'Reboot the device and validate the kiosk flow in the Assigned Access session.'
