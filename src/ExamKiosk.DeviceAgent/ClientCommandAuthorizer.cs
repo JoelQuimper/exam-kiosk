@@ -10,7 +10,9 @@ internal static class ClientCommandAuthorizer
         string installRoot,
         AgentCommand command)
     {
-        if (sessionId == 0)
+        if (sessionId == 0 ||
+            string.IsNullOrWhiteSpace(executablePath) ||
+            string.IsNullOrWhiteSpace(installRoot))
         {
             return false;
         }
@@ -35,9 +37,16 @@ internal static class ClientCommandAuthorizer
         };
     }
 
-    private static bool PathsEqual(string first, string second) =>
-        string.Equals(
+    private static bool PathsEqual(string first, string second)
+    {
+        if (string.IsNullOrWhiteSpace(first) || string.IsNullOrWhiteSpace(second))
+        {
+            return false;
+        }
+
+        return string.Equals(
             Path.GetFullPath(first),
             Path.GetFullPath(second),
             StringComparison.OrdinalIgnoreCase);
+    }
 }

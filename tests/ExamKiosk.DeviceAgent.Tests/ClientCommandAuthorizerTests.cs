@@ -61,4 +61,18 @@ public sealed class ClientCommandAuthorizerTests
 
         Assert.False(result);
     }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void IsAuthorized_ForEmptyExecutablePath_ReturnsFalse(string executablePath)
+    {
+        var result = ClientCommandAuthorizer.IsAuthorized(
+            executablePath,
+            1,
+            InstallRoot,
+            AgentCommand.StartExam);
+
+        Assert.False(result);
+    }
 }
