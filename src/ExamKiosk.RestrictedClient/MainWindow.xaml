@@ -45,7 +45,8 @@
 
         <Border Grid.Row="0" Background="#12332E" Padding="32,24">
             <StackPanel>
-                <TextBlock Foreground="#9FD4C8"
+                <TextBlock x:Name="ExamProgressLabelText"
+                           Foreground="#9FD4C8"
                            FontSize="13"
                            FontWeight="SemiBold"
                            Text="EXAM IN PROGRESS" />
@@ -53,6 +54,7 @@
                            Foreground="White"
                            FontSize="28"
                            FontWeight="SemiBold"
+                           x:Name="ExamTitleText"
                            Text="Bogus exam" />
             </StackPanel>
         </Border>
@@ -66,11 +68,13 @@
                        Foreground="#18211F"
                        FontSize="22"
                        FontWeight="SemiBold"
+                       x:Name="RestrictedSessionText"
                        Text="Restricted exam session" />
             <TextBlock Margin="0,12,0,28"
                        HorizontalAlignment="Center"
                        Foreground="#53605D"
                        FontSize="15"
+                       x:Name="ExamInstructionsText"
                        Text="Open the placeholder exam in Edge. When your work is complete, return here and finish the exam."
                        TextAlignment="Center"
                        TextWrapping="Wrap" />
@@ -79,6 +83,7 @@
                         Background="#176B5B"
                         Foreground="White"
                         Click="OpenExamButton_Click"
+                        x:Name="OpenExamButton"
                         Content="Open exam" />
                 <Button x:Name="FinishExamButton"
                         Background="#A33A32"

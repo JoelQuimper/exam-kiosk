@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="AgentUnreachableFinish" xml:space="preserve"><value>Impossible de joindre l'agent de l'appareil d'examen. Contactez l'administrateur du test.
+
+</value></data>
+  <data name="AgentUnreachableStart" xml:space="preserve"><value>Impossible de joindre l'agent de l'appareil d'examen. Vérifiez que le service est installé et en cours d'exécution.
+
+</value></data>
+  <data name="AvailableExams" xml:space="preserve"><value>Examens disponibles</value></data>
+  <data name="Connected" xml:space="preserve"><value>Connecté à la session d'examen restreinte.</value></data>
+  <data name="ExamDescription" xml:space="preserve"><value>Test de faisabilité d'Assigned Access</value></data>
+  <data name="ExamDetails" xml:space="preserve"><value>Ce prototype applique un profil kiosque local et redémarre l'appareil.</value></data>
+  <data name="ExamDone" xml:space="preserve"><value>Examen terminé</value></data>
+  <data name="ExamFinishFailed" xml:space="preserve"><value>L'examen n'a pas pu être terminé.</value></data>
+  <data name="ExamInProgress" xml:space="preserve"><value>EXAMEN EN COURS</value></data>
+  <data name="ExamOpened" xml:space="preserve"><value>L'examen fictif a été ouvert dans Edge.</value></data>
+  <data name="ExamTitle" xml:space="preserve"><value>Examen fictif</value></data>
+  <data name="FinishWarning" xml:space="preserve"><value>Terminer l'examen supprimera la session restreinte et redémarrera Windows. Assurez-vous d'avoir enregistré votre travail.
+
+Voulez-vous terminer ?</value></data>
+  <data name="FinishWarningTitle" xml:space="preserve"><value>Terminer l'examen fictif</value></data>
+  <data name="KioskLabel" xml:space="preserve"><value>KIOSQUE D'EXAMEN</value></data>
+  <data name="KioskTitle" xml:space="preserve"><value>Kiosque d'examen</value></data>
+  <data name="LeavingExam" xml:space="preserve"><value>Demande à l'agent de l'appareil d'examen de quitter le mode examen...</value></data>
+  <data name="NoExamRunning" xml:space="preserve"><value>Aucun examen n'est en cours.</value></data>
+  <data name="OpenExam" xml:space="preserve"><value>Ouvrir l'examen</value></data>
+  <data name="PreparingDevice" xml:space="preserve"><value>Demande à l'agent de l'appareil d'examen de préparer l'appareil...</value></data>
+  <data name="PreparationFailed" xml:space="preserve"><value>La préparation du kiosque n'a pas pu démarrer.</value></data>
+  <data name="Ready" xml:space="preserve"><value>PRÊT</value></data>
+  <data name="RestrictedSession" xml:space="preserve"><value>Session d'examen restreinte</value></data>
+  <data name="StartExam" xml:space="preserve"><value>Passer à l'examen</value></data>
+  <data name="StartWarning" xml:space="preserve"><value>L'agent de l'appareil d'examen va appliquer un profil Assigned Access et redémarrer cet ordinateur dans un compte d'examen local restreint.
+
+Enregistrez votre travail avant de continuer. Voulez-vous démarrer l'examen fictif ?</value></data>
+  <data name="StartWarningTitle" xml:space="preserve"><value>Démarrer l'examen fictif</value></data>
+  <data name="Instructions" xml:space="preserve"><value>Ouvrez l'examen fictif dans Edge. Lorsque vous avez terminé, revenez ici et terminez l'examen.</value></data>
+  <data name="EdgeOpenFailed" xml:space="preserve"><value>Microsoft Edge n'a pas pu être ouvert.
+
+</value></data>
+  <data name="ExamSessionTitle" xml:space="preserve"><value>Examen fictif</value></data>
+</root>

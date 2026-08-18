@@ -2,6 +2,7 @@
 using System.IO;
 using System.Windows;
 using ExamKiosk.Contracts;
+using AppResources = ExamKiosk.Contracts.Resources;
 
 namespace ExamKiosk.RestrictedClient;
 
@@ -10,6 +11,19 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        ApplyLocalization();
+    }
+
+    private void ApplyLocalization()
+    {
+        Title = AppResources.ExamSessionTitle;
+        ExamProgressLabelText.Text = AppResources.ExamInProgress;
+        ExamTitleText.Text = AppResources.ExamTitle;
+        RestrictedSessionText.Text = AppResources.RestrictedSession;
+        ExamInstructionsText.Text = AppResources.Instructions;
+        OpenExamButton.Content = AppResources.OpenExam;
+        FinishExamButton.Content = AppResources.ExamDone;
+        StatusText.Text = AppResources.Connected;
     }
 
     private void OpenExamButton_Click(object sender, RoutedEventArgs e)
@@ -31,14 +45,14 @@ public partial class MainWindow : Window
                 Arguments = edgeArguments,
                 UseShellExecute = true
             });
-            StatusText.Text = "The placeholder exam was opened in Edge.";
+            StatusText.Text = AppResources.ExamOpened;
         }
         catch (Exception exception)
         {
             MessageBox.Show(
                 this,
-                $"Microsoft Edge could not be opened.\n\n{exception.Message}",
-                "Bogus exam",
+                AppResources.EdgeOpenFailed + exception.Message,
+                AppResources.ExamTitle,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
         }
@@ -48,9 +62,8 @@ public partial class MainWindow : Window
     {
         if (MessageBox.Show(
                 this,
-                "Finishing the exam will remove the restricted session and restart Windows. " +
-                "Make sure your exam work has been saved.\n\nDo you want to finish?",
-                "Finish bogus exam",
+                AppResources.FinishWarning,
+                AppResources.FinishWarningTitle,
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning,
                 MessageBoxResult.No) != MessageBoxResult.Yes)
@@ -59,7 +72,7 @@ public partial class MainWindow : Window
         }
 
         FinishExamButton.IsEnabled = false;
-        StatusText.Text = "Asking the Exam Device Agent to leave exam mode...";
+        StatusText.Text = AppResources.LeavingExam;
 
         try
         {
@@ -73,7 +86,7 @@ public partial class MainWindow : Window
                 MessageBox.Show(
                     this,
                     response.Message,
-                    "Bogus exam",
+                    AppResources.ExamTitle,
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
                 FinishExamButton.IsEnabled = true;
@@ -83,12 +96,11 @@ public partial class MainWindow : Window
         {
             MessageBox.Show(
                 this,
-                "The Exam Device Agent could not be reached. Contact the test administrator.\n\n" +
-                exception.Message,
-                "Bogus exam",
+                AppResources.AgentUnreachableFinish + exception.Message,
+                AppResources.ExamTitle,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
-            StatusText.Text = "The exam could not be finished.";
+            StatusText.Text = AppResources.ExamFinishFailed;
             FinishExamButton.IsEnabled = true;
         }
     }

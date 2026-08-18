@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using ExamKiosk.Contracts;
+using AppResources = ExamKiosk.Contracts.Resources;
 
 namespace ExamKiosk.Launcher;
 
@@ -8,19 +9,28 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        ApplyLocalization();
+    }
+
+    private void ApplyLocalization()
+    {
+        Title = AppResources.KioskTitle;
+        KioskLabelText.Text = AppResources.KioskLabel;
+        AvailableExamsText.Text = AppResources.AvailableExams;
+        ReadyText.Text = AppResources.Ready;
+        ExamTitleText.Text = AppResources.ExamTitle;
+        ExamDescriptionText.Text = AppResources.ExamDescription;
+        ExamDetailsText.Text = AppResources.ExamDetails;
+        StartExamButton.Content = AppResources.StartExam;
+        StatusText.Text = AppResources.NoExamRunning;
     }
 
     private async void StartExamButton_Click(object sender, RoutedEventArgs e)
     {
-        const string warning =
-            "The Exam Device Agent will apply an Assigned Access profile and restart this " +
-            "computer into a restricted local exam account.\n\n" +
-            "Save your work before continuing. Do you want to start the bogus exam?";
-
         if (MessageBox.Show(
                 this,
-                warning,
-                "Start bogus exam",
+                AppResources.StartWarning,
+                AppResources.StartWarningTitle,
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning,
                 MessageBoxResult.No) != MessageBoxResult.Yes)
@@ -29,7 +39,7 @@ public partial class MainWindow : Window
         }
 
         StartExamButton.IsEnabled = false;
-        StatusText.Text = "Asking the Exam Device Agent to prepare the device...";
+        StatusText.Text = AppResources.PreparingDevice;
 
         try
         {
@@ -43,7 +53,7 @@ public partial class MainWindow : Window
                 MessageBox.Show(
                     this,
                     response.Message,
-                    "Exam Kiosk",
+                    AppResources.KioskTitle,
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
                 StartExamButton.IsEnabled = true;
@@ -53,12 +63,11 @@ public partial class MainWindow : Window
         {
             MessageBox.Show(
                 this,
-                "The Exam Device Agent could not be reached. Verify that the service is " +
-                $"installed and running.\n\n{exception.Message}",
-                "Exam Kiosk",
+                AppResources.AgentUnreachableStart + exception.Message,
+                AppResources.KioskTitle,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
-            StatusText.Text = "Kiosk preparation failed to start.";
+            StatusText.Text = AppResources.PreparationFailed;
             StartExamButton.IsEnabled = true;
         }
     }
