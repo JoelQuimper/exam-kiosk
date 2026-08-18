@@ -81,6 +81,29 @@ adds **Exam Kiosk Launcher** to the all-users Start menu. In a managed rollout,
 Intune would perform this administrator-controlled installation before exam
 day.
 
+### School-board customization hooks
+
+The agent package includes two administrator-owned PowerShell hooks:
+
+```text
+src/ExamKiosk.DeviceAgent/Customization/OnExamStart.ps1
+src/ExamKiosk.DeviceAgent/Customization/OnExamEnd.ps1
+```
+
+`OnExamStart.ps1` runs as `LocalSystem` before Assigned Access is applied and
+the device restarts into exam mode. `OnExamEnd.ps1` runs as `LocalSystem` before
+Assigned Access is removed and Windows restarts into the normal session. The
+hooks are fixed agent-owned files; the launcher and restricted client cannot
+select scripts, arguments, registry paths, or commands.
+
+Boards may customize these files before publishing the agent to apply approved
+device policies, such as Edge allowlists, sign-out restrictions, or Office
+settings. Every temporary change made by `OnExamStart.ps1` must be restored by
+`OnExamEnd.ps1`. The scripts run as `LocalSystem`, so they must be reviewed,
+digitally controlled, and writable only by administrators or the deployment
+system. A script failure aborts the transition and leaves the current session
+in place for recovery.
+
 ### Run the flow
 
 1. Sign in as a non-administrator student.

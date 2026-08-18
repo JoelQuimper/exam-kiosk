@@ -38,6 +38,13 @@ public sealed class TransitionManager
             try
             {
                 var examModeConfigured = await IsExamModeConfiguredAsync(cancellationToken);
+                if (examModeConfigured)
+                {
+                    await RunCustomizationScriptAsync(
+                        "OnExamStart.ps1",
+                        cancellationToken);
+                }
+
                 var reconciledState = ReconcileState(CurrentState, examModeConfigured);
                 if (reconciledState != CurrentState)
                 {
@@ -131,6 +138,7 @@ public sealed class TransitionManager
         await SetStateAsync(AgentState.ExitingExam, cancellationToken);
         try
         {
+            await RunCustomizationScriptAsync("OnExamEnd.ps1", cancellationToken);
             await RunPowerShellAsync("Stop-Exam.ps1", [], cancellationToken);
             ScheduleRestart("Leaving the restricted exam session");
             return Success(request, "Assigned Access was removed. Windows will restart shortly.");
@@ -183,6 +191,20 @@ public sealed class TransitionManager
             throw new FileNotFoundException("A required agent script was not found.", scriptPath);
         }
 
+        return await RunPowerShellFileAsync(
+            scriptPath,
+            scriptName,
+            arguments,
+            cancellationToken);
+    }
+
+    private async Task<string> RunPowerShellFileAsync(
+        string scriptPath,
+        string scriptName,
+        IReadOnlyList<string> arguments,
+        CancellationToken cancellationToken)
+    {
+
         var startInfo = new ProcessStartInfo
         {
             FileName = Path.Combine(
@@ -224,6 +246,28 @@ public sealed class TransitionManager
         }
 
         return output;
+    }
+
+    private async Task RunCustomizationScriptAsync(
+        string scriptName,
+        CancellationToken cancellationToken)
+    {
+        var scriptPath = Path.Combine(
+            AppContext.BaseDirectory,
+            "Customization",
+            scriptName);
+        if (!File.Exists(scriptPath))
+        {
+            throw new FileNotFoundException(
+                "An exam customization script was not found.",
+                scriptPath);
+        }
+
+        await RunPowerShellFileAsync(
+            scriptPath,
+            scriptName,
+            [],
+            cancellationToken);
     }
 
     private void ScheduleRestart(string reason)
