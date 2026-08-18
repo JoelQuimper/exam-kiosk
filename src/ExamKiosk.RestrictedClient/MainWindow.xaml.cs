@@ -20,13 +20,15 @@ public partial class MainWindow : Window
             "Edge",
             "Application",
             "msedge.exe");
+        const string examUrl = "https://www.example.com";
+        var edgeArguments = $"--new-window --no-first-run --inprivate {examUrl}";
 
         try
         {
             Process.Start(new ProcessStartInfo
             {
                 FileName = edgePath,
-                Arguments = "https://www.example.com",
+                Arguments = edgeArguments,
                 UseShellExecute = true
             });
             StatusText.Text = "The placeholder exam was opened in Edge.";
