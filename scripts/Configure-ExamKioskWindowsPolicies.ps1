@@ -7,15 +7,6 @@ $ErrorActionPreference = 'Stop'
 Write-Host 'Applying the device-wide Windows policy for the kiosk flow...'
 
 $windowsSystemPath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System'
-$legacyWindowsSystemPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System'
-
-if (Test-Path -LiteralPath $legacyWindowsSystemPath) {
-    Remove-ItemProperty `
-        -LiteralPath $legacyWindowsSystemPath `
-        -Name 'EnableFirstLogonAnimation' `
-        -ErrorAction SilentlyContinue
-    Write-Host 'Removed the obsolete first-sign-in animation policy entry.'
-}
 
 # Suppress the first-sign-in animation shown while Windows initializes the exam session.
 if (-not (Test-Path -LiteralPath $windowsSystemPath)) {
