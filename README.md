@@ -90,9 +90,9 @@ src/ExamKiosk.DeviceAgent/Customization/OnExamStart.ps1
 src/ExamKiosk.DeviceAgent/Customization/OnExamEnd.ps1
 ```
 
-`OnExamStart.ps1` runs as `LocalSystem` before Assigned Access is applied and
-the device restarts into exam mode. `OnExamEnd.ps1` runs as `LocalSystem` before
-Assigned Access is removed and Windows restarts into the normal session. The
+`OnExamStart.ps1` runs as `LocalSystem` when the Device Agent initializes and
+confirms that Assigned Access is active. `OnExamEnd.ps1` runs as `LocalSystem`
+before Assigned Access is removed and Windows restarts into the normal session. The
 hooks are fixed agent-owned files; the launcher and restricted client cannot
 select scripts, arguments, registry paths, or commands.
 
@@ -125,6 +125,17 @@ The agent serializes transitions and persists its state at:
 ```text
 %ProgramData%\ExamKiosk\agent-state.json
 ```
+
+The agent also persists the ordered local transition journal at:
+
+```text
+%ProgramData%\ExamKiosk\session-journal.json
+```
+
+The journal supports recovery across reboot or network loss. It records the
+local session ID, current state, timestamps, and completion status for each
+transition step. It is a local recovery record, not the proctor dashboard
+telemetry channel.
 
 The PoC states are `available`, `enteringExam`, `inExam`, `exitingExam`, and
 `failed`. The agent remains in `enteringExam` or `exitingExam` throughout the

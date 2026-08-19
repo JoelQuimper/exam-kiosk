@@ -10,6 +10,7 @@ public sealed class TransitionManager
     private readonly SemaphoreSlim transitionLock = new(1, 1);
     private readonly ILogger<TransitionManager> logger;
     private readonly string statePath;
+    private readonly SessionJournal sessionJournal;
     private bool initialized;
 
     public TransitionManager(ILogger<TransitionManager> logger)
@@ -20,6 +21,7 @@ public sealed class TransitionManager
             "ExamKiosk");
         Directory.CreateDirectory(dataDirectory);
         statePath = Path.Combine(dataDirectory, "agent-state.json");
+        sessionJournal = new SessionJournal(Path.Combine(dataDirectory, "session-journal.json"));
         CurrentState = ReadState();
     }
 
@@ -40,8 +42,19 @@ public sealed class TransitionManager
                 var examModeConfigured = await IsExamModeConfiguredAsync(cancellationToken);
                 if (examModeConfigured)
                 {
+                    await sessionJournal.SetStateAsync(AgentState.InExam, cancellationToken);
+                    await sessionJournal.RecordStepAsync(
+                        "AssignedAccessDetected",
+                        "completed",
+                        null,
+                        cancellationToken);
                     await RunCustomizationScriptAsync(
                         "OnExamStart.ps1",
+                        cancellationToken);
+                    await sessionJournal.RecordStepAsync(
+                        "OnExamStart",
+                        "completed",
+                        null,
                         cancellationToken);
                 }
 
@@ -107,6 +120,12 @@ public sealed class TransitionManager
         await SetStateAsync(AgentState.EnteringExam, cancellationToken);
         try
         {
+            await sessionJournal.BeginAsync(cancellationToken);
+            await sessionJournal.RecordStepAsync(
+                "AssignedAccessApply",
+                "started",
+                null,
+                cancellationToken);
             var configurationPath = Path.Combine(
                 AppContext.BaseDirectory,
                 "Configuration",
@@ -115,7 +134,17 @@ public sealed class TransitionManager
                 "Start-Exam.ps1",
                 ["-ConfigurationPath", configurationPath],
                 cancellationToken);
+            await sessionJournal.RecordStepAsync(
+                "AssignedAccessApply",
+                "completed",
+                null,
+                cancellationToken);
             ScheduleRestart("Entering the restricted exam session");
+            await sessionJournal.RecordStepAsync(
+                "Restart",
+                "scheduled",
+                null,
+                cancellationToken);
             return Success(request, "Assigned Access was applied. Windows will restart shortly.");
         }
         catch (Exception exception)
@@ -138,9 +167,36 @@ public sealed class TransitionManager
         await SetStateAsync(AgentState.ExitingExam, cancellationToken);
         try
         {
+            await sessionJournal.SetStateAsync(AgentState.ExitingExam, cancellationToken);
+            await sessionJournal.RecordStepAsync(
+                "OnExamEnd",
+                "started",
+                null,
+                cancellationToken);
             await RunCustomizationScriptAsync("OnExamEnd.ps1", cancellationToken);
+            await sessionJournal.RecordStepAsync(
+                "OnExamEnd",
+                "completed",
+                null,
+                cancellationToken);
+            await sessionJournal.RecordStepAsync(
+                "AssignedAccessRemove",
+                "started",
+                null,
+                cancellationToken);
             await RunPowerShellAsync("Stop-Exam.ps1", [], cancellationToken);
+            await sessionJournal.RecordStepAsync(
+                "AssignedAccessRemove",
+                "completed",
+                null,
+                cancellationToken);
+            await sessionJournal.SetStateAsync(AgentState.Available, cancellationToken);
             ScheduleRestart("Leaving the restricted exam session");
+            await sessionJournal.RecordStepAsync(
+                "Restart",
+                "scheduled",
+                null,
+                cancellationToken);
             return Success(request, "Assigned Access was removed. Windows will restart shortly.");
         }
         catch (Exception exception)
