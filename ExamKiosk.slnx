@@ -4,8 +4,10 @@
     <Project Path="src/ExamKiosk.DeviceAgent/ExamKiosk.DeviceAgent.csproj" />
     <Project Path="src/ExamKiosk.Launcher/ExamKiosk.Launcher.csproj" />
     <Project Path="src/ExamKiosk.RestrictedClient/ExamKiosk.RestrictedClient.csproj" />
+    <Project Path="src/ExamKiosk.Web/ExamKiosk.Web.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ExamKiosk.DeviceAgent.Tests/ExamKiosk.DeviceAgent.Tests.csproj" />
+    <Project Path="tests/ExamKiosk.Web.Tests/ExamKiosk.Web.Tests.csproj" />
   </Folder>
 </Solution>
