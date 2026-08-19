@@ -26,6 +26,14 @@ if (-not $principal.IsInRole($administratorRole)) {
     exit $elevatedProcess.ExitCode
 }
 
+Set-Location -LiteralPath $repositoryRoot
+
+Write-Host 'Pulling the latest Exam Kiosk changes...'
+& git pull --ff-only
+if ($LASTEXITCODE -ne 0) {
+    throw "git pull failed with exit code $LASTEXITCODE. The reset was stopped."
+}
+
 Set-Location -LiteralPath $scriptDirectory
 
 Write-Host 'Uninstalling the current Exam Kiosk installation...'
