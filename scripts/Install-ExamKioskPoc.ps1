@@ -78,6 +78,14 @@ try {
     $shortcut.WorkingDirectory = Join-Path $installRoot 'Launcher'
     $shortcut.Save()
 
+    $desktopShortcutPath = Join-Path ([Environment]::GetFolderPath('Desktop')) 'Reset Exam Kiosk PoC.lnk'
+    $resetShortcut = $shell.CreateShortcut($desktopShortcutPath)
+    $resetShortcut.TargetPath = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+    $resetShortcut.Arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$(Join-Path $repositoryRoot 'scripts\Reset-ExamKioskPoc.ps1')`""
+    $resetShortcut.WorkingDirectory = Join-Path $repositoryRoot 'scripts'
+    $resetShortcut.Description = 'Uninstall, install, and launch the Exam Kiosk PoC.'
+    $resetShortcut.Save()
+
     Start-Service -Name $serviceName
     Write-Output "Exam Kiosk PoC installed at $installRoot."
     Write-Output 'The normal launcher is available in the Start menu under Exam Kiosk.'
