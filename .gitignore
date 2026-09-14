@@ -430,3 +430,5 @@ FodyWeavers.xsd
 
 # Custom additions
 .vscode
+appsettings.Development.json
+scrapbook.ps1

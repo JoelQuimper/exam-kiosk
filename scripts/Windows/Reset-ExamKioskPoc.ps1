@@ -4,7 +4,7 @@ param()
 $ErrorActionPreference = 'Stop'
 $scriptPath = $MyInvocation.MyCommand.Path
 $scriptDirectory = Split-Path -Parent $scriptPath
-$repositoryRoot = Split-Path -Parent $scriptDirectory
+$repositoryRoot = Split-Path -Parent (Split-Path -Parent $scriptDirectory)
 
 $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = [Security.Principal.WindowsPrincipal]::new($identity)

@@ -11,7 +11,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $serviceName = 'ExamKioskDeviceAgent'
 $installRoot = Join-Path $env:ProgramFiles 'ExamKiosk'
-$repositoryRoot = Split-Path -Parent $PSScriptRoot
+$repositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $stagingRoot = Join-Path $env:TEMP "ExamKiosk-$([guid]::NewGuid())"
 
 try {
@@ -81,8 +81,8 @@ try {
     $desktopShortcutPath = Join-Path ([Environment]::GetFolderPath('Desktop')) 'Reset Exam Kiosk PoC.lnk'
     $resetShortcut = $shell.CreateShortcut($desktopShortcutPath)
     $resetShortcut.TargetPath = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
-    $resetShortcut.Arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$(Join-Path $repositoryRoot 'scripts\Reset-ExamKioskPoc.ps1')`""
-    $resetShortcut.WorkingDirectory = Join-Path $repositoryRoot 'scripts'
+    $resetShortcut.Arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$(Join-Path $repositoryRoot 'scripts\Windows\Reset-ExamKioskPoc.ps1')`""
+    $resetShortcut.WorkingDirectory = Join-Path $repositoryRoot 'scripts\Windows'
     $resetShortcut.Description = 'Uninstall, install, and launch the Exam Kiosk PoC.'
     $resetShortcut.Save()
 

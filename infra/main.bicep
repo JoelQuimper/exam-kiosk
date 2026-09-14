@@ -1,7 +1,7 @@
 targetScope = 'subscription'
 
 metadata name = 'Exam Kiosk web application'
-metadata description = 'Creates the resource group and Linux App Service resources for Exam Kiosk.'
+metadata description = 'Creates the resource group, Linux App Service, and Key Vault resources for Exam Kiosk.'
 
 @description('Azure region for the resource group and App Service resources.')
 param location string
@@ -12,9 +12,14 @@ param workloadName string
 @description('Deployment environment name.')
 param environment string
 
+@description('Client ID of the Exam Kiosk Web Microsoft Entra app registration.')
+param entraClientId string
+
 var resourceGroupName = 'rg-${workloadName}-${environment}'
 var appServicePlanName = 'asp-${workloadName}-${environment}'
-var webAppName = 'app-${workloadName}-${uniqueString(subscription().id, workloadName, environment)}-${environment}'
+var webAppName = 'app-${workloadName}-${environment}'
+var keyVaultName = 'kv-${workloadName}-${environment}'
+var clientSecretName = 'entra-client-secret'
 
 module resourceGroup 'br/public:avm/res/resources/resource-group:0.4.4' = {
   name: 'deploy-${resourceGroupName}'
@@ -65,7 +70,54 @@ module webApp 'br/public:avm/res/web/site:0.24.0' = {
   }
 }
 
+module keyVault 'br/public:avm/res/key-vault/vault:0.14.0' = {
+  name: 'deploy-${keyVaultName}'
+  scope: az.resourceGroup(resourceGroupName)
+  params: {
+    name: keyVaultName
+    location: location
+    sku: 'standard'
+    enableRbacAuthorization: true
+    enableSoftDelete: true
+    softDeleteRetentionInDays: 90
+    enablePurgeProtection: true
+    enableVaultForDeployment: false
+    enableVaultForDiskEncryption: false
+    enableVaultForTemplateDeployment: false
+    publicNetworkAccess: 'Enabled'
+    networkAcls: {
+      bypass: 'AzureServices'
+      defaultAction: 'Allow'
+    }
+    roleAssignments: [
+      {
+        principalId: webApp.outputs.systemAssignedMIPrincipalId!
+        principalType: 'ServicePrincipal'
+        roleDefinitionIdOrName: 'Key Vault Secrets User'
+      }
+      {
+        principalId: deployer().objectId
+        roleDefinitionIdOrName: 'Key Vault Secrets Officer'
+      }
+    ]
+  }
+}
+
+module webAppSettings './modules/web-app-settings.bicep' = {
+  name: 'configure-${webAppName}'
+  scope: az.resourceGroup(resourceGroupName)
+  params: {
+    webAppName: webApp.outputs.name
+    entraInstance: az.environment().authentication.loginEndpoint
+    entraTenantId: subscription().tenantId
+    entraClientId: entraClientId
+    clientSecretUri: '${keyVault.outputs.uri}secrets/${clientSecretName}'
+  }
+}
+
 output resourceGroupName string = resourceGroupName
 output appServicePlanName string = appServicePlanName
 output webAppName string = webAppName
 output webAppUrl string = 'https://${webAppName}.azurewebsites.net'
+output keyVaultName string = keyVaultName
+output clientSecretName string = clientSecretName

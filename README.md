@@ -67,7 +67,7 @@ administrator recovery path.
 Open PowerShell as an administrator from the repository root and run:
 
 ```powershell
-& .\scripts\Install-ExamKioskPoc.ps1
+& .\scripts\Windows\Install-ExamKioskPoc.ps1
 ```
 
 The installer publishes self-contained Windows applications under:
@@ -153,7 +153,7 @@ replace or restore the test device rather than attempting an in-place repair.
 Finish any active exam, then run as administrator:
 
 ```powershell
-& .\scripts\Uninstall-ExamKioskPoc.ps1
+& .\scripts\Windows\Uninstall-ExamKioskPoc.ps1
 ```
 
 The uninstaller refuses to continue unless the persisted agent state is
@@ -181,4 +181,3 @@ phase.
 
 See [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md) for the architecture, security
 boundaries, implementation stack, and phased development plan.
-

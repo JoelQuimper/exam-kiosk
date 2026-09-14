@@ -24,24 +24,40 @@ az bicep lint --file .\infra\main.bicep
 The deployment location stores subscription-deployment metadata. The resources
 are created in the `location` supplied by the parameter file.
 
+## Local development registration
+
+Create or update the dedicated `Exam Kiosk Web - dev` app registration and
+service principal:
+
+```powershell
+& .\scripts\Azure\Initialize-ExamKioskDevelopmentApplication.ps1
+```
+
+The command replaces only the credential named `Exam Kiosk Local Development`
+and prints JSON that can be pasted into
+`src\ExamKiosk.Web\appsettings.Development.json`. That file is ignored by Git.
+
 ## Deploy
 
 The deployment script restores and lints the Bicep modules, tests and publishes
-the web app, deploys the infrastructure and ZIP package, and verifies `/health`:
+the web app, creates or reuses an environment-specific Entra app registration
+and service principal, deploys the infrastructure and ZIP package, and verifies
+`/health`:
 
 ```powershell
-& .\scripts\Deploy-ExamKioskWeb.ps1
+& .\scripts\Azure\Deploy-ExamKioskWeb.ps1 `
+  -SubscriptionId '<subscription-id>' `
+  -Environment 'dev'
 ```
 
-To select a subscription explicitly:
+The environment is used as the suffix for both Azure resource names and the
+Entra app registration display name, such as `Exam Kiosk Web - test`:
 
 ```powershell
-& .\scripts\Deploy-ExamKioskWeb.ps1 `
-  -SubscriptionId '<subscription-id>'
+& .\scripts\Azure\Deploy-ExamKioskWeb.ps1 `
+  -SubscriptionId '<subscription-id>' `
+  -Environment 'test'
 ```
-
-The script asks for confirmation before deployment. Use `-Force` for a
-non-interactive deployment.
 
 To deploy only the infrastructure manually:
 
