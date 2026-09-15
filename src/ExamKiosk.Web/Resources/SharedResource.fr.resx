@@ -37,7 +37,7 @@
   <data name="LaunchPhaseNote" xml:space="preserve"><value>Le lancement des examens sera activé dans l'application de bureau.</value></data>
   <data name="Student" xml:space="preserve"><value>Étudiant</value></data>
   <data name="BogusExamTitle" xml:space="preserve"><value>Examen fictif</value></data>
-  <data name="PrototypeAssessment" xml:space="preserve"><value>Évaluation prototype</value></data>
+  <data name="PrototypeAssessment" xml:space="preserve"><value>Évaluation prototype en mathématique</value></data>
   <data name="BogusExamDescription" xml:space="preserve"><value>L'évaluation initiale du kiosque d'examen utilisée pour valider l'expérience d'examen sécurisé.</value></data>
   <data name="AvailableNow" xml:space="preserve"><value>Disponible maintenant</value></data>
   <data name="MicrosoftEdge" xml:space="preserve"><value>Microsoft Edge</value></data>

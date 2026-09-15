@@ -62,6 +62,7 @@ public sealed class HomePageTests
         Assert.Contains("<h1>Hi Joel, here are your exams</h1>", content);
         Assert.Contains("Joel Student", content);
         Assert.Contains("Bogus exam", content);
+        Assert.Contains("aria-hidden=\"true\">+/-</div>", content);
         Assert.Contains("<dt>Tools</dt>", content);
         Assert.Contains("Microsoft Edge", content);
         Assert.Contains("Calculator", content);

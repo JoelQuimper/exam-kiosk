@@ -37,7 +37,7 @@
   <data name="LaunchPhaseNote" xml:space="preserve"><value>Exam launching will be enabled in the desktop app.</value></data>
   <data name="Student" xml:space="preserve"><value>Student</value></data>
   <data name="BogusExamTitle" xml:space="preserve"><value>Bogus exam</value></data>
-  <data name="PrototypeAssessment" xml:space="preserve"><value>Prototype assessment</value></data>
+  <data name="PrototypeAssessment" xml:space="preserve"><value>Prototype assessment in mathematics</value></data>
   <data name="BogusExamDescription" xml:space="preserve"><value>The initial Exam Kiosk assessment used to validate the secure exam experience.</value></data>
   <data name="AvailableNow" xml:space="preserve"><value>Available now</value></data>
   <data name="MicrosoftEdge" xml:space="preserve"><value>Microsoft Edge</value></data>
