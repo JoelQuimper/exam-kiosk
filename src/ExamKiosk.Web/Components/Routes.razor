@@ -1,5 +1,23 @@
 <Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
-        <RouteView RouteData="routeData" />
+        <AuthorizeRouteView RouteData="routeData">
+            <Authorizing>
+                <main class="page-shell status-page">
+                    <p>Checking your account...</p>
+                </main>
+            </Authorizing>
+            <NotAuthorized>
+                <RedirectToLogin />
+            </NotAuthorized>
+        </AuthorizeRouteView>
     </Found>
+    <NotFound>
+        <PageTitle>Page not found</PageTitle>
+        <main class="page-shell status-page">
+            <p class="eyebrow">404</p>
+            <h1>Page not found</h1>
+            <p>The page you requested does not exist.</p>
+            <a class="button button-primary" href="/">Return home</a>
+        </main>
+    </NotFound>
 </Router>

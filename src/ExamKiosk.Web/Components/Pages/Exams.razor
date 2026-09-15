@@ -1,0 +1,103 @@
+@page "/"
+@page "/exams"
+@attribute [Authorize]
+@inject IExamCatalog ExamCatalog
+
+<PageTitle>My exams</PageTitle>
+
+<main class="page-shell">
+    <header class="app-header">
+        <a class="brand" href="/" aria-label="Exam Kiosk home">
+            <span class="brand-mark" aria-hidden="true">EK</span>
+            <span>Exam Kiosk</span>
+        </a>
+        <div class="account-menu">
+            <div class="account-copy">
+                <span class="account-name">@DisplayName</span>
+                <span class="account-label">Student account</span>
+            </div>
+            <form action="/authentication/logout" method="post">
+                <AntiforgeryToken />
+                <button class="button button-secondary" type="submit">Sign out</button>
+            </form>
+        </div>
+    </header>
+
+    <section class="catalog-heading">
+        <p class="eyebrow">Exam dashboard</p>
+        <h1>Hi @GreetingName, here are your exams</h1>
+        <p>Select an available exam to review its details.</p>
+    </section>
+
+    <section class="exam-grid" aria-label="Available exams">
+        @foreach (var exam in AssignedExams)
+        {
+            <article class="exam-card">
+                <div class="exam-summary">
+                    <div class="exam-glyph" aria-hidden="true">A+</div>
+                    <div class="exam-copy">
+                        <div class="exam-card-top">
+                            <span class="status-badge">@exam.Status</span>
+                            <span class="exam-duration">@exam.DurationMinutes min</span>
+                        </div>
+                        <p class="exam-course">@exam.Course</p>
+                        <h2>@exam.Title</h2>
+                        <p class="exam-description">@exam.Description</p>
+                    </div>
+                </div>
+                <dl class="exam-details">
+                    <div>
+                        <dt>Available</dt>
+                        <dd>@exam.AvailabilityLabel</dd>
+                    </div>
+                    <div>
+                        <dt>Tools</dt>
+                        <dd>
+                            @if (exam.AllowedTools.Count == 0)
+                            {
+                                <span>None</span>
+                            }
+                            else
+                            {
+                                <ul class="exam-tools">
+                                    @foreach (var tool in exam.AllowedTools)
+                                    {
+                                        <li>@tool</li>
+                                    }
+                                </ul>
+                            }
+                        </dd>
+                    </div>
+                </dl>
+                <div class="exam-controls">
+                    <button class="button button-primary exam-action" type="button" disabled>
+                        Start exam
+                    </button>
+                    <p class="phase-note">Exam launching will be enabled in the desktop app.</p>
+                </div>
+            </article>
+        }
+    </section>
+</main>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthenticationStateTask { get; set; } = null!;
+
+    private IReadOnlyList<ExamSummary> AssignedExams => ExamCatalog.GetAssignedExams();
+
+    private string DisplayName { get; set; } = "Student";
+    private string GreetingName { get; set; } = "Student";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = (await AuthenticationStateTask).User;
+        DisplayName = user.FindFirstValue("name")
+            ?? user.Identity?.Name
+            ?? "Student";
+        GreetingName = user.FindFirstValue(ClaimTypes.GivenName)
+            ?? user.FindFirstValue("given_name")
+            ?? DisplayName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()
+            ?? "Student";
+    }
+}

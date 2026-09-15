@@ -36,6 +36,21 @@ service principal:
 The command replaces only the credential named `Exam Kiosk Local Development`
 and prints JSON that can be pasted into
 `src\ExamKiosk.Web\appsettings.Development.json`. That file is ignored by Git.
+Start the web project with its `https` launch profile so it loads the
+development settings and uses the registered
+`https://localhost:7136/signin-oidc` redirect URI:
+
+```powershell
+dotnet run --project .\src\ExamKiosk.Web\ExamKiosk.Web.csproj --launch-profile https
+```
+
+The web application uses the OpenID Connect authorization-code flow with PKCE.
+The app registration does not require implicit-grant access tokens or ID tokens
+to be enabled.
+
+If the local credential has been disclosed, run the initialization script
+again and replace `appsettings.Development.json` with its newly generated
+output before starting the application.
 
 ## Deploy
 

@@ -14,6 +14,25 @@ Exam Kiosk is an experimental toolkit for moving a managed Windows laptop from
 a normal student session into a restricted exam session. The current code is a
 Phase 0 feasibility prototype, not a production-ready exam system.
 
+## Exam list web application
+
+The first web phase is available in `src\ExamKiosk.Web`. It provides:
+
+- automatic Microsoft Entra sign-in when the application opens;
+- Microsoft Entra single-tenant authentication with a server-owned session
+  cookie;
+- an authenticated exam list at `/` and `/exams` containing the initial
+  **Bogus exam**;
+- a sign-in-required recovery page when authentication is canceled; and
+- antiforgery-protected sign-out.
+
+Exam launching remains disabled in the web experience. Connecting this page to
+the WPF Launcher is a separate phase so the native client and Device Agent
+continue to own privileged device transitions.
+
+For local Entra configuration and Azure deployment instructions, see
+[`infra\README.md`](infra/README.md).
+
 ## Local device prototype
 
 The current vertical slice contains three applications:
