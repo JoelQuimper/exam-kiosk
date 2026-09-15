@@ -1,18 +1,18 @@
+using Microsoft.Extensions.Localization;
+
 namespace ExamKiosk.Web.Exams;
 
-public sealed class ExamCatalog : IExamCatalog
+public sealed class ExamCatalog(IStringLocalizer<SharedResource> localizer) : IExamCatalog
 {
-    private static readonly IReadOnlyList<ExamSummary> AssignedExams =
+    public IReadOnlyList<ExamSummary> GetAssignedExams() =>
     [
         new(
-            "Bogus exam",
-            "Prototype assessment",
-            "The initial Exam Kiosk assessment used to validate the secure exam experience.",
+            localizer["BogusExamTitle"],
+            localizer["PrototypeAssessment"],
+            localizer["BogusExamDescription"],
             60,
-            "Available now",
-            ["Microsoft Edge", "Calculator"],
-            "Ready"),
+            localizer["AvailableNow"],
+            [localizer["MicrosoftEdge"], localizer["Calculator"]],
+            localizer["Ready"]),
     ];
-
-    public IReadOnlyList<ExamSummary> GetAssignedExams() => AssignedExams;
 }

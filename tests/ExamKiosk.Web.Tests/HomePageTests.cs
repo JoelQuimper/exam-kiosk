@@ -92,11 +92,46 @@ public sealed class HomePageTests
         using var client = application.CreateClient();
 
         var response = await client.GetAsync("/");
-        var content = await response.Content.ReadAsStringAsync();
+        var content = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("<dt>Tools</dt>", content);
         Assert.Contains("<span>None</span>", content);
+    }
+
+    [Fact]
+    public async Task ExamList_WhenBrowserPrefersFrench_RendersFrench()
+    {
+        await using var application = CreateApplication(authenticated: true);
+        using var client = application.CreateClient();
+        client.DefaultRequestHeaders.AcceptLanguage.ParseAdd("fr");
+
+        var response = await client.GetAsync("/");
+        var content = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("<html lang=\"fr\">", content);
+        Assert.Contains("<h1>Bonjour Joel, voici vos examens</h1>", content);
+        Assert.Contains("Examen fictif", content);
+        Assert.Contains("<dt>Outils</dt>", content);
+        Assert.Contains("Calculatrice", content);
+        Assert.Contains("Se déconnecter", content);
+    }
+
+    [Fact]
+    public async Task SignInRequired_WhenBrowserPrefersFrench_RendersFrench()
+    {
+        await using var application = CreateApplication(authenticated: false);
+        using var client = application.CreateClient();
+        client.DefaultRequestHeaders.AcceptLanguage.ParseAdd("fr");
+
+        var response = await client.GetAsync("/sign-in-required?culture=en");
+        var content = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("Vous devez vous connecter pour voir vos examens.", content);
+        Assert.Contains("Se connecter", content);
+        Assert.DoesNotContain("You must sign in to view your exams.", content);
     }
 
     [Fact]

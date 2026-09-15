@@ -1,9 +1,11 @@
+using System.Globalization;
 using ExamKiosk.Web.Components;
 using ExamKiosk.Web.Exams;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
@@ -28,12 +30,25 @@ builder.Services.Configure<OpenIdConnectOptions>(
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddControllers();
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    CultureInfo[] supportedCultures = [new("en"), new("fr")];
+    options.DefaultRequestCulture = new RequestCulture("en");
+    options.SupportedCultures = supportedCultures;
+    options.SupportedUICultures = supportedCultures;
+    options.RequestCultureProviders =
+    [
+        new AcceptLanguageHeaderRequestCultureProvider(),
+    ];
+});
 builder.Services.AddRazorComponents();
 builder.Services.AddSingleton<IExamCatalog, ExamCatalog>();
 
 var app = builder.Build();
 
 app.UseStaticFiles();
+app.UseRequestLocalization();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();

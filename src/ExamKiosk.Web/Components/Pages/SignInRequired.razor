@@ -1,12 +1,13 @@
 @page "/sign-in-required"
+@inject IStringLocalizer<SharedResource> Localizer
 
-<PageTitle>Sign-in required</PageTitle>
+<PageTitle>@Localizer["SignInRequired"]</PageTitle>
 
 <main class="page-shell status-page">
-    <p class="eyebrow">Sign-in required</p>
-    <h1>You must sign in to view your exams.</h1>
-    <p>Your school account is required to access assigned exams.</p>
+    <p class="eyebrow">@Localizer["SignInRequired"]</p>
+    <h1>@Localizer["MustSignInToViewExams"]</h1>
+    <p>@Localizer["SchoolAccountRequired"]</p>
     <a class="button button-primary" href="/authentication/login?returnUrl=%2F">
-        Sign in
+        @Localizer["SignIn"]
     </a>
 </main>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppTitle" xml:space="preserve"><value>Exam Kiosk</value></data>
+  <data name="CheckingAccount" xml:space="preserve"><value>Checking your account...</value></data>
+  <data name="PageNotFound" xml:space="preserve"><value>Page not found</value></data>
+  <data name="RequestedPageDoesNotExist" xml:space="preserve"><value>The page you requested does not exist.</value></data>
+  <data name="ReturnHome" xml:space="preserve"><value>Return home</value></data>
+  <data name="SignInRequired" xml:space="preserve"><value>Sign-in required</value></data>
+  <data name="MustSignInToViewExams" xml:space="preserve"><value>You must sign in to view your exams.</value></data>
+  <data name="SchoolAccountRequired" xml:space="preserve"><value>Your school account is required to access assigned exams.</value></data>
+  <data name="SignIn" xml:space="preserve"><value>Sign in</value></data>
+  <data name="MyExams" xml:space="preserve"><value>My exams</value></data>
+  <data name="ExamKioskHome" xml:space="preserve"><value>Exam Kiosk home</value></data>
+  <data name="StudentAccount" xml:space="preserve"><value>Student account</value></data>
+  <data name="SignOut" xml:space="preserve"><value>Sign out</value></data>
+  <data name="ExamDashboard" xml:space="preserve"><value>Exam dashboard</value></data>
+  <data name="Greeting" xml:space="preserve"><value>Hi {0}, here are your exams</value></data>
+  <data name="SelectExam" xml:space="preserve"><value>Select an available exam to review its details.</value></data>
+  <data name="AvailableExams" xml:space="preserve"><value>Available exams</value></data>
+  <data name="DurationMinutes" xml:space="preserve"><value>{0} min</value></data>
+  <data name="Available" xml:space="preserve"><value>Available</value></data>
+  <data name="Tools" xml:space="preserve"><value>Tools</value></data>
+  <data name="None" xml:space="preserve"><value>None</value></data>
+  <data name="StartExam" xml:space="preserve"><value>Start exam</value></data>
+  <data name="LaunchPhaseNote" xml:space="preserve"><value>Exam launching will be enabled in the desktop app.</value></data>
+  <data name="Student" xml:space="preserve"><value>Student</value></data>
+  <data name="BogusExamTitle" xml:space="preserve"><value>Bogus exam</value></data>
+  <data name="PrototypeAssessment" xml:space="preserve"><value>Prototype assessment</value></data>
+  <data name="BogusExamDescription" xml:space="preserve"><value>The initial Exam Kiosk assessment used to validate the secure exam experience.</value></data>
+  <data name="AvailableNow" xml:space="preserve"><value>Available now</value></data>
+  <data name="MicrosoftEdge" xml:space="preserve"><value>Microsoft Edge</value></data>
+  <data name="Calculator" xml:space="preserve"><value>Calculator</value></data>
+  <data name="Ready" xml:space="preserve"><value>Ready</value></data>
+</root>

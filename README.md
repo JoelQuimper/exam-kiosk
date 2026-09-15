@@ -23,6 +23,8 @@ The first web phase is available in `src\ExamKiosk.Web`. It provides:
   cookie;
 - an authenticated exam list at `/` and `/exams` containing the initial
   **Bogus exam**;
+- English and French localization selected from the browser's language
+  preferences, with English as the fallback;
 - a sign-in-required recovery page when authentication is canceled; and
 - antiforgery-protected sign-out.
 

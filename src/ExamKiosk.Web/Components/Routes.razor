@@ -1,9 +1,11 @@
+@inject IStringLocalizer<SharedResource> Localizer
+
 <Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
         <AuthorizeRouteView RouteData="routeData">
             <Authorizing>
                 <main class="page-shell status-page">
-                    <p>Checking your account...</p>
+                    <p>@Localizer["CheckingAccount"]</p>
                 </main>
             </Authorizing>
             <NotAuthorized>
@@ -12,12 +14,12 @@
         </AuthorizeRouteView>
     </Found>
     <NotFound>
-        <PageTitle>Page not found</PageTitle>
+        <PageTitle>@Localizer["PageNotFound"]</PageTitle>
         <main class="page-shell status-page">
             <p class="eyebrow">404</p>
-            <h1>Page not found</h1>
-            <p>The page you requested does not exist.</p>
-            <a class="button button-primary" href="/">Return home</a>
+            <h1>@Localizer["PageNotFound"]</h1>
+            <p>@Localizer["RequestedPageDoesNotExist"]</p>
+            <a class="button button-primary" href="/">@Localizer["ReturnHome"]</a>
         </main>
     </NotFound>
 </Router>
