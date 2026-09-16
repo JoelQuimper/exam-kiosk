@@ -1,4 +1,6 @@
 @page "/exam-session"
+@attribute [Authorize]
+@inject IExamCatalog ExamCatalog
 @inject IStringLocalizer<SharedResource> Localizer
 
 <PageTitle>@Localizer["ExamInProgress"]</PageTitle>
@@ -13,12 +15,47 @@
 
     <section class="catalog-heading">
         <p class="eyebrow">@Localizer["ExamInProgress"]</p>
-        <h1>@Localizer["ExamInProgress"]</h1>
+        <h1>@(Exam?.Title ?? Localizer["ExamInProgress"])</h1>
         <p>@Localizer["ExamSessionInstructions"]</p>
     </section>
 
     <section class="exam-grid" aria-label="@Localizer["ExamInProgress"]">
         <article class="exam-card">
+            @if (Exam is not null)
+            {
+                <div class="exam-summary">
+                    <div class="exam-glyph" aria-hidden="true">+/-</div>
+                    <div class="exam-copy">
+                        <div class="exam-card-top">
+                            <span class="status-badge">@Exam.Status</span>
+                            <span class="exam-duration">@Localizer["DurationMinutes", Exam.DurationMinutes]</span>
+                        </div>
+                        <p class="exam-course">@Exam.Course</p>
+                        <h2>@Exam.Title</h2>
+                        <p class="exam-description">@Exam.Description</p>
+                    </div>
+                </div>
+                <dl class="exam-details">
+                    <div>
+                        <dt>@Localizer["Tools"]</dt>
+                        <dd>
+                            @if (Exam.AllowedTools.Count == 0)
+                            {
+                                <span>@Localizer["None"]</span>
+                            }
+                            else
+                            {
+                                <ul class="exam-tools">
+                                    @foreach (var tool in Exam.AllowedTools)
+                                    {
+                                        <li>@tool</li>
+                                    }
+                                </ul>
+                            }
+                        </dd>
+                    </div>
+                </dl>
+            }
             <div class="exam-controls session-controls">
                 <div class="session-actions">
                     <button class="button button-primary"
@@ -49,3 +86,12 @@
         </article>
     </section>
 </main>
+
+@code {
+    private ExamSummary? Exam { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Exam = ExamCatalog.GetAssignedExams().FirstOrDefault();
+    }
+}

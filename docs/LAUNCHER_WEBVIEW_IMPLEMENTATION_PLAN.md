@@ -429,14 +429,17 @@ exception details to the hosted UI.
 
 ## Restricted Client Follow-on
 
-The Restricted Client now applies the same hosted-shell pattern to the public,
-assignment-free `/exam-session` page. Its separate ephemeral WebView2 profile
-allows only the configured Exam Kiosk origin. The fixed bridge accepts only
+The Restricted Client now applies the same hosted-shell pattern to the
+authenticated `/exam-session` page. Its separate ephemeral WebView2 profile
+allows the configured Exam Kiosk and Microsoft Entra origins. Because it cannot
+reuse the normal Launcher's cookie, the student signs in again after entering
+exam mode. The fixed bridge accepts only
 `clientReady`, `openExam`, and `finishExam`; native code revalidates agent state,
 owns the fixed prototype URL, requires native finish confirmation, and remains
 the only caller of `FinishExam`.
 
-This does not implement assignment handoff. A future signed, short-lived,
-device-bound effective policy must resolve and persist the student's
-SharePoint link before restart. The `/exam-session` page must not anonymously
-query assignments or supply an arbitrary URL to the native client.
+This authenticates the student and allows the page to retrieve assigned exam
+metadata, but it does not implement URL handoff. A future signed, short-lived,
+device-bound effective policy must validate the student's SharePoint link
+before native code opens it. The page must not supply an untrusted arbitrary
+URL to the native client.

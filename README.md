@@ -47,7 +47,7 @@ The current vertical slice contains three applications:
 | --- | --- |
 | Exam Kiosk Launcher | Runs as the normal student and securely hosts the authenticated exam list. |
 | Exam Kiosk Device Agent | Runs as a `LocalSystem` Windows Service and owns privileged transitions. |
-| Restricted Exam Client | Hosts `/exam-session` in the exam account and owns the native **Open exam** and **Exam done** actions. |
+| Restricted Exam Client | Hosts the authenticated `/exam-session` page in the exam account and owns the native **Open exam** and **Exam done** actions. |
 
 The two WPF applications communicate with the agent over a local named pipe.
 They never elevate and do not receive administrator credentials.
@@ -156,11 +156,13 @@ in place for recovery.
 2. Open **Exam Kiosk Launcher** from the Start menu.
 3. Select **Switch to exam** and confirm the restart.
 4. After Windows restarts, Assigned Access signs in its managed **Exam Kiosk**
-	 account and starts the Restricted Exam Client.
-5. The Restricted Client loads `/exam-session`. Select **Open exam** to open
-   the native-owned placeholder URL in Edge.
-6. Return to the Restricted Exam Client, select **Exam done**, and confirm.
-7. The agent removes Assigned Access and restarts Windows.
+   account and starts the Restricted Exam Client.
+5. The Restricted Client loads `/exam-session` and asks the student to sign in
+   again because its isolated profile cannot reuse the Launcher's cookie.
+6. After the assigned exam appears, select **Open exam** to open the
+   native-owned placeholder URL in Edge.
+7. Return to the Restricted Exam Client, select **Exam done**, and confirm.
+8. The agent removes Assigned Access and restarts Windows.
 
 The launcher and restricted client require no UAC prompt. The preinstalled
 service performs the privileged operations.
@@ -226,10 +228,10 @@ The uninstaller refuses to continue unless the persisted agent state is
 	application signatures.
 - The placeholder exam is `https://www.example.com/`; SharePoint and Microsoft
 	365 authentication are not implemented yet.
-- `/exam-session` is intentionally a public, assignment-free control shell for
-	this fixed prototype. It cannot retrieve student assignments or provide an
-	arbitrary exam URL. Dynamic SharePoint assignments require a signed,
-	device-bound effective policy resolved before restart.
+- `/exam-session` requires a second Entra sign-in and can retrieve the
+  authenticated student's assigned exam metadata. It cannot provide an
+  arbitrary exam URL to native code. Dynamic SharePoint URLs require a signed,
+  device-bound effective policy resolved before restart.
 - The Assigned Access profile assumes standard machine-wide installation paths
 	for the Restricted Exam Client and Microsoft Edge.
 - Automatic cleanup of browser identity, documents, and cached student data is

@@ -70,7 +70,9 @@ public partial class MainWindow : Window
             diagnosticLog.Write(
                 "configuration-loaded",
                 new { page = WebViewDiagnosticLog.DescribeUri(configuration.PageUri.AbsoluteUri) });
-            navigationPolicy ??= new WebViewNavigationPolicy(configuration);
+            navigationPolicy ??= new WebViewNavigationPolicy(
+                configuration,
+                [new Uri("https://login.microsoftonline.com")]);
 
             if (Browser.CoreWebView2 is null)
             {
