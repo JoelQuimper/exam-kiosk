@@ -164,6 +164,10 @@ in place for recovery.
 7. Return to the Restricted Exam Client, select **Exam done**, and confirm.
 8. The agent removes Assigned Access and restarts Windows.
 
+For normal entry and exit transitions, the Agent schedules the restart five
+seconds after applying or removing Assigned Access. The active native client
+shows a non-dismissible countdown window synchronized with the restart time.
+
 The launcher and restricted client require no UAC prompt. The preinstalled
 service performs the privileged operations.
 

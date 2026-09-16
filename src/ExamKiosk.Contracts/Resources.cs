@@ -52,6 +52,7 @@ public static class Resources
     public static string FinishCancelled => Get(nameof(FinishCancelled));
     public static string NoActiveExamSession => Get(nameof(NoActiveExamSession));
     public static string RestrictedClientConfigurationInvalid => Get(nameof(RestrictedClientConfigurationInvalid));
+    public static string RestartingWindows => Get(nameof(RestartingWindows));
 
     private static string Get(string name)
     {

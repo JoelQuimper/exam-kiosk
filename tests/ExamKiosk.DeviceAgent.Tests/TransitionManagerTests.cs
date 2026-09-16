@@ -4,6 +4,30 @@ namespace ExamKiosk.DeviceAgent.Tests;
 
 public sealed class TransitionManagerTests
 {
+    [Fact]
+    public void RestartSchedule_UsesFiveSecondDelay()
+    {
+        Assert.Equal(5, RestartSchedule.DelaySeconds);
+    }
+
+    [Theory]
+    [InlineData(5.0, 5)]
+    [InlineData(4.1, 5)]
+    [InlineData(4.0, 4)]
+    [InlineData(-1.0, 0)]
+    public void RestartSchedule_ReturnsVisibleWholeSeconds(
+        double secondsUntilRestart,
+        int expected)
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        var result = RestartSchedule.GetRemainingSeconds(
+            now.AddSeconds(secondsUntilRestart),
+            now);
+
+        Assert.Equal(expected, result);
+    }
+
     [Theory]
     [InlineData(AgentState.Available, true)]
     [InlineData(AgentState.EnteringExam, false)]

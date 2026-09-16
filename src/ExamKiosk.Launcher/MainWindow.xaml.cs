@@ -320,6 +320,10 @@ public partial class MainWindow : Window
                 requestId,
                 response.Success ? "accepted" : "failed",
                 response.Success ? AppResources.PreparingDevice : AppResources.PreparationFailed);
+            if (response.Success && response.RestartAtUtc is { } restartAtUtc)
+            {
+                new RestartCountdownWindow(this, restartAtUtc).ShowDialog();
+            }
         }
         catch (Exception)
         {

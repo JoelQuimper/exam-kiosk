@@ -43,7 +43,8 @@ public sealed record AgentResponse(
     Guid RequestId,
     bool Success,
     AgentState State,
-    string Message);
+    string Message,
+    DateTimeOffset? RestartAtUtc = null);
 
 public static class AgentClient
 {

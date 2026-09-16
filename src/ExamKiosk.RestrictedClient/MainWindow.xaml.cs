@@ -375,6 +375,10 @@ public partial class MainWindow : Window
                     response.Success ? AppResources.ExamInProgress : AppResources.WebContentUnavailable,
                     message);
             }
+            if (response.Success && response.RestartAtUtc is { } restartAtUtc)
+            {
+                new RestartCountdownWindow(this, restartAtUtc).ShowDialog();
+            }
         }
         catch (Exception)
         {

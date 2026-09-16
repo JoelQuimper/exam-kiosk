@@ -32,6 +32,7 @@ Do you want to finish?</value></data>
   <data name="PreparationFailed" xml:space="preserve"><value>Kiosk preparation failed to start.</value></data>
   <data name="Ready" xml:space="preserve"><value>READY</value></data>
   <data name="RestrictedSession" xml:space="preserve"><value>Restricted exam session</value></data>
+  <data name="RestartingWindows" xml:space="preserve"><value>Restarting Windows</value></data>
   <data name="StartExam" xml:space="preserve"><value>Switch to exam</value></data>
   <data name="StartWarning" xml:space="preserve"><value>The Exam Device Agent will apply an Assigned Access profile and restart this computer into a restricted local exam account.
 

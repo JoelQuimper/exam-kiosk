@@ -139,13 +139,16 @@ public sealed class TransitionManager
                 "completed",
                 null,
                 cancellationToken);
-            ScheduleRestart("Entering the restricted exam session");
+            var restartAtUtc = ScheduleRestart("Entering the restricted exam session");
             await sessionJournal.RecordStepAsync(
                 "Restart",
                 "scheduled",
                 null,
                 cancellationToken);
-            return Success(request, "Assigned Access was applied. Windows will restart shortly.");
+            return Success(
+                request,
+                "Assigned Access was applied. Windows will restart shortly.",
+                restartAtUtc);
         }
         catch (Exception exception)
         {
@@ -191,13 +194,16 @@ public sealed class TransitionManager
                 null,
                 cancellationToken);
             await sessionJournal.SetStateAsync(AgentState.Available, cancellationToken);
-            ScheduleRestart("Leaving the restricted exam session");
+            var restartAtUtc = ScheduleRestart("Leaving the restricted exam session");
             await sessionJournal.RecordStepAsync(
                 "Restart",
                 "scheduled",
                 null,
                 cancellationToken);
-            return Success(request, "Assigned Access was removed. Windows will restart shortly.");
+            return Success(
+                request,
+                "Assigned Access was removed. Windows will restart shortly.",
+                restartAtUtc);
         }
         catch (Exception exception)
         {
@@ -326,7 +332,7 @@ public sealed class TransitionManager
             cancellationToken);
     }
 
-    private void ScheduleRestart(string reason)
+    private DateTimeOffset ScheduleRestart(string reason)
     {
         var startInfo = new ProcessStartInfo
         {
@@ -338,12 +344,13 @@ public sealed class TransitionManager
         };
         startInfo.ArgumentList.Add("/r");
         startInfo.ArgumentList.Add("/t");
-        startInfo.ArgumentList.Add("15");
+        startInfo.ArgumentList.Add(RestartSchedule.DelaySeconds.ToString());
         startInfo.ArgumentList.Add("/d");
         startInfo.ArgumentList.Add("p:4:1");
         startInfo.ArgumentList.Add("/c");
         startInfo.ArgumentList.Add(reason);
         Process.Start(startInfo);
+        return DateTimeOffset.UtcNow.AddSeconds(RestartSchedule.DelaySeconds);
     }
 
     private async Task SetStateAsync(AgentState state, CancellationToken cancellationToken)
@@ -379,8 +386,17 @@ public sealed class TransitionManager
         }
     }
 
-    private AgentResponse Success(AgentRequest request, string message) =>
-        new(AgentProtocol.Version, request.RequestId, true, CurrentState, message);
+    private AgentResponse Success(
+        AgentRequest request,
+        string message,
+        DateTimeOffset? restartAtUtc = null) =>
+        new(
+            AgentProtocol.Version,
+            request.RequestId,
+            true,
+            CurrentState,
+            message,
+            restartAtUtc);
 
     private AgentResponse Failure(AgentRequest request, string message) =>
         new(AgentProtocol.Version, request.RequestId, false, CurrentState, message);
