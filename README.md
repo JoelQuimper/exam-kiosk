@@ -166,7 +166,9 @@ in place for recovery.
 
 For normal entry and exit transitions, the Agent schedules the restart five
 seconds after applying or removing Assigned Access. The active native client
-shows a non-dismissible countdown window synchronized with the restart time.
+shows one Exam Kiosk-styled confirmation window; after confirmation, that same
+window shows preparation progress and then a countdown synchronized with the
+restart time.
 
 The launcher and restricted client require no UAC prompt. The preinstalled
 service performs the privileged operations.

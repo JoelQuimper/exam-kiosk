@@ -296,13 +296,18 @@ public partial class MainWindow : Window
         startInProgress = true;
         try
         {
-            if (MessageBox.Show(
-                    this,
-                    AppResources.StartWarning,
-                    AppResources.StartWarningTitle,
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning,
-                    MessageBoxResult.No) != MessageBoxResult.Yes)
+            var dialog = new TransitionDialog(
+                this,
+                AppResources.StartWarningTitle,
+                AppResources.StartWarning,
+                AppResources.StartExam,
+                AppResources.PreparingDevice,
+                AppResources.PreparationFailed,
+                () => AgentClient.SendAsync(
+                    AgentCommand.StartExam,
+                    TimeSpan.FromSeconds(30)));
+            dialog.ShowDialog();
+            if (dialog.WasCancelled)
             {
                 PostBridgeResponse(
                     "startExamResult",
@@ -312,18 +317,12 @@ public partial class MainWindow : Window
                 return;
             }
 
-            var response = await AgentClient.SendAsync(
-                AgentCommand.StartExam,
-                TimeSpan.FromSeconds(30));
+            var response = dialog.Response;
             PostBridgeResponse(
                 "startExamResult",
                 requestId,
-                response.Success ? "accepted" : "failed",
-                response.Success ? AppResources.PreparingDevice : AppResources.PreparationFailed);
-            if (response.Success && response.RestartAtUtc is { } restartAtUtc)
-            {
-                new RestartCountdownWindow(this, restartAtUtc).ShowDialog();
-            }
+                response?.Success == true ? "accepted" : "failed",
+                response?.Success == true ? AppResources.PreparingDevice : AppResources.PreparationFailed);
         }
         catch (Exception)
         {

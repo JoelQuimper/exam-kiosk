@@ -347,37 +347,36 @@ public partial class MainWindow : Window
         actionInProgress = true;
         try
         {
-            if (MessageBox.Show(
-                    this,
-                    AppResources.FinishWarning,
-                    AppResources.FinishWarningTitle,
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning,
-                    MessageBoxResult.No) != MessageBoxResult.Yes)
+            var dialog = new TransitionDialog(
+                this,
+                AppResources.FinishWarningTitle,
+                AppResources.FinishWarning,
+                AppResources.ExamDone,
+                AppResources.LeavingExam,
+                AppResources.ExamFinishFailed,
+                () => AgentClient.SendAsync(
+                    AgentCommand.FinishExam,
+                    TimeSpan.FromSeconds(30)));
+            dialog.ShowDialog();
+            if (dialog.WasCancelled)
             {
                 PostFinishResponse(requestId, "cancelled", AppResources.FinishCancelled);
                 return;
             }
 
-            var response = await AgentClient.SendAsync(
-                AgentCommand.FinishExam,
-                TimeSpan.FromSeconds(30));
-            var message = response.Success
+            var response = dialog.Response;
+            var message = response?.Success == true
                 ? AppResources.LeavingExam
                 : AppResources.ExamFinishFailed;
             PostFinishResponse(
                 requestId,
-                response.Success ? "accepted" : "failed",
+                response?.Success == true ? "accepted" : "failed",
                 message);
             if (requestId is null)
             {
                 ShowFailure(
-                    response.Success ? AppResources.ExamInProgress : AppResources.WebContentUnavailable,
+                    response?.Success == true ? AppResources.ExamInProgress : AppResources.WebContentUnavailable,
                     message);
-            }
-            if (response.Success && response.RestartAtUtc is { } restartAtUtc)
-            {
-                new RestartCountdownWindow(this, restartAtUtc).ShowDialog();
             }
         }
         catch (Exception)
