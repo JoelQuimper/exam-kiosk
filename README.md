@@ -127,6 +127,19 @@ directories, registers
 Intune would perform this administrator-controlled installation before exam
 day.
 
+### Optional local Windows configuration
+
+The installer does not change general Windows sign-in policies. For a local
+test device, an administrator may separately disable the Windows first-sign-in
+animation before validating the kiosk flow:
+
+```powershell
+& .\scripts\LocalConfig\Configure-ExamKioskWindowsPolicies.ps1
+```
+
+This optional machine-wide configuration is kept separate from installation so
+district deployment tooling can own the equivalent policy.
+
 ### School-board customization hooks
 
 The agent package includes two administrator-owned PowerShell hooks:
@@ -250,5 +263,5 @@ phase.
 
 ## Architecture
 
-See [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md) for the architecture, security
+See [DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md) for the architecture, security
 boundaries, implementation stack, and phased development plan.

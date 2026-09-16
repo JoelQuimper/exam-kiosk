@@ -125,8 +125,6 @@ internal sealed class TransitionDialog : Window
 
     internal AgentResponse? Response { get; private set; }
 
-    internal Exception? Error { get; private set; }
-
     internal bool WasCancelled => !transitionStarted;
 
     private async void ConfirmButton_Click(object sender, RoutedEventArgs e)
@@ -151,9 +149,8 @@ internal sealed class TransitionDialog : Window
             UpdateCountdown();
             timer.Start();
         }
-        catch (Exception exception)
+        catch (Exception)
         {
-            Error = exception;
             ShowFailure();
         }
     }

@@ -6,9 +6,10 @@ Azure Verified Modules to create a Linux App Service plan and web app.
 The development resource names follow the project convention:
 
 ```text
-rg-examkiosk.dev
+rg-examkiosk-dev
 asp-examkiosk-dev
-app-examkiosk-<unique-suffix>-dev
+app-examkiosk-dev
+kv-examkiosk-dev
 ```
 
 ## Validate

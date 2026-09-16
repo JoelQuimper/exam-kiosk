@@ -79,22 +79,18 @@ function Initialize-ExamKioskEntraApplication {
 
     if ($servicePrincipals.Count -eq 0) {
         Write-Verbose "Creating the service principal for client ID '$($application.appId)'."
-        $servicePrincipalJson = & az ad sp create `
+        & az ad sp create `
             --id $application.appId `
-            --output json | Out-String
+            --output none
         if ($LASTEXITCODE -ne 0) {
             throw "Creating the Entra service principal failed with exit code $LASTEXITCODE."
         }
-        $servicePrincipal = $servicePrincipalJson | ConvertFrom-Json
     }
     else {
-        $servicePrincipal = $servicePrincipals[0]
         Write-Verbose 'The service principal already exists.'
     }
 
     [pscustomobject]@{
-        ClientId                 = $application.appId
-        ApplicationObjectId      = $application.id
-        ServicePrincipalObjectId = $servicePrincipal.id
+        ClientId = $application.appId
     }
 }

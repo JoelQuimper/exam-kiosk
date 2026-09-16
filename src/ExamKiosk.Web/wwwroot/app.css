@@ -32,12 +32,12 @@ a {
 }
 
 .app-header {
-    width: min(1180px, calc(100% - 48px));
-    margin: 0 auto;
+    width: 100%;
     min-height: 88px;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    border-bottom: 1px solid var(--line);
 }
 
 .brand {
@@ -126,11 +126,6 @@ a {
 .page-shell {
     width: min(1180px, calc(100% - 48px));
     margin: 0 auto;
-}
-
-.app-header {
-    width: 100%;
-    border-bottom: 1px solid var(--line);
 }
 
 .account-menu,
@@ -343,7 +338,6 @@ a {
 }
 
 @media (max-width: 760px) {
-    .app-header,
     .page-shell {
         width: min(100% - 32px, 1180px);
     }

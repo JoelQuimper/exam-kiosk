@@ -133,7 +133,7 @@ flowchart TB
     Laptop --> ExamWifi --> Firewall --> Services
 ```
 
-The [original high-level architecture diagram](docs/high-level-architecure.pdf)
+The [original high-level architecture diagram](high-level-architecure.pdf)
 is retained as the source design artifact. The Mermaid diagram above is the
 evolving logical architecture.
 
