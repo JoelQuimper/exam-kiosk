@@ -19,11 +19,12 @@
         let statusRequestId = crypto.randomUUID();
         let startRequestId = null;
 
-        function post(type, requestId) {
+        function post(type, requestId, additionalData = {}) {
             webview.postMessage({
                 version: protocolVersion,
                 type,
-                requestId
+                requestId,
+                ...additionalData
             });
         }
 
@@ -69,7 +70,11 @@
             startButton.disabled = true;
             status.textContent = status.dataset.starting;
             startRequestId = crypto.randomUUID();
-            post("startExam", startRequestId);
+            post("startExam", startRequestId, {
+                exam: {
+                    title: startButton.dataset.examTitle
+                }
+            });
         });
 
         status.textContent = status.dataset.connecting;

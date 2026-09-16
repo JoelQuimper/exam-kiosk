@@ -10,6 +10,20 @@ public sealed class TransitionManagerTests
         Assert.Equal(5, RestartSchedule.DelaySeconds);
     }
 
+    [Fact]
+    public void RestartCommand_IsImmediateAndForcedAfterApplicationCountdown()
+    {
+        var startInfo = TransitionManager.CreateRestartStartInfo();
+
+        Assert.EndsWith(
+            Path.Combine("System32", "shutdown.exe"),
+            startInfo.FileName,
+            StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(
+            ["/r", "/t", "0", "/f", "/d", "p:4:1"],
+            startInfo.ArgumentList);
+    }
+
     [Theory]
     [InlineData(5.0, 5)]
     [InlineData(4.1, 5)]

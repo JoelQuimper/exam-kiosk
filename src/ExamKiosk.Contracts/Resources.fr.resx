@@ -20,10 +20,8 @@ Voulez-vous terminer ?</value></data>
   <data name="PreparationFailed" xml:space="preserve"><value>La préparation du kiosque n'a pas pu démarrer.</value></data>
   <data name="RestartingWindows" xml:space="preserve"><value>Redémarrage de Windows</value></data>
   <data name="StartExam" xml:space="preserve"><value>Passer à l'examen</value></data>
-  <data name="StartWarning" xml:space="preserve"><value>L'agent de l'appareil d'examen va appliquer un profil Assigned Access et redémarrer cet ordinateur dans un compte d'examen local restreint.
-
-Enregistrez votre travail avant de continuer. Voulez-vous démarrer l'examen fictif ?</value></data>
-  <data name="StartWarningTitle" xml:space="preserve"><value>Démarrer l'examen fictif</value></data>
+  <data name="StartWarning" xml:space="preserve"><value>Enregistrez votre travail avant de continuer. Cet ordinateur va redémarrer.</value></data>
+  <data name="StartWarningTitle" xml:space="preserve"><value>Démarrage de l'examen : {0}</value></data>
   <data name="EdgeOpenFailed" xml:space="preserve"><value>Microsoft Edge n'a pas pu être ouvert.
 
 </value></data>

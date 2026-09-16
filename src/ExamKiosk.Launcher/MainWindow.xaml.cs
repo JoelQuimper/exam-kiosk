@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -232,7 +233,7 @@ public partial class MainWindow : Window
                     await SendAgentStatusAsync(request.RequestId);
                     break;
                 case LauncherBridgeRequestType.StartExam:
-                    await StartExamAsync(request.RequestId);
+                    await StartExamAsync(request.RequestId, request.Exam!.Title);
                     break;
             }
         }
@@ -281,7 +282,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private async Task StartExamAsync(Guid requestId)
+    private async Task StartExamAsync(Guid requestId, string examTitle)
     {
         if (startInProgress)
         {
@@ -298,7 +299,10 @@ public partial class MainWindow : Window
         {
             var dialog = new TransitionDialog(
                 this,
-                AppResources.StartWarningTitle,
+                string.Format(
+                    CultureInfo.CurrentUICulture,
+                    AppResources.StartWarningTitle,
+                    examTitle),
                 AppResources.StartWarning,
                 AppResources.StartExam,
                 AppResources.PreparingDevice,

@@ -10,12 +10,16 @@ public enum LauncherBridgeRequestType
 
 public sealed record LauncherBridgeRequest(
     LauncherBridgeRequestType Type,
-    Guid RequestId);
+    Guid RequestId,
+    LauncherExamDescriptor? Exam);
+
+public sealed record LauncherExamDescriptor(string Title);
 
 public static class LauncherBridgeProtocol
 {
     public const int Version = 1;
     public const int MaximumMessageLength = 4096;
+    public const int MaximumExamTitleLength = 200;
 
     public static bool TryParseRequest(
         string json,
@@ -37,8 +41,7 @@ public static class LauncherBridgeProtocol
             }
 
             var properties = root.EnumerateObject().ToArray();
-            if (properties.Length != 3
-                || properties.Select(property => property.Name).Distinct().Count() != 3
+            if (properties.Select(property => property.Name).Distinct().Count() != properties.Length
                 || !root.TryGetProperty("version", out var version)
                 || !version.TryGetInt32(out var versionValue)
                 || versionValue != Version
@@ -63,7 +66,41 @@ public static class LauncherBridgeProtocol
                 return false;
             }
 
-            request = new LauncherBridgeRequest(requestType.Value, requestIdValue);
+            string? examTitle = null;
+            if (requestType == LauncherBridgeRequestType.StartExam)
+            {
+                if (properties.Length != 4
+                    || !root.TryGetProperty("exam", out var examElement)
+                    || examElement.ValueKind != JsonValueKind.Object)
+                {
+                    return false;
+                }
+
+                var examProperties = examElement.EnumerateObject().ToArray();
+                if (examProperties.Length != 1
+                    || !examElement.TryGetProperty("title", out var examTitleElement)
+                    || examTitleElement.ValueKind != JsonValueKind.String)
+                {
+                    return false;
+                }
+
+                examTitle = examTitleElement.GetString();
+                if (string.IsNullOrWhiteSpace(examTitle)
+                    || examTitle.Length > MaximumExamTitleLength
+                    || examTitle.Any(char.IsControl))
+                {
+                    return false;
+                }
+            }
+            else if (properties.Length != 3)
+            {
+                return false;
+            }
+
+            request = new LauncherBridgeRequest(
+                requestType.Value,
+                requestIdValue,
+                examTitle is null ? null : new LauncherExamDescriptor(examTitle));
             return true;
         }
         catch (JsonException)

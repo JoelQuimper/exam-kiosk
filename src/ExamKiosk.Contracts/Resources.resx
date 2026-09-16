@@ -20,10 +20,8 @@ Do you want to finish?</value></data>
   <data name="PreparationFailed" xml:space="preserve"><value>Kiosk preparation failed to start.</value></data>
   <data name="RestartingWindows" xml:space="preserve"><value>Restarting Windows</value></data>
   <data name="StartExam" xml:space="preserve"><value>Switch to exam</value></data>
-  <data name="StartWarning" xml:space="preserve"><value>The Exam Device Agent will apply an Assigned Access profile and restart this computer into a restricted local exam account.
-
-Save your work before continuing. Do you want to start the bogus exam?</value></data>
-  <data name="StartWarningTitle" xml:space="preserve"><value>Start bogus exam</value></data>
+  <data name="StartWarning" xml:space="preserve"><value>Save your work before continuing. This computer will restart.</value></data>
+  <data name="StartWarningTitle" xml:space="preserve"><value>Starting exam: {0}</value></data>
   <data name="EdgeOpenFailed" xml:space="preserve"><value>Microsoft Edge could not be opened.
 
 </value></data>

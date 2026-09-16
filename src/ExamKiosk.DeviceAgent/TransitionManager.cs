@@ -139,7 +139,7 @@ public sealed class TransitionManager
                 "completed",
                 null,
                 cancellationToken);
-            var restartAtUtc = ScheduleRestart("Entering the restricted exam session");
+            var restartAtUtc = ScheduleRestart();
             await sessionJournal.RecordStepAsync(
                 "Restart",
                 "scheduled",
@@ -194,7 +194,7 @@ public sealed class TransitionManager
                 null,
                 cancellationToken);
             await sessionJournal.SetStateAsync(AgentState.Available, cancellationToken);
-            var restartAtUtc = ScheduleRestart("Leaving the restricted exam session");
+            var restartAtUtc = ScheduleRestart();
             await sessionJournal.RecordStepAsync(
                 "Restart",
                 "scheduled",
@@ -332,7 +332,34 @@ public sealed class TransitionManager
             cancellationToken);
     }
 
-    private DateTimeOffset ScheduleRestart(string reason)
+    private DateTimeOffset ScheduleRestart()
+    {
+        var restartAtUtc = DateTimeOffset.UtcNow.AddSeconds(RestartSchedule.DelaySeconds);
+        _ = RestartAtAsync(restartAtUtc);
+        return restartAtUtc;
+    }
+
+    private async Task RestartAtAsync(DateTimeOffset restartAtUtc)
+    {
+        try
+        {
+            var delay = restartAtUtc - DateTimeOffset.UtcNow;
+            if (delay > TimeSpan.Zero)
+            {
+                await Task.Delay(delay);
+            }
+
+            using var process = Process.Start(CreateRestartStartInfo())
+                ?? throw new InvalidOperationException("The Windows restart command could not be started.");
+            logger.LogInformation("Windows restart initiated after the Exam Kiosk countdown");
+        }
+        catch (Exception exception)
+        {
+            logger.LogCritical(exception, "Windows restart failed after the Exam Kiosk countdown");
+        }
+    }
+
+    internal static ProcessStartInfo CreateRestartStartInfo()
     {
         var startInfo = new ProcessStartInfo
         {
@@ -344,13 +371,11 @@ public sealed class TransitionManager
         };
         startInfo.ArgumentList.Add("/r");
         startInfo.ArgumentList.Add("/t");
-        startInfo.ArgumentList.Add(RestartSchedule.DelaySeconds.ToString());
+        startInfo.ArgumentList.Add("0");
+        startInfo.ArgumentList.Add("/f");
         startInfo.ArgumentList.Add("/d");
         startInfo.ArgumentList.Add("p:4:1");
-        startInfo.ArgumentList.Add("/c");
-        startInfo.ArgumentList.Add(reason);
-        Process.Start(startInfo);
-        return DateTimeOffset.UtcNow.AddSeconds(RestartSchedule.DelaySeconds);
+        return startInfo;
     }
 
     private async Task SetStateAsync(AgentState state, CancellationToken cancellationToken)

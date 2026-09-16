@@ -126,6 +126,7 @@ public sealed class HomePageTests
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("id=\"launcher-start-exam\"", content);
+        Assert.Contains("data-exam-title=\"Bogus exam\"", content);
         Assert.Contains("id=\"launcher-status\"", content);
         Assert.Contains("launcher-bridge.js", content);
         Assert.DoesNotContain("Exam launching will be enabled in the desktop app.", content);

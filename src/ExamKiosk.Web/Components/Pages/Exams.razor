@@ -75,6 +75,7 @@
                 <div class="exam-controls">
                     <button class="button button-primary exam-action"
                             id="@(IsLauncher ? "launcher-start-exam" : null)"
+                            data-exam-title="@(IsLauncher ? exam.Title : null)"
                             type="button"
                             disabled>
                         @Localizer["StartExam"]
