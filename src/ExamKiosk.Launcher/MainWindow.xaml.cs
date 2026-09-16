@@ -26,6 +26,7 @@ public partial class MainWindow : Window
     private bool startInProgress;
     private bool cleanupInProgress;
     private bool closeAfterCleanup;
+    private bool navigationWasBlocked;
 
     public MainWindow()
     {
@@ -106,7 +107,14 @@ public partial class MainWindow : Window
         core.Settings.IsGeneralAutofillEnabled = false;
 
         core.NavigationStarting += Browser_NavigationStarting;
+        core.FrameNavigationStarting += Browser_FrameNavigationStarting;
         core.NavigationCompleted += Browser_NavigationCompleted;
+        core.ProcessFailed += Browser_ProcessFailed;
+        core.PermissionRequested += (_, args) =>
+        {
+            args.State = CoreWebView2PermissionState.Deny;
+            args.Handled = true;
+        };
         core.NewWindowRequested += (_, args) => args.Handled = true;
         core.DownloadStarting += (_, args) =>
         {
@@ -126,13 +134,30 @@ public partial class MainWindow : Window
         }
 
         e.Cancel = true;
+        navigationWasBlocked = true;
         ShowFailure(AppResources.NavigationBlocked, AppResources.NavigationBlockedDetails);
+    }
+
+    private void Browser_FrameNavigationStarting(
+        object? sender,
+        CoreWebView2NavigationStartingEventArgs e)
+    {
+        if (navigationPolicy?.IsAllowed(e.Uri) != true)
+        {
+            e.Cancel = true;
+        }
     }
 
     private void Browser_NavigationCompleted(
         object? sender,
         CoreWebView2NavigationCompletedEventArgs e)
     {
+        if (navigationWasBlocked)
+        {
+            navigationWasBlocked = false;
+            return;
+        }
+
         if (e.IsSuccess)
         {
             Browser.Visibility = Visibility.Visible;
@@ -143,6 +168,15 @@ public partial class MainWindow : Window
         ShowFailure(
             AppResources.WebContentUnavailable,
             $"{AppResources.WebNavigationFailed} ({e.WebErrorStatus})");
+    }
+
+    private void Browser_ProcessFailed(
+        object? sender,
+        CoreWebView2ProcessFailedEventArgs e)
+    {
+        ShowFailure(
+            AppResources.WebContentUnavailable,
+            $"{AppResources.WebNavigationFailed} ({e.ProcessFailedKind})");
     }
 
     private async void Browser_WebMessageReceived(
