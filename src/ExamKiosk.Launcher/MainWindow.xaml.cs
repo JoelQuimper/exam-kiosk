@@ -20,6 +20,7 @@ public partial class MainWindow : Window
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "ExamKiosk",
         "LauncherWebView2");
+    private readonly WebViewDiagnosticLog diagnosticLog = new("launcher");
     private WebViewHostConfiguration? configuration;
     private WebViewNavigationPolicy? navigationPolicy;
     private bool initializationInProgress;
@@ -54,12 +55,16 @@ public partial class MainWindow : Window
 
         initializationInProgress = true;
         ShowLoading();
+        diagnosticLog.Write("initialization-started");
 
         try
         {
             configuration ??= WebViewHostConfiguration.Load(
                 "launcher.settings.json",
                 "/launcher");
+            diagnosticLog.Write(
+                "configuration-loaded",
+                new { page = WebViewDiagnosticLog.DescribeUri(configuration.PageUri.AbsoluteUri) });
             navigationPolicy ??= new WebViewNavigationPolicy(
                 configuration,
                 [new Uri("https://login.microsoftonline.com")]);
@@ -77,6 +82,7 @@ public partial class MainWindow : Window
                     options: environmentOptions);
                 await Browser.EnsureCoreWebView2Async(environment);
                 ConfigureBrowser();
+                diagnosticLog.Write("webview-configured");
             }
 
             var core = Browser.CoreWebView2
@@ -85,6 +91,9 @@ public partial class MainWindow : Window
         }
         catch (Exception exception)
         {
+            diagnosticLog.Write(
+                "initialization-failed",
+                new { exceptionType = exception.GetType().FullName, exception.Message });
             var details = exception is InvalidDataException
                 ? AppResources.LauncherConfigurationInvalid
                 : AppResources.WebNavigationFailed;
@@ -128,7 +137,11 @@ public partial class MainWindow : Window
         object? sender,
         CoreWebView2NavigationStartingEventArgs e)
     {
-        if (navigationPolicy?.IsAllowed(e.Uri) == true)
+        var allowed = navigationPolicy?.IsAllowed(e.Uri) == true;
+        diagnosticLog.Write(
+            "navigation-starting",
+            new { target = WebViewDiagnosticLog.DescribeUri(e.Uri), allowed });
+        if (allowed)
         {
             return;
         }
@@ -144,6 +157,9 @@ public partial class MainWindow : Window
     {
         if (navigationPolicy?.IsAllowed(e.Uri) != true)
         {
+            diagnosticLog.Write(
+                "frame-navigation-blocked",
+                new { target = WebViewDiagnosticLog.DescribeUri(e.Uri) });
             e.Cancel = true;
         }
     }
@@ -152,6 +168,15 @@ public partial class MainWindow : Window
         object? sender,
         CoreWebView2NavigationCompletedEventArgs e)
     {
+        diagnosticLog.Write(
+            "navigation-completed",
+            new
+            {
+                e.IsSuccess,
+                webErrorStatus = e.WebErrorStatus.ToString(),
+                source = WebViewDiagnosticLog.DescribeUri(Browser.Source?.AbsoluteUri),
+                navigationWasBlocked,
+            });
         if (navigationWasBlocked)
         {
             navigationWasBlocked = false;
@@ -174,6 +199,9 @@ public partial class MainWindow : Window
         object? sender,
         CoreWebView2ProcessFailedEventArgs e)
     {
+        diagnosticLog.Write(
+            "webview-process-failed",
+            new { processFailedKind = e.ProcessFailedKind.ToString() });
         ShowFailure(
             AppResources.WebContentUnavailable,
             $"{AppResources.WebNavigationFailed} ({e.ProcessFailedKind})");
@@ -187,9 +215,15 @@ public partial class MainWindow : Window
             || !LauncherBridgeProtocol.TryParseRequest(e.WebMessageAsJson, out var request)
             || request is null)
         {
+            diagnosticLog.Write(
+                "bridge-message-rejected",
+                new { source = WebViewDiagnosticLog.DescribeUri(e.Source) });
             return;
         }
 
+        diagnosticLog.Write(
+            "bridge-message-accepted",
+            new { requestType = request.Type.ToString(), request.RequestId });
         try
         {
             switch (request.Type)

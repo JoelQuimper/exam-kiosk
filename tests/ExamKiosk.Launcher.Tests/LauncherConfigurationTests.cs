@@ -34,4 +34,17 @@ public sealed class LauncherConfigurationTests
         Assert.Throws<InvalidDataException>(
             () => WebViewHostConfiguration.Parse(json, "/launcher"));
     }
+
+    [Theory]
+    [InlineData(
+        "https://example.test/launcher?code=secret#fragment",
+        "https://example.test/launcher")]
+    [InlineData(
+        "https://login.microsoftonline.com/tenant/oauth2/v2.0/authorize?client_id=secret",
+        "https://login.microsoftonline.com/tenant/oauth2/v2.0/authorize")]
+    [InlineData("not-a-uri", "<invalid-uri>")]
+    public void DescribeUri_RemovesSensitiveComponents(string target, string expected)
+    {
+        Assert.Equal(expected, WebViewDiagnosticLog.DescribeUri(target));
+    }
 }

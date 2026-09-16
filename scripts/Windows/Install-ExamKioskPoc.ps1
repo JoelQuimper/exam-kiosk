@@ -45,6 +45,13 @@ if (-not [Uri]::TryCreate($WebAppUrl, [UriKind]::Absolute, [ref]$webAppUri) -or
 $normalizedWebAppUrl = $webAppUri.GetLeftPart([UriPartial]::Authority)
 
 New-Item -ItemType Directory -Path $configurationRoot -Force | Out-Null
+$logsRoot = Join-Path $configurationRoot 'Logs'
+New-Item -ItemType Directory -Path $logsRoot -Force | Out-Null
+& icacls.exe $logsRoot /grant '*S-1-5-32-545:(OI)(CI)(M)' | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    throw "Granting write access to the diagnostic log directory failed with exit code $LASTEXITCODE."
+}
+
 [ordered]@{
     webAppUrl = $normalizedWebAppUrl
 } |
@@ -152,6 +159,7 @@ try {
 
     Start-Service -Name $serviceName
     Write-Output "Exam Kiosk PoC installed at $installRoot."
+    Write-Output "Native client diagnostics are written under $logsRoot."
     Write-Output 'The normal launcher is available in the Start menu under Exam Kiosk.'
 }
 finally {

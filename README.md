@@ -184,6 +184,18 @@ local session ID, current state, timestamps, and completion status for each
 transition step. It is a local recovery record, not the proctor dashboard
 telemetry channel.
 
+The Launcher and Restricted Client write bounded JSON-lines diagnostics to:
+
+```text
+%ProgramData%\ExamKiosk\Logs\launcher.jsonl
+%ProgramData%\ExamKiosk\Logs\restricted-client.jsonl
+```
+
+Navigation entries contain only the origin and path. Query strings, fragments,
+page content, cookies, and authentication tokens are not recorded. Each log
+rotates at 5 MB and retains one previous file. These student-writable diagnostic
+logs are useful for troubleshooting but are not an authoritative audit record.
+
 The PoC states are `available`, `enteringExam`, `inExam`, `exitingExam`, and
 `failed`. The agent remains in `enteringExam` or `exitingExam` throughout the
 restart countdown, so the opposite command is rejected. On service startup it
