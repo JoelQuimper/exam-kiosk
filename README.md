@@ -23,14 +23,18 @@ The first web phase is available in `src\ExamKiosk.Web`. It provides:
   cookie;
 - an authenticated exam list at `/` and `/exams` containing the initial
   **Bogus exam**;
+- an authenticated `/launcher` experience hosted inside the installed WPF
+  Launcher;
 - English and French localization selected from the browser's language
   preferences, with English as the fallback;
 - a sign-in-required recovery page when authentication is canceled; and
 - antiforgery-protected sign-out.
 
-Exam launching remains disabled in the web experience. Connecting this page to
-the WPF Launcher is a separate phase so the native client and Device Agent
-continue to own privileged device transitions.
+In a normal browser, exam launching remains disabled. The installed WPF
+Launcher hosts `/launcher`, verifies the web origin and bridge messages,
+requires native confirmation, and then calls the Device Agent through the
+existing named pipe. Web content never receives direct access to privileged
+device operations.
 
 For local Entra configuration and Azure deployment instructions, see
 [`infra\README.md`](infra/README.md).
@@ -41,9 +45,9 @@ The current vertical slice contains three applications:
 
 | Component | Purpose |
 | --- | --- |
-| Exam Kiosk Launcher | Runs as the normal student and displays one **Bogus exam**. |
+| Exam Kiosk Launcher | Runs as the normal student and securely hosts the authenticated exam list. |
 | Exam Kiosk Device Agent | Runs as a `LocalSystem` Windows Service and owns privileged transitions. |
-| Restricted Exam Client | Starts automatically in the exam account and provides **Open exam** and **Exam done** actions. |
+| Restricted Exam Client | Hosts `/exam-session` in the exam account and owns the native **Open exam** and **Exam done** actions. |
 
 The two WPF applications communicate with the agent over a local named pipe.
 They never elevate and do not receive administrator credentials.
@@ -77,6 +81,7 @@ The agent invokes `Start-Exam.ps1` to apply Assigned Access and
 - A Windows edition that supports the configured Assigned Access experience.
 - .NET 10 SDK to build and install the prototype.
 - Microsoft Edge installed in its standard machine-wide location.
+- Microsoft Edge WebView2 Runtime installed machine-wide.
 - A separate local administrator recovery account that is not the kiosk
   account.
 
@@ -91,14 +96,34 @@ Open PowerShell as an administrator from the repository root and run:
 & .\scripts\Windows\Install-ExamKioskPoc.ps1
 ```
 
+On the first installation, the installer prompts for the Exam Kiosk web
+application HTTPS origin and saves it in:
+
+```text
+%ProgramData%\ExamKiosk\deployment.settings.json
+```
+
+Later installations and resets reuse that machine configuration without
+prompting. The uninstaller preserves the complete `%ProgramData%\ExamKiosk`
+directory, including configuration, agent state, and session history. For unattended deployment,
+administrators can provide or replace the saved value with:
+
+```powershell
+& .\scripts\Windows\Install-ExamKioskPoc.ps1 `
+    -WebAppUrl 'https://exam-kiosk.example.org'
+```
+
 The installer publishes self-contained Windows applications under:
 
 ```text
 %ProgramFiles%\ExamKiosk
 ```
 
-It registers `ExamKioskDeviceAgent` as an automatic `LocalSystem` service and
-adds **Exam Kiosk Launcher** to the all-users Start menu. In a managed rollout,
+It validates the WebView2 Runtime, copies the administrator-owned web
+application origin into the installed Launcher and Restricted Client
+directories, registers
+`ExamKioskDeviceAgent` as an automatic `LocalSystem` service, and adds
+**Exam Kiosk Launcher** to the all-users Start menu. In a managed rollout,
 Intune would perform this administrator-controlled installation before exam
 day.
 
@@ -132,7 +157,8 @@ in place for recovery.
 3. Select **Switch to exam** and confirm the restart.
 4. After Windows restarts, Assigned Access signs in its managed **Exam Kiosk**
 	 account and starts the Restricted Exam Client.
-5. Select **Open exam** to open the placeholder URL in Edge.
+5. The Restricted Client loads `/exam-session`. Select **Open exam** to open
+   the native-owned placeholder URL in Edge.
 6. Return to the Restricted Exam Client, select **Exam done**, and confirm.
 7. The agent removes Assigned Access and restarts Windows.
 
@@ -188,6 +214,10 @@ The uninstaller refuses to continue unless the persisted agent state is
 	application signatures.
 - The placeholder exam is `https://www.example.com/`; SharePoint and Microsoft
 	365 authentication are not implemented yet.
+- `/exam-session` is intentionally a public, assignment-free control shell for
+	this fixed prototype. It cannot retrieve student assignments or provide an
+	arbitrary exam URL. Dynamic SharePoint assignments require a signed,
+	device-bound effective policy resolved before restart.
 - The Assigned Access profile assumes standard machine-wide installation paths
 	for the Restricted Exam Client and Microsoft Edge.
 - Automatic cleanup of browser identity, documents, and cached student data is

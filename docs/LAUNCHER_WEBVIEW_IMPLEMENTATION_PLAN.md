@@ -2,9 +2,10 @@
 
 ## Status
 
-This document records the architecture decisions made for the next Exam Kiosk
-prototype increment. It is an implementation handoff, not a description of
-completed functionality.
+This document records the architecture decisions for the Exam Kiosk Launcher
+WebView2 increment. The authenticated Launcher page, native bridge, hardened
+WebView2 shell, and installer configuration described here are implemented.
+The deferred decisions remain future work.
 
 The increment replaces only the normal-session Launcher's native content with
 a centrally hosted user interface. The Restricted Client remains unchanged.
@@ -78,8 +79,12 @@ authenticated and executable-authorized named pipe.
 
 ## Web Application
 
-Use the existing ASP.NET Core Blazor Web App as the host. Add an Interactive
-WebAssembly client for the `/launcher` experience.
+Use the existing ASP.NET Core Blazor Web App as the host. The `/launcher`
+experience is server-rendered and uses a small fixed JavaScript bridge for
+native messages. A separate Interactive WebAssembly project is unnecessary for
+this fixed bridge: after the initial authenticated page load, status and start
+messages do not require a live Blazor circuit, and the ephemeral profile
+downloads a smaller client bundle.
 
 - Authentication is server-owned through `Microsoft.Identity.Web` and OpenID
   Connect.
@@ -89,7 +94,8 @@ WebAssembly client for the `/launcher` experience.
   storage.
 - Same-origin server calls use the protected session cookie.
 - Server mutations require antiforgery protection.
-- The WebAssembly UI can remain loaded during a brief server interruption.
+- The loaded Launcher page can continue its native bridge interaction during a
+  brief server interruption.
 - Keep the initial client bundle small because the ephemeral profile downloads
   it again on every Launcher run.
 - Show a native loading or failure state while WebView2 initializes and the
@@ -222,8 +228,16 @@ credential.
 
 ## Launcher Configuration
 
-`Install-ExamKioskPoc.ps1` will require `-WebAppUrl` and write an
-administrator-owned configuration file under:
+On first use, `Install-ExamKioskPoc.ps1` accepts `-WebAppUrl` or prompts for the
+deployment URL, validates it, and saves the machine-specific configuration
+under:
+
+```text
+%ProgramData%\ExamKiosk\deployment.settings.json
+```
+
+Later installs and resets reuse that value. The installer also writes
+administrator-owned client configuration files under:
 
 ```text
 %ProgramFiles%\ExamKiosk\Launcher
@@ -233,7 +247,7 @@ Store only the absolute HTTPS base URL:
 
 ```json
 {
-  "webAppUrl": "https://app-examkiosk-dev.azurewebsites.net"
+  "webAppUrl": "https://exam-kiosk.example.org"
 }
 ```
 
@@ -367,8 +381,8 @@ exception details to the hosted UI.
    bridge JavaScript interop.
 6. Replace only the WPF Launcher's native content with the hardened WebView2
    shell, native confirmation, status handshake, and ephemeral profile.
-7. Update the installer with required `-WebAppUrl`, configuration writing, and
-   WebView2 Runtime prerequisite validation.
+7. Update the installer with persistent machine configuration, client
+   configuration writing, and WebView2 Runtime prerequisite validation.
 8. Add focused tests, validate the Bicep template, build the solution, and run
    the existing and new tests.
 9. Update the README and infrastructure documentation with bootstrap, local
@@ -406,11 +420,23 @@ exception details to the hosted UI.
 - Real exam discovery and assignment selection.
 - Server-issued signed, short-lived, device-bound effective policy.
 - Identity-to-device and assignment binding at the Device Agent boundary.
-- Converting the Restricted Client to the same hosted UI pattern.
-- Restricted Client `finishExam` bridge and native confirmation.
 - External identity-provider federation compatibility.
 - Credential rotation automation and overlap procedure.
 - Custom district domains and associated callback changes.
 - Key Vault private endpoint, App Service VNet integration, and private
   deployment agent.
 - Offline application assets beyond the native loading and failure experience.
+
+## Restricted Client Follow-on
+
+The Restricted Client now applies the same hosted-shell pattern to the public,
+assignment-free `/exam-session` page. Its separate ephemeral WebView2 profile
+allows only the configured Exam Kiosk origin. The fixed bridge accepts only
+`clientReady`, `openExam`, and `finishExam`; native code revalidates agent state,
+owns the fixed prototype URL, requires native finish confirmation, and remains
+the only caller of `FinishExam`.
+
+This does not implement assignment handoff. A future signed, short-lived,
+device-bound effective policy must resolve and persist the student's
+SharePoint link before restart. The `/exam-session` page must not anonymously
+query assignments or supply an arbitrary URL to the native client.

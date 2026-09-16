@@ -1,6 +1,9 @@
 #Requires -RunAsAdministrator
 [CmdletBinding()]
 param(
+    [ValidateNotNullOrEmpty()]
+    [string]$WebAppUrl,
+
     [ValidateSet('Debug', 'Release')]
     [string]$Configuration = 'Release',
 
@@ -13,6 +16,51 @@ $serviceName = 'ExamKioskDeviceAgent'
 $installRoot = Join-Path $env:ProgramFiles 'ExamKiosk'
 $repositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $stagingRoot = Join-Path $env:TEMP "ExamKiosk-$([guid]::NewGuid())"
+$configurationRoot = Join-Path $env:ProgramData 'ExamKiosk'
+$deploymentConfigurationPath = Join-Path $configurationRoot 'deployment.settings.json'
+
+if (-not $PSBoundParameters.ContainsKey('WebAppUrl')) {
+    if (Test-Path -LiteralPath $deploymentConfigurationPath -PathType Leaf) {
+        $deploymentConfiguration = Get-Content `
+            -LiteralPath $deploymentConfigurationPath `
+            -Raw |
+            ConvertFrom-Json
+        $WebAppUrl = $deploymentConfiguration.webAppUrl
+    }
+    else {
+        $WebAppUrl = Read-Host 'Enter the Exam Kiosk web application HTTPS origin'
+    }
+}
+
+$webAppUri = $null
+if (-not [Uri]::TryCreate($WebAppUrl, [UriKind]::Absolute, [ref]$webAppUri) -or
+    $webAppUri.Scheme -cne 'https' -or
+    -not $webAppUri.Host -or
+    $webAppUri.UserInfo -or
+    $webAppUri.Query -or
+    $webAppUri.Fragment -or
+    $webAppUri.AbsolutePath -cne '/') {
+    throw 'WebAppUrl must be an absolute HTTPS origin without credentials, a path, query, or fragment.'
+}
+$normalizedWebAppUrl = $webAppUri.GetLeftPart([UriPartial]::Authority)
+
+New-Item -ItemType Directory -Path $configurationRoot -Force | Out-Null
+[ordered]@{
+    webAppUrl = $normalizedWebAppUrl
+} |
+    ConvertTo-Json |
+    Set-Content -LiteralPath $deploymentConfigurationPath -Encoding utf8
+
+$webViewRuntime = @(
+    'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*'
+    'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'
+) |
+    ForEach-Object { Get-ItemProperty -Path $_ -ErrorAction SilentlyContinue } |
+    Where-Object DisplayName -Like 'Microsoft Edge WebView2 Runtime*' |
+    Select-Object -First 1
+if (-not $webViewRuntime) {
+    throw 'Microsoft Edge WebView2 Runtime is required. Install it through device management before installing Exam Kiosk.'
+}
 
 try {
     $projects = @{
@@ -50,6 +98,22 @@ try {
             -Destination $destination `
             -Recurse
     }
+
+    [ordered]@{
+        webAppUrl = $normalizedWebAppUrl
+    } |
+        ConvertTo-Json |
+        Set-Content `
+            -LiteralPath (Join-Path $installRoot 'Launcher\launcher.settings.json') `
+            -Encoding utf8
+
+    [ordered]@{
+        webAppUrl = $normalizedWebAppUrl
+    } |
+        ConvertTo-Json |
+        Set-Content `
+            -LiteralPath (Join-Path $installRoot 'RestrictedClient\restricted-client.settings.json') `
+            -Encoding utf8
 
     $agentPath = Join-Path $installRoot 'Agent\ExamKiosk.DeviceAgent.exe'
     if ($service) {

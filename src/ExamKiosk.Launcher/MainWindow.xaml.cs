@@ -1,74 +1,384 @@
-﻿using System.Windows;
+﻿using System.ComponentModel;
+using System.IO;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Windows;
 using ExamKiosk.Contracts;
+using Microsoft.Web.WebView2.Core;
 using AppResources = ExamKiosk.Contracts.Resources;
 
 namespace ExamKiosk.Launcher;
 
 public partial class MainWindow : Window
 {
+    private static readonly JsonSerializerOptions BridgeSerializerOptions = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+    };
+
+    private readonly string profilePath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "ExamKiosk",
+        "LauncherWebView2");
+    private WebViewHostConfiguration? configuration;
+    private WebViewNavigationPolicy? navigationPolicy;
+    private bool initializationInProgress;
+    private bool startInProgress;
+    private bool cleanupInProgress;
+    private bool closeAfterCleanup;
+
     public MainWindow()
     {
         InitializeComponent();
-        ApplyLocalization();
-    }
-
-    private void ApplyLocalization()
-    {
         Title = AppResources.KioskTitle;
-        KioskLabelText.Text = AppResources.KioskLabel;
-        AvailableExamsText.Text = AppResources.AvailableExams;
-        ReadyText.Text = AppResources.Ready;
-        ExamTitleText.Text = AppResources.ExamTitle;
-        ExamDescriptionText.Text = AppResources.ExamDescription;
-        ExamDetailsText.Text = AppResources.ExamDetails;
-        StartExamButton.Content = AppResources.StartExam;
-        StatusText.Text = AppResources.NoExamRunning;
+        ShowLoading();
     }
 
-    private async void StartExamButton_Click(object sender, RoutedEventArgs e)
+    private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
-        if (MessageBox.Show(
-                this,
-                AppResources.StartWarning,
-                AppResources.StartWarningTitle,
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning,
-                MessageBoxResult.No) != MessageBoxResult.Yes)
+        await InitializeBrowserAsync();
+    }
+
+    private async void RetryButton_Click(object sender, RoutedEventArgs e)
+    {
+        await InitializeBrowserAsync();
+    }
+
+    private async Task InitializeBrowserAsync()
+    {
+        if (initializationInProgress)
         {
             return;
         }
 
-        StartExamButton.IsEnabled = false;
-        StatusText.Text = AppResources.PreparingDevice;
+        initializationInProgress = true;
+        ShowLoading();
 
         try
         {
+            configuration ??= WebViewHostConfiguration.Load(
+                "launcher.settings.json",
+                "/launcher");
+            navigationPolicy ??= new WebViewNavigationPolicy(
+                configuration,
+                [new Uri("https://login.microsoftonline.com")]);
+
+            if (Browser.CoreWebView2 is null)
+            {
+                DeleteProfileDirectory();
+                var environmentOptions = new CoreWebView2EnvironmentOptions
+                {
+                    AreBrowserExtensionsEnabled = false,
+                };
+                var environment = await CoreWebView2Environment.CreateAsync(
+                    browserExecutableFolder: null,
+                    userDataFolder: profilePath,
+                    options: environmentOptions);
+                await Browser.EnsureCoreWebView2Async(environment);
+                ConfigureBrowser();
+            }
+
+            var core = Browser.CoreWebView2
+                ?? throw new InvalidOperationException("WebView2 initialization did not complete.");
+            core.Navigate(configuration.PageUri.AbsoluteUri);
+        }
+        catch (Exception exception)
+        {
+            var details = exception is InvalidDataException
+                ? AppResources.LauncherConfigurationInvalid
+                : AppResources.WebNavigationFailed;
+            ShowFailure(AppResources.WebContentUnavailable, details);
+        }
+        finally
+        {
+            initializationInProgress = false;
+        }
+    }
+
+    private void ConfigureBrowser()
+    {
+        var core = Browser.CoreWebView2
+            ?? throw new InvalidOperationException("WebView2 initialization did not complete.");
+        core.Settings.AreDefaultContextMenusEnabled = false;
+        core.Settings.AreDevToolsEnabled = false;
+        core.Settings.AreBrowserAcceleratorKeysEnabled = false;
+        core.Settings.IsPasswordAutosaveEnabled = false;
+        core.Settings.IsGeneralAutofillEnabled = false;
+
+        core.NavigationStarting += Browser_NavigationStarting;
+        core.NavigationCompleted += Browser_NavigationCompleted;
+        core.NewWindowRequested += (_, args) => args.Handled = true;
+        core.DownloadStarting += (_, args) =>
+        {
+            args.Cancel = true;
+            args.Handled = true;
+        };
+        core.WebMessageReceived += Browser_WebMessageReceived;
+    }
+
+    private void Browser_NavigationStarting(
+        object? sender,
+        CoreWebView2NavigationStartingEventArgs e)
+    {
+        if (navigationPolicy?.IsAllowed(e.Uri) == true)
+        {
+            return;
+        }
+
+        e.Cancel = true;
+        ShowFailure(AppResources.NavigationBlocked, AppResources.NavigationBlockedDetails);
+    }
+
+    private void Browser_NavigationCompleted(
+        object? sender,
+        CoreWebView2NavigationCompletedEventArgs e)
+    {
+        if (e.IsSuccess)
+        {
+            Browser.Visibility = Visibility.Visible;
+            StatusPanel.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        ShowFailure(
+            AppResources.WebContentUnavailable,
+            $"{AppResources.WebNavigationFailed} ({e.WebErrorStatus})");
+    }
+
+    private async void Browser_WebMessageReceived(
+        object? sender,
+        CoreWebView2WebMessageReceivedEventArgs e)
+    {
+        if (navigationPolicy?.IsTrustedMessageSource(e.Source) != true
+            || !LauncherBridgeProtocol.TryParseRequest(e.WebMessageAsJson, out var request)
+            || request is null)
+        {
+            return;
+        }
+
+        try
+        {
+            switch (request.Type)
+            {
+                case LauncherBridgeRequestType.ClientReady:
+                    await SendAgentStatusAsync(request.RequestId);
+                    break;
+                case LauncherBridgeRequestType.StartExam:
+                    await StartExamAsync(request.RequestId);
+                    break;
+            }
+        }
+        catch (Exception)
+        {
+            ShowFailure(AppResources.WebContentUnavailable, AppResources.WebNavigationFailed);
+            if (request.Type == LauncherBridgeRequestType.ClientReady)
+            {
+                PostBridgeResponse(
+                    "agentStatus",
+                    request.RequestId,
+                    "unavailable",
+                    AppResources.AgentStatusUnavailable);
+            }
+            else
+            {
+                PostBridgeResponse(
+                    "startExamResult",
+                    request.RequestId,
+                    "failed",
+                    AppResources.PreparationFailed);
+            }
+        }
+    }
+
+    private async Task SendAgentStatusAsync(Guid requestId)
+    {
+        try
+        {
+            var response = await AgentClient.SendAsync(
+                AgentCommand.GetStatus,
+                TimeSpan.FromSeconds(5));
+            PostBridgeResponse(
+                "agentStatus",
+                requestId,
+                response.Success ? ToProtocolState(response.State) : "unavailable",
+                response.Success ? null : AppResources.AgentStatusUnavailable);
+        }
+        catch (Exception)
+        {
+            PostBridgeResponse(
+                "agentStatus",
+                requestId,
+                "unavailable",
+                AppResources.AgentStatusUnavailable);
+        }
+    }
+
+    private async Task StartExamAsync(Guid requestId)
+    {
+        if (startInProgress)
+        {
+            PostBridgeResponse(
+                "startExamResult",
+                requestId,
+                "busy",
+                AppResources.PreparingDevice);
+            return;
+        }
+
+        startInProgress = true;
+        try
+        {
+            if (MessageBox.Show(
+                    this,
+                    AppResources.StartWarning,
+                    AppResources.StartWarningTitle,
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning,
+                    MessageBoxResult.No) != MessageBoxResult.Yes)
+            {
+                PostBridgeResponse(
+                    "startExamResult",
+                    requestId,
+                    "cancelled",
+                    AppResources.StartCancelled);
+                return;
+            }
+
             var response = await AgentClient.SendAsync(
                 AgentCommand.StartExam,
                 TimeSpan.FromSeconds(30));
+            PostBridgeResponse(
+                "startExamResult",
+                requestId,
+                response.Success ? "accepted" : "failed",
+                response.Success ? AppResources.PreparingDevice : AppResources.PreparationFailed);
+        }
+        catch (Exception)
+        {
+            PostBridgeResponse(
+                "startExamResult",
+                requestId,
+                "failed",
+                AppResources.PreparationFailed);
+        }
+        finally
+        {
+            startInProgress = false;
+        }
+    }
 
-            StatusText.Text = response.Message;
-            if (!response.Success)
-            {
-                MessageBox.Show(
-                    this,
-                    response.Message,
-                    AppResources.KioskTitle,
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
-                StartExamButton.IsEnabled = true;
-            }
+    private void PostBridgeResponse(
+        string type,
+        Guid requestId,
+        string state,
+        string? message)
+    {
+        if (cleanupInProgress || closeAfterCleanup || Browser.CoreWebView2 is not { } core)
+        {
+            return;
+        }
+
+        var response = new BridgeResponse(
+            LauncherBridgeProtocol.Version,
+            type,
+            requestId,
+            state,
+            message);
+        core.PostWebMessageAsJson(
+            JsonSerializer.Serialize(response, BridgeSerializerOptions));
+    }
+
+    private static string ToProtocolState(AgentState state)
+    {
+        return JsonNamingPolicy.CamelCase.ConvertName(state.ToString());
+    }
+
+    private void ShowLoading()
+    {
+        Browser.Visibility = Visibility.Collapsed;
+        StatusPanel.Visibility = Visibility.Visible;
+        StatusHeading.Text = AppResources.KioskTitle;
+        StatusMessage.Text = AppResources.LoadingWebContent;
+        RetryButton.Visibility = Visibility.Collapsed;
+    }
+
+    private void ShowFailure(string heading, string details)
+    {
+        Browser.Visibility = Visibility.Collapsed;
+        StatusPanel.Visibility = Visibility.Visible;
+        StatusHeading.Text = heading;
+        StatusMessage.Text = details;
+        RetryButton.Content = AppResources.Retry;
+        RetryButton.Visibility = Visibility.Visible;
+    }
+
+    private async void Window_Closing(object? sender, CancelEventArgs e)
+    {
+        if (closeAfterCleanup)
+        {
+            return;
+        }
+
+        e.Cancel = true;
+        if (cleanupInProgress)
+        {
+            return;
+        }
+
+        cleanupInProgress = true;
+        Browser.Dispose();
+
+        try
+        {
+            await DeleteProfileDirectoryWithRetryAsync();
         }
         catch (Exception exception)
         {
             MessageBox.Show(
                 this,
-                AppResources.AgentUnreachableStart + exception.Message,
+                $"{AppResources.ProfileCleanupFailed}{Environment.NewLine}{Environment.NewLine}{exception.Message}",
                 AppResources.KioskTitle,
                 MessageBoxButton.OK,
-                MessageBoxImage.Error);
-            StatusText.Text = AppResources.PreparationFailed;
-            StartExamButton.IsEnabled = true;
+                MessageBoxImage.Warning);
+        }
+
+        closeAfterCleanup = true;
+        Close();
+    }
+
+    private async Task DeleteProfileDirectoryWithRetryAsync()
+    {
+        const int maximumAttempts = 5;
+        for (var attempt = 1; attempt <= maximumAttempts; attempt++)
+        {
+            try
+            {
+                DeleteProfileDirectory();
+                return;
+            }
+            catch (IOException) when (attempt < maximumAttempts)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(200 * attempt));
+            }
+            catch (UnauthorizedAccessException) when (attempt < maximumAttempts)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(200 * attempt));
+            }
         }
     }
+
+    private void DeleteProfileDirectory()
+    {
+        if (Directory.Exists(profilePath))
+        {
+            Directory.Delete(profilePath, recursive: true);
+        }
+    }
+
+    private sealed record BridgeResponse(
+        int Version,
+        string Type,
+        Guid RequestId,
+        string State,
+        string? Message);
 }

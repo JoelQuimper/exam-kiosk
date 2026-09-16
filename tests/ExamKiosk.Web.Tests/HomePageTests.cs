@@ -47,6 +47,21 @@ public sealed class HomePageTests
             response.Headers.Location?.OriginalString);
     }
 
+    [Fact]
+    public async Task Launcher_WhenAnonymous_RedirectsToSignIn()
+    {
+        await using var application = CreateApplication(authenticated: false);
+        using var client = application.CreateClient(
+            new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+
+        var response = await client.GetAsync("/launcher");
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Equal(
+            "/authentication/login?returnUrl=%2Flauncher",
+            response.Headers.Location?.OriginalString);
+    }
+
     [Theory]
     [InlineData("/")]
     [InlineData("/exams")]
@@ -98,6 +113,58 @@ public sealed class HomePageTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("<dt>Tools</dt>", content);
         Assert.Contains("<span>None</span>", content);
+    }
+
+    [Fact]
+    public async Task Launcher_WhenAuthenticated_RendersNativeBridgeControls()
+    {
+        await using var application = CreateApplication(authenticated: true);
+        using var client = application.CreateClient();
+
+        var response = await client.GetAsync("/launcher");
+        var content = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("id=\"launcher-start-exam\"", content);
+        Assert.Contains("id=\"launcher-status\"", content);
+        Assert.Contains("launcher-bridge.js", content);
+        Assert.DoesNotContain("Exam launching will be enabled in the desktop app.", content);
+    }
+
+    [Fact]
+    public async Task ExamSession_WhenAnonymous_RendersRestrictedClientBridge()
+    {
+        await using var application = CreateApplication(authenticated: false);
+        using var client = application.CreateClient();
+
+        var response = await client.GetAsync("/exam-session");
+        var content = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("<h1>Exam in progress</h1>", content);
+        Assert.Contains("id=\"session-open-exam\"", content);
+        Assert.Contains("id=\"session-finish-exam\"", content);
+        Assert.Contains("id=\"session-status\"", content);
+        Assert.Contains("exam-session-bridge.js", content);
+        Assert.DoesNotContain("Bogus exam", content);
+        Assert.DoesNotContain("Microsoft Edge</li>", content);
+        Assert.DoesNotContain("/authentication/login", content);
+    }
+
+    [Fact]
+    public async Task ExamSession_WhenBrowserPrefersFrench_RendersFrench()
+    {
+        await using var application = CreateApplication(authenticated: false);
+        using var client = application.CreateClient();
+        client.DefaultRequestHeaders.AcceptLanguage.ParseAdd("fr");
+
+        var response = await client.GetAsync("/exam-session");
+        var content = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("Examen en cours", content);
+        Assert.Contains("Ouvrir l'examen", content);
+        Assert.Contains("Examen terminé", content);
     }
 
     [Fact]

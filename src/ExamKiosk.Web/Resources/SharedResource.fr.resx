@@ -43,4 +43,19 @@
   <data name="MicrosoftEdge" xml:space="preserve"><value>Microsoft Edge</value></data>
   <data name="Calculator" xml:space="preserve"><value>Calculatrice</value></data>
   <data name="Ready" xml:space="preserve"><value>Prêt</value></data>
+  <data name="LauncherConnecting" xml:space="preserve"><value>Vérification de l'état de l'appareil...</value></data>
+  <data name="LauncherDeviceReady" xml:space="preserve"><value>Votre appareil est prêt à démarrer cet examen.</value></data>
+  <data name="LauncherDirectBrowser" xml:space="preserve"><value>Ouvrez cette page dans le lanceur Exam Kiosk installé pour démarrer l'examen.</value></data>
+  <data name="LauncherStarting" xml:space="preserve"><value>Préparation de votre appareil pour l'examen...</value></data>
+  <data name="LauncherUnavailable" xml:space="preserve"><value>Votre appareil n'est pas prêt. Vérifiez que l'agent de l'appareil d'examen est en cours d'exécution.</value></data>
+  <data name="ExamInProgress" xml:space="preserve"><value>Examen en cours</value></data>
+  <data name="ExamSessionInstructions" xml:space="preserve"><value>Ouvrez votre examen SharePoint dans Edge. Revenez ici lorsque votre travail est terminé.</value></data>
+  <data name="OpenExam" xml:space="preserve"><value>Ouvrir l'examen</value></data>
+  <data name="ExamDone" xml:space="preserve"><value>Examen terminé</value></data>
+  <data name="SessionConnecting" xml:space="preserve"><value>Vérification de la session d'examen active...</value></data>
+  <data name="SessionDirectBrowser" xml:space="preserve"><value>Ouvrez cette page dans le client d'examen restreint pour contrôler la session.</value></data>
+  <data name="SessionFinishing" xml:space="preserve"><value>Fermeture de l'examen et restauration de l'appareil...</value></data>
+  <data name="SessionOpening" xml:space="preserve"><value>Ouverture de l'examen dans Microsoft Edge...</value></data>
+  <data name="SessionReady" xml:space="preserve"><value>La session d'examen restreinte est active.</value></data>
+  <data name="SessionUnavailable" xml:space="preserve"><value>Aucune session d'examen restreinte active n'a été trouvée.</value></data>
 </root>

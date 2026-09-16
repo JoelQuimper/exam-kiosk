@@ -65,6 +65,17 @@ and service principal, deploys the infrastructure and ZIP package, and verifies
   -Environment 'dev'
 ```
 
+After deployment, use the deployed `webAppUrl` output for the first Windows
+prototype installation:
+
+```powershell
+& .\scripts\Windows\Install-ExamKioskPoc.ps1 -WebAppUrl '<web-app-url>'
+```
+
+The installer stores this machine-specific value under
+`%ProgramData%\ExamKiosk\deployment.settings.json`. Later installs and resets
+reuse it without requiring the argument.
+
 The environment is used as the suffix for both Azure resource names and the
 Entra app registration display name, such as `Exam Kiosk Web - test`:
 

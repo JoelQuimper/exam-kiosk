@@ -1,0 +1,51 @@
+@page "/exam-session"
+@inject IStringLocalizer<SharedResource> Localizer
+
+<PageTitle>@Localizer["ExamInProgress"]</PageTitle>
+
+<main class="page-shell">
+    <header class="app-header">
+        <div class="brand">
+            <span class="brand-mark" aria-hidden="true">EK</span>
+            <span>Exam Kiosk</span>
+        </div>
+    </header>
+
+    <section class="catalog-heading">
+        <p class="eyebrow">@Localizer["ExamInProgress"]</p>
+        <h1>@Localizer["ExamInProgress"]</h1>
+        <p>@Localizer["ExamSessionInstructions"]</p>
+    </section>
+
+    <section class="exam-grid" aria-label="@Localizer["ExamInProgress"]">
+        <article class="exam-card">
+            <div class="exam-controls session-controls">
+                <div class="session-actions">
+                    <button class="button button-primary"
+                            id="session-open-exam"
+                            type="button"
+                            disabled>
+                        @Localizer["OpenExam"]
+                    </button>
+                    <button class="button button-danger"
+                            id="session-finish-exam"
+                            type="button"
+                            disabled>
+                        @Localizer["ExamDone"]
+                    </button>
+                </div>
+                <p class="phase-note"
+                   id="session-status"
+                   aria-live="polite"
+                   data-connecting="@(Localizer["SessionConnecting"])"
+                   data-direct-browser="@(Localizer["SessionDirectBrowser"])"
+                   data-finishing="@(Localizer["SessionFinishing"])"
+                   data-opening="@(Localizer["SessionOpening"])"
+                   data-ready="@(Localizer["SessionReady"])"
+                   data-unavailable="@(Localizer["SessionUnavailable"])">
+                    @Localizer["SessionConnecting"]
+                </p>
+            </div>
+        </article>
+    </section>
+</main>

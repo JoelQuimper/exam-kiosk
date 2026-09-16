@@ -42,4 +42,19 @@ Enregistrez votre travail avant de continuer. Voulez-vous démarrer l'examen fic
 
 </value></data>
   <data name="ExamSessionTitle" xml:space="preserve"><value>Examen fictif</value></data>
+  <data name="AgentStatusUnavailable" xml:space="preserve"><value>L'agent de l'appareil d'examen n'est pas disponible. Réessayez lorsque le service est en cours d'exécution.</value></data>
+  <data name="LoadingWebContent" xml:space="preserve"><value>Chargement de vos examens...</value></data>
+  <data name="LauncherConfigurationInvalid" xml:space="preserve"><value>L'adresse de l'application Web du lanceur est absente ou non valide. Communiquez avec l'administrateur du test.</value></data>
+  <data name="NavigationBlocked" xml:space="preserve"><value>Navigation bloquée</value></data>
+  <data name="NavigationBlockedDetails" xml:space="preserve"><value>Le lanceur du kiosque d'examen a bloqué la navigation vers une destination non approuvée.</value></data>
+  <data name="ProfileCleanupFailed" xml:space="preserve"><value>Les données temporaires du navigateur du kiosque d'examen n'ont pas pu être complètement supprimées.</value></data>
+  <data name="Retry" xml:space="preserve"><value>Réessayer</value></data>
+  <data name="StartCancelled" xml:space="preserve"><value>Le démarrage de l'examen a été annulé.</value></data>
+  <data name="WebContentUnavailable" xml:space="preserve"><value>Vos examens n'ont pas pu être chargés</value></data>
+  <data name="WebNavigationFailed" xml:space="preserve"><value>L'application Web du kiosque d'examen ne s'est pas chargée.</value></data>
+  <data name="ExamSessionActionBusy" xml:space="preserve"><value>Une autre action d'examen est déjà en cours.</value></data>
+  <data name="ExamSessionActionFailed" xml:space="preserve"><value>L'action d'examen demandée n'a pas pu être effectuée.</value></data>
+  <data name="FinishCancelled" xml:space="preserve"><value>La fermeture de l'examen a été annulée.</value></data>
+  <data name="NoActiveExamSession" xml:space="preserve"><value>Aucune session d'examen restreinte active n'a été trouvée.</value></data>
+  <data name="RestrictedClientConfigurationInvalid" xml:space="preserve"><value>L'adresse de l'application Web du client restreint est absente ou non valide. Communiquez avec l'administrateur du test.</value></data>
 </root>

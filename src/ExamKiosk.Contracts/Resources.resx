@@ -42,4 +42,19 @@ Save your work before continuing. Do you want to start the bogus exam?</value></
 
 </value></data>
   <data name="ExamSessionTitle" xml:space="preserve"><value>Exam Kiosk</value></data>
+  <data name="AgentStatusUnavailable" xml:space="preserve"><value>The Exam Device Agent is unavailable. Retry when the service is running.</value></data>
+  <data name="LoadingWebContent" xml:space="preserve"><value>Loading your exams...</value></data>
+  <data name="LauncherConfigurationInvalid" xml:space="preserve"><value>The Launcher web application address is missing or invalid. Contact the test administrator.</value></data>
+  <data name="NavigationBlocked" xml:space="preserve"><value>Navigation blocked</value></data>
+  <data name="NavigationBlockedDetails" xml:space="preserve"><value>The Exam Kiosk Launcher blocked navigation to an unapproved destination.</value></data>
+  <data name="ProfileCleanupFailed" xml:space="preserve"><value>The temporary Exam Kiosk browser data could not be completely removed.</value></data>
+  <data name="Retry" xml:space="preserve"><value>Retry</value></data>
+  <data name="StartCancelled" xml:space="preserve"><value>Exam start was cancelled.</value></data>
+  <data name="WebContentUnavailable" xml:space="preserve"><value>Your exams could not be loaded</value></data>
+  <data name="WebNavigationFailed" xml:space="preserve"><value>The Exam Kiosk web application did not load.</value></data>
+  <data name="ExamSessionActionBusy" xml:space="preserve"><value>Another exam action is already in progress.</value></data>
+  <data name="ExamSessionActionFailed" xml:space="preserve"><value>The requested exam action could not be completed.</value></data>
+  <data name="FinishCancelled" xml:space="preserve"><value>Finishing the exam was cancelled.</value></data>
+  <data name="NoActiveExamSession" xml:space="preserve"><value>No active restricted exam session was found.</value></data>
+  <data name="RestrictedClientConfigurationInvalid" xml:space="preserve"><value>The Restricted Client web application address is missing or invalid. Contact the test administrator.</value></data>
 </root>

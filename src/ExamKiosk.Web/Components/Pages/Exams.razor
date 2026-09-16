@@ -1,8 +1,10 @@
 @page "/"
 @page "/exams"
+@page "/launcher"
 @attribute [Authorize]
 @inject IExamCatalog ExamCatalog
 @inject IStringLocalizer<SharedResource> Localizer
+@inject NavigationManager Navigation
 
 <PageTitle>@Localizer["MyExams"]</PageTitle>
 
@@ -71,10 +73,29 @@
                     </div>
                 </dl>
                 <div class="exam-controls">
-                    <button class="button button-primary exam-action" type="button" disabled>
+                    <button class="button button-primary exam-action"
+                            id="@(IsLauncher ? "launcher-start-exam" : null)"
+                            type="button"
+                            disabled>
                         @Localizer["StartExam"]
                     </button>
-                    <p class="phase-note">@Localizer["LaunchPhaseNote"]</p>
+                    @if (IsLauncher)
+                    {
+                        <p class="phase-note"
+                           id="launcher-status"
+                           aria-live="polite"
+                           data-connecting="@(Localizer["LauncherConnecting"])"
+                           data-direct-browser="@(Localizer["LauncherDirectBrowser"])"
+                           data-ready="@(Localizer["LauncherDeviceReady"])"
+                           data-starting="@(Localizer["LauncherStarting"])"
+                           data-unavailable="@(Localizer["LauncherUnavailable"])">
+                            @Localizer["LauncherConnecting"]
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="phase-note">@Localizer["LaunchPhaseNote"]</p>
+                    }
                 </div>
             </article>
         }
@@ -86,6 +107,10 @@
     private Task<AuthenticationState> AuthenticationStateTask { get; set; } = null!;
 
     private IReadOnlyList<ExamSummary> AssignedExams => ExamCatalog.GetAssignedExams();
+    private bool IsLauncher =>
+        Navigation.ToBaseRelativePath(Navigation.Uri)
+            .Split('?', '#')[0]
+            .Equals("launcher", StringComparison.OrdinalIgnoreCase);
 
     private string DisplayName { get; set; } = string.Empty;
     private string GreetingName { get; set; } = string.Empty;

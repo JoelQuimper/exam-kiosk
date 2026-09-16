@@ -5,7 +5,8 @@ param()
 $ErrorActionPreference = 'Stop'
 $serviceName = 'ExamKioskDeviceAgent'
 $installRoot = Join-Path $env:ProgramFiles 'ExamKiosk'
-$statePath = Join-Path $env:ProgramData 'ExamKiosk\agent-state.json'
+$dataRoot = Join-Path $env:ProgramData 'ExamKiosk'
+$statePath = Join-Path $dataRoot 'agent-state.json'
 
 if (Test-Path -LiteralPath $statePath -PathType Leaf) {
     $state = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
@@ -26,6 +27,5 @@ if ($service) {
 $shortcutDirectory = Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs\Exam Kiosk'
 Remove-Item -LiteralPath $shortcutDirectory -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item -LiteralPath $installRoot -Recurse -Force -ErrorAction SilentlyContinue
-Remove-Item -LiteralPath (Join-Path $env:ProgramData 'ExamKiosk') -Recurse -Force -ErrorAction SilentlyContinue
 
-Write-Output 'Exam Kiosk PoC uninstalled.'
+Write-Output 'Exam Kiosk PoC uninstalled. ProgramData state and history were preserved.'

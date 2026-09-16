@@ -8,6 +8,8 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ExamKiosk.DeviceAgent.Tests/ExamKiosk.DeviceAgent.Tests.csproj" />
+    <Project Path="tests/ExamKiosk.Launcher.Tests/ExamKiosk.Launcher.Tests.csproj" />
+    <Project Path="tests/ExamKiosk.RestrictedClient.Tests/ExamKiosk.RestrictedClient.Tests.csproj" />
     <Project Path="tests/ExamKiosk.Web.Tests/ExamKiosk.Web.Tests.csproj" />
   </Folder>
 </Solution>

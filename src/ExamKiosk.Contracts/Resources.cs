@@ -37,6 +37,21 @@ public static class Resources
     public static string Instructions => Get(nameof(Instructions));
     public static string EdgeOpenFailed => Get(nameof(EdgeOpenFailed));
     public static string ExamSessionTitle => Get(nameof(ExamSessionTitle));
+    public static string AgentStatusUnavailable => Get(nameof(AgentStatusUnavailable));
+    public static string LoadingWebContent => Get(nameof(LoadingWebContent));
+    public static string LauncherConfigurationInvalid => Get(nameof(LauncherConfigurationInvalid));
+    public static string NavigationBlocked => Get(nameof(NavigationBlocked));
+    public static string NavigationBlockedDetails => Get(nameof(NavigationBlockedDetails));
+    public static string ProfileCleanupFailed => Get(nameof(ProfileCleanupFailed));
+    public static string Retry => Get(nameof(Retry));
+    public static string StartCancelled => Get(nameof(StartCancelled));
+    public static string WebContentUnavailable => Get(nameof(WebContentUnavailable));
+    public static string WebNavigationFailed => Get(nameof(WebNavigationFailed));
+    public static string ExamSessionActionBusy => Get(nameof(ExamSessionActionBusy));
+    public static string ExamSessionActionFailed => Get(nameof(ExamSessionActionFailed));
+    public static string FinishCancelled => Get(nameof(FinishCancelled));
+    public static string NoActiveExamSession => Get(nameof(NoActiveExamSession));
+    public static string RestrictedClientConfigurationInvalid => Get(nameof(RestrictedClientConfigurationInvalid));
 
     private static string Get(string name)
     {

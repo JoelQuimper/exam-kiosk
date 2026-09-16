@@ -9,6 +9,7 @@
                 <AllowedApps>
                     <App DesktopAppPath="%ProgramFiles%\ExamKiosk\RestrictedClient\ExamKiosk.RestrictedClient.exe"
                          rs5:AutoLaunch="true" />
+                    <App DesktopAppPath="%ProgramFiles(x86)%\Microsoft\EdgeWebView\Application\*\msedgewebview2.exe" />
                     <App AppUserModelId="Microsoft.WindowsCalculator_8wekyb3d8bbwe!App" />
                     <App DesktopAppPath="%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe" />
                     <App DesktopAppPath="%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge_proxy.exe" />

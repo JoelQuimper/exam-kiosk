@@ -109,6 +109,15 @@ a {
     color: var(--ink);
 }
 
+.button-danger {
+    background: #b42318;
+    color: white;
+}
+
+.button-danger:hover {
+    background: #8f1c13;
+}
+
 .account-label {
     color: var(--muted);
     font-size: 0.86rem;
@@ -294,6 +303,20 @@ a {
 
 .exam-controls {
     min-width: 0;
+}
+
+.session-controls,
+.session-actions {
+    display: grid;
+    gap: 10px;
+}
+
+.session-actions {
+    grid-template-columns: 1fr;
+}
+
+.session-actions .button {
+    width: 100%;
 }
 
 .exam-action:disabled {
