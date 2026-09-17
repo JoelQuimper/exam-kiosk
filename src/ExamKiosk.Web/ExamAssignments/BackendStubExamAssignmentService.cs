@@ -1,8 +1,10 @@
 using System.Collections.Frozen;
+using ExamKiosk.Contracts;
+using ExamKiosk.Web.ExamAssignments.Models;
 
 namespace ExamKiosk.Web.ExamAssignments;
 
-public sealed class StubExamAssignmentService : IExamAssignmentService
+public sealed class BackendStubExamAssignmentService : IExamAssignmentService
 {
     private static readonly FrozenDictionary<string, StudentProfile> StudentsByUpn =
         new[]
@@ -41,20 +43,57 @@ public sealed class StubExamAssignmentService : IExamAssignmentService
         }.ToFrozenDictionary(exam => exam.ExamId, StringComparer.Ordinal);
 
     private static readonly FrozenDictionary<string, ToolDefinition> ToolsById =
-        new[]
+        new ToolDefinition[]
         {
-            new ToolDefinition(
+            new DesktopToolDefinition(
                 "microsoft-word",
                 "Microsoft Word",
-                "word"),
-            new ToolDefinition(
+                "word",
+                true,
+                new DesktopToolConfiguration(
+                    [
+                        new DesktopExecutableDefinition(
+                            "word",
+                            ApplicationRole.Primary,
+                            "%ProgramFiles%\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                            new ExecutableValidation(
+                                "Microsoft Corporation",
+                                null)),
+                    ],
+                    new DesktopLaunchTarget(
+                        "word",
+                        "Microsoft Word",
+                        true,
+                        true))),
+            new DesktopToolDefinition(
                 "windows-calculator",
                 "Calculator",
-                "calculator"),
-            new ToolDefinition(
+                "calculator",
+                true,
+                new DesktopToolConfiguration(
+                    [
+                        new PackagedApplicationDefinition(
+                            "calculator",
+                            ApplicationRole.Primary,
+                            "Microsoft.WindowsCalculator_8wekyb3d8bbwe!App"),
+                    ],
+                    new DesktopLaunchTarget(
+                        "calculator",
+                        "Calculator",
+                        true,
+                        true))),
+            new WebToolDefinition(
                 "usito-dictionary",
                 "Dictionnaire Usito",
-                "dictionary"),
+                "dictionary",
+                true,
+                new WebToolConfiguration(
+                    ["https://.usito.usherbrooke.ca"],
+                    new WebLaunchTarget(
+                        new Uri("https://usito.usherbrooke.ca/"),
+                        "Dictionnaire Usito",
+                        true,
+                        true))),
         }.ToFrozenDictionary(tool => tool.ToolId, StringComparer.Ordinal);
 
     private static readonly IReadOnlyList<StudentExamAssignment> Assignments =
@@ -104,6 +143,20 @@ public sealed class StubExamAssignmentService : IExamAssignmentService
             .ToArray();
     }
 
+    public AssignedExam? GetAssignment(
+        string userPrincipalName,
+        string assignmentId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(assignmentId);
+
+        return GetAssignments(userPrincipalName)
+            .SingleOrDefault(
+                assignment => string.Equals(
+                    assignment.AssignmentId,
+                    assignmentId,
+                    StringComparison.Ordinal));
+    }
+
     private static AssignedExam CreateAssignedExam(StudentExamAssignment assignment)
     {
         if (!ExamsById.TryGetValue(assignment.ExamId, out var exam))
@@ -125,6 +178,10 @@ public sealed class StubExamAssignmentService : IExamAssignmentService
             })
             .ToArray();
 
-        return new AssignedExam(assignment.AssignmentId, exam, tools);
+        return new AssignedExam(
+            assignment.AssignmentId,
+            exam,
+            assignment.SharePointFolderUrl,
+            tools);
     }
 }

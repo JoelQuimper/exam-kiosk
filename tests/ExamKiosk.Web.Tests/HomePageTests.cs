@@ -54,7 +54,10 @@ public sealed class HomePageTests
         Assert.DoesNotContain("Bogus exam", content);
         Assert.DoesNotContain("Microsoft Edge", content);
         Assert.DoesNotContain("<dt>Format</dt>", content);
-        Assert.Contains("Open this page in the installed Exam Kiosk Launcher", content);
+        Assert.Contains(
+            "Open this page in the installed Exam Kiosk Launcher to start the exam.",
+            content);
+        Assert.DoesNotContain("effective profile preview", content);
     }
 
     [Fact]
@@ -111,6 +114,8 @@ public sealed class HomePageTests
             "data-exam-title=\"Sciences secondaire 4 — Analyse de données\"",
             content);
         Assert.Contains("id=\"launcher-status\"", content);
+        Assert.DoesNotContain("data-preview-", content);
+        Assert.DoesNotContain("profile-preview-dialog", content);
         Assert.Contains("launcher-bridge.js", content);
     }
 

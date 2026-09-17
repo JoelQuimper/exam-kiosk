@@ -1,4 +1,5 @@
 using ExamKiosk.Web.Authentication;
+using ExamKiosk.Web.Controllers.Models;
 using ExamKiosk.Web.ExamAssignments;
 using Microsoft.AspNetCore.Mvc;
 
@@ -30,33 +31,3 @@ public sealed class ExamAssignmentsController(
         return Ok(response);
     }
 }
-
-public sealed record ExamAssignmentResponse(
-    string AssignmentId,
-    ExamResponse Exam,
-    IReadOnlyList<ToolResponse> Tools)
-{
-    internal static ExamAssignmentResponse FromAssignedExam(AssignedExam assignment) =>
-        new(
-            assignment.AssignmentId,
-            new ExamResponse(
-                assignment.Exam.ExamId,
-                assignment.Exam.Title,
-                assignment.Exam.Icon),
-            assignment.Tools
-                .Select(tool => new ToolResponse(
-                    tool.ToolId,
-                    tool.DisplayName,
-                    tool.Icon))
-                .ToArray());
-}
-
-public sealed record ExamResponse(
-    string Id,
-    string Title,
-    string Icon);
-
-public sealed record ToolResponse(
-    string Id,
-    string DisplayName,
-    string Icon);

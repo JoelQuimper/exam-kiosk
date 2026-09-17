@@ -1,13 +1,17 @@
 using System.Globalization;
 using ExamKiosk.Web.Authentication;
+using ExamKiosk.Web.AssignedAccess;
+using ExamKiosk.Web.AssignedAccess.Generators;
+using ExamKiosk.Web.AssignedAccess.Validation;
 using ExamKiosk.Web.Components;
+using ExamKiosk.Web.EdgePolicy;
+using ExamKiosk.Web.EdgePolicy.Validation;
 using ExamKiosk.Web.ExamAssignments;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authorization.Policy;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
@@ -46,7 +50,25 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
     ];
 });
 builder.Services.AddRazorComponents();
-builder.Services.AddSingleton<IExamAssignmentService, StubExamAssignmentService>();
+builder.Services.AddSingleton<
+    IExamAssignmentService,
+    BackendStubExamAssignmentService>();
+builder.Services.AddSingleton<
+    IAssignedAccessXmlGenerator,
+    AssignedAccess2022XmlGenerator>();
+builder.Services.AddSingleton<
+    IAssignedAccessFactory,
+    AssignedAccessFactory>();
+builder.Services.AddSingleton<
+    IAssignedAccessConfigurationValidator,
+    AssignedAccessConfigurationValidator>();
+builder.Services.AddSingleton<
+    IEdgePolicyConfigurationValidator,
+    EdgePolicyConfigurationValidator>();
+builder.Services.AddSingleton<IEdgePolicyFactory, EdgePolicyFactory>();
+builder.Services.AddSingleton<
+    IExamProfileOrchestrator,
+    ExamProfileOrchestrator>();
 builder.Services.AddSingleton<
     IAuthorizationMiddlewareResultHandler,
     ApiAuthorizationMiddlewareResultHandler>();
