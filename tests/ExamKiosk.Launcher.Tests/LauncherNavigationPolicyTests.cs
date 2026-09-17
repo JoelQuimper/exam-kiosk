@@ -8,11 +8,11 @@ public sealed class LauncherNavigationPolicyTests
     private readonly WebViewNavigationPolicy policy = new(
         WebViewHostConfiguration.Parse(
             """{"webAppUrl":"https://exam.example.test"}""",
-            "/launcher"),
+            "/exams"),
         [new Uri("https://login.microsoftonline.com")]);
 
     [Theory]
-    [InlineData("https://exam.example.test/launcher")]
+    [InlineData("https://exam.example.test/exams")]
     [InlineData("https://exam.example.test/signin-oidc")]
     [InlineData("https://login.microsoftonline.com/tenant/oauth2/v2.0/authorize")]
     public void IsAllowed_WithApprovedOrigin_ReturnsTrue(string target)
@@ -21,7 +21,7 @@ public sealed class LauncherNavigationPolicyTests
     }
 
     [Theory]
-    [InlineData("http://exam.example.test/launcher")]
+    [InlineData("http://exam.example.test/exams")]
     [InlineData("https://evil.example.test/")]
     [InlineData("https://exam.example.test.evil.test/")]
     [InlineData("https://login.microsoftonline.com.evil.test/")]
@@ -32,7 +32,6 @@ public sealed class LauncherNavigationPolicyTests
     }
 
     [Theory]
-    [InlineData("https://exam.example.test/launcher", true)]
     [InlineData("https://exam.example.test/exams", true)]
     [InlineData("https://login.microsoftonline.com/", false)]
     [InlineData("https://evil.example.test/", false)]

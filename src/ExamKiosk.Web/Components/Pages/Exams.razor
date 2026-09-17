@@ -1,16 +1,13 @@
-@page "/"
 @page "/exams"
-@page "/launcher"
 @attribute [Authorize]
-@inject IExamCatalog ExamCatalog
+@inject IExamAssignmentService ExamAssignmentService
 @inject IStringLocalizer<SharedResource> Localizer
-@inject NavigationManager Navigation
 
 <PageTitle>@Localizer["MyExams"]</PageTitle>
 
 <main class="page-shell">
     <header class="app-header">
-        <a class="brand" href="/" aria-label="@Localizer["ExamKioskHome"]">
+        <a class="brand" href="/exams" aria-label="@Localizer["ExamKioskHome"]">
             <span class="brand-mark" aria-hidden="true">EK</span>
             <span>Exam Kiosk</span>
         </a>
@@ -33,39 +30,45 @@
     </section>
 
     <section class="exam-grid" aria-label="@Localizer["AvailableExams"]">
-        @foreach (var exam in AssignedExams)
+        @if (AssignedExams.Count == 0)
+        {
+            <article class="exam-card empty-exam-card">
+                <div class="exam-copy">
+                    <h2>@Localizer["NoExamsAssigned"]</h2>
+                    <p class="exam-description">@Localizer["NoExamsAssignedDetails"]</p>
+                </div>
+            </article>
+        }
+        @foreach (var assignment in AssignedExams)
         {
             <article class="exam-card">
                 <div class="exam-summary">
-                    <div class="exam-glyph" aria-hidden="true">+/-</div>
+                    <div class="exam-glyph" aria-hidden="true">@GetExamGlyph(assignment.Exam.Icon)</div>
                     <div class="exam-copy">
                         <div class="exam-card-top">
-                            <span class="status-badge">@exam.Status</span>
-                            <span class="exam-duration">@Localizer["DurationMinutes", exam.DurationMinutes]</span>
+                            <span class="status-badge">@Localizer["Ready"]</span>
                         </div>
-                        <p class="exam-course">@exam.Course</p>
-                        <h2>@exam.Title</h2>
-                        <p class="exam-description">@exam.Description</p>
+                        <h2>@assignment.Exam.Title</h2>
                     </div>
                 </div>
                 <dl class="exam-details">
                     <div>
                         <dt>@Localizer["Available"]</dt>
-                        <dd>@exam.AvailabilityLabel</dd>
+                        <dd>@Localizer["AvailableNow"]</dd>
                     </div>
                     <div>
                         <dt>@Localizer["Tools"]</dt>
                         <dd>
-                            @if (exam.AllowedTools.Count == 0)
+                            @if (assignment.Tools.Count == 0)
                             {
                                 <span>@Localizer["None"]</span>
                             }
                             else
                             {
                                 <ul class="exam-tools">
-                                    @foreach (var tool in exam.AllowedTools)
+                                    @foreach (var tool in assignment.Tools)
                                     {
-                                        <li>@tool</li>
+                                        <li>@GetToolDisplayName(tool)</li>
                                     }
                                 </ul>
                             }
@@ -73,45 +76,37 @@
                     </div>
                 </dl>
                 <div class="exam-controls">
-                    <button class="button button-primary exam-action"
-                            id="@(IsLauncher ? "launcher-start-exam" : null)"
-                            data-exam-title="@(IsLauncher ? exam.Title : null)"
+                    <button class="button button-primary exam-action launcher-start-exam"
+                            data-assignment-id="@assignment.AssignmentId"
+                            data-exam-title="@assignment.Exam.Title"
                             type="button"
                             disabled>
                         @Localizer["StartExam"]
                     </button>
-                    @if (IsLauncher)
-                    {
-                        <p class="phase-note"
-                           id="launcher-status"
-                           aria-live="polite"
-                           data-connecting="@(Localizer["LauncherConnecting"])"
-                           data-direct-browser="@(Localizer["LauncherDirectBrowser"])"
-                           data-ready="@(Localizer["LauncherDeviceReady"])"
-                           data-starting="@(Localizer["LauncherStarting"])"
-                           data-unavailable="@(Localizer["LauncherUnavailable"])">
-                            @Localizer["LauncherConnecting"]
-                        </p>
-                    }
-                    else
-                    {
-                        <p class="phase-note">@Localizer["LaunchPhaseNote"]</p>
-                    }
                 </div>
             </article>
         }
     </section>
+    @if (AssignedExams.Count > 0)
+    {
+        <p class="phase-note launcher-status"
+           id="launcher-status"
+           aria-live="polite"
+           data-connecting="@(Localizer["LauncherConnecting"])"
+           data-direct-browser="@(Localizer["LauncherDirectBrowser"])"
+           data-ready="@(Localizer["LauncherDeviceReady"])"
+           data-starting="@(Localizer["LauncherStarting"])"
+           data-unavailable="@(Localizer["LauncherUnavailable"])">
+            @Localizer["LauncherConnecting"]
+        </p>
+    }
 </main>
 
 @code {
     [CascadingParameter]
     private Task<AuthenticationState> AuthenticationStateTask { get; set; } = null!;
 
-    private IReadOnlyList<ExamSummary> AssignedExams => ExamCatalog.GetAssignedExams();
-    private bool IsLauncher =>
-        Navigation.ToBaseRelativePath(Navigation.Uri)
-            .Split('?', '#')[0]
-            .Equals("launcher", StringComparison.OrdinalIgnoreCase);
+    private IReadOnlyList<AssignedExam> AssignedExams { get; set; } = [];
 
     private string DisplayName { get; set; } = string.Empty;
     private string GreetingName { get; set; } = string.Empty;
@@ -119,6 +114,10 @@
     protected override async Task OnInitializedAsync()
     {
         var user = (await AuthenticationStateTask).User;
+        var userPrincipalName = AuthenticatedUpnResolver.Resolve(user);
+        AssignedExams = userPrincipalName is null
+            ? []
+            : ExamAssignmentService.GetAssignments(userPrincipalName);
         DisplayName = user.FindFirstValue("name")
             ?? user.Identity?.Name
             ?? Localizer["Student"];
@@ -127,4 +126,17 @@
             ?? DisplayName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()
             ?? Localizer["Student"];
     }
+
+    private static string GetExamGlyph(string icon) =>
+        icon switch
+        {
+            "calculator" => "+/-",
+            "chart" => "|||",
+            _ => "EX",
+        };
+
+    private string GetToolDisplayName(ToolDefinition tool) =>
+        tool.ToolId == "windows-calculator"
+            ? Localizer["Calculator"]
+            : tool.DisplayName;
 }

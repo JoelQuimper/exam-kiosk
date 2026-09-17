@@ -178,6 +178,10 @@ a {
     gap: 32px;
 }
 
+.empty-exam-card {
+    grid-template-columns: 1fr;
+}
+
 .exam-summary {
     display: flex;
     align-items: center;
@@ -323,6 +327,11 @@ a {
 .phase-note {
     margin: 12px 0 0;
     text-align: center;
+}
+
+.launcher-status {
+    margin-top: -46px;
+    padding-bottom: 70px;
 }
 
 .status-page {

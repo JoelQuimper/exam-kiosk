@@ -4,9 +4,10 @@
     const protocolVersion = 1;
 
     function initialize() {
-        const startButton = document.getElementById("launcher-start-exam");
+        const startButtons = Array.from(
+            document.querySelectorAll(".launcher-start-exam"));
         const status = document.getElementById("launcher-status");
-        if (!startButton || !status) {
+        if (startButtons.length === 0 || !status) {
             return;
         }
 
@@ -18,6 +19,12 @@
 
         let statusRequestId = crypto.randomUUID();
         let startRequestId = null;
+
+        function setStartButtonsDisabled(disabled) {
+            startButtons.forEach(button => {
+                button.disabled = disabled;
+            });
+        }
 
         function post(type, requestId, additionalData = {}) {
             webview.postMessage({
@@ -37,7 +44,7 @@
             if (message.type === "agentStatus"
                 && message.requestId === statusRequestId) {
                 const ready = message.state === "available";
-                startButton.disabled = !ready;
+                setStartButtonsDisabled(!ready);
                 status.textContent = ready
                     ? status.dataset.ready
                     : message.message || status.dataset.unavailable;
@@ -62,18 +69,20 @@
             status.textContent = message.message || status.dataset.starting;
         });
 
-        startButton.addEventListener("click", () => {
-            if (startButton.disabled || startRequestId !== null) {
-                return;
-            }
-
-            startButton.disabled = true;
-            status.textContent = status.dataset.starting;
-            startRequestId = crypto.randomUUID();
-            post("startExam", startRequestId, {
-                exam: {
-                    title: startButton.dataset.examTitle
+        startButtons.forEach(startButton => {
+            startButton.addEventListener("click", () => {
+                if (startButton.disabled || startRequestId !== null) {
+                    return;
                 }
+
+                setStartButtonsDisabled(true);
+                status.textContent = status.dataset.starting;
+                startRequestId = crypto.randomUUID();
+                post("startExam", startRequestId, {
+                    exam: {
+                        title: startButton.dataset.examTitle
+                    }
+                });
             });
         });
 

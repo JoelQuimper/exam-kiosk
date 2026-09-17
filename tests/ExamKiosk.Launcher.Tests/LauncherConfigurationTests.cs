@@ -10,10 +10,10 @@ public sealed class LauncherConfigurationTests
     {
         var configuration = WebViewHostConfiguration.Parse(
             """{"webAppUrl":"https://app-examkiosk-dev.azurewebsites.net"}""",
-            "/launcher");
+            "/exams");
 
         Assert.Equal(
-            "https://app-examkiosk-dev.azurewebsites.net/launcher",
+            "https://app-examkiosk-dev.azurewebsites.net/exams",
             configuration.PageUri.AbsoluteUri);
         Assert.Equal(
             "https://app-examkiosk-dev.azurewebsites.net",
@@ -32,13 +32,13 @@ public sealed class LauncherConfigurationTests
     public void Parse_WithInvalidConfiguration_Throws(string json)
     {
         Assert.Throws<InvalidDataException>(
-            () => WebViewHostConfiguration.Parse(json, "/launcher"));
+            () => WebViewHostConfiguration.Parse(json, "/exams"));
     }
 
     [Theory]
     [InlineData(
-        "https://example.test/launcher?code=secret#fragment",
-        "https://example.test/launcher")]
+        "https://example.test/exams?code=secret#fragment",
+        "https://example.test/exams")]
     [InlineData(
         "https://login.microsoftonline.com/tenant/oauth2/v2.0/authorize?client_id=secret",
         "https://login.microsoftonline.com/tenant/oauth2/v2.0/authorize")]

@@ -21,17 +21,18 @@ The first web phase is available in `src\ExamKiosk.Web`. It provides:
 - automatic Microsoft Entra sign-in when the application opens;
 - Microsoft Entra single-tenant authentication with a server-owned session
   cookie;
-- an authenticated exam list at `/` and `/exams` containing the initial
-  **Bogus exam**;
-- an authenticated `/launcher` experience hosted inside the installed WPF
-  Launcher;
+- an authenticated exam list at `/exams` populated from immutable development
+  student, exam, assignment, and tool data;
+- an authenticated current-student assignments API at
+  `/api/v1/exam-assignments`;
+- the same `/exams` experience hosted inside the installed WPF Launcher;
 - English and French localization selected from the browser's language
   preferences, with English as the fallback;
 - a sign-in-required recovery page when authentication is canceled; and
 - antiforgery-protected sign-out.
 
 In a normal browser, exam launching remains disabled. The installed WPF
-Launcher hosts `/launcher`, verifies the web origin and bridge messages,
+Launcher hosts `/exams`, verifies the web origin and bridge messages,
 requires native confirmation, and then calls the Device Agent through the
 existing named pipe. Web content never receives direct access to privileged
 device operations.

@@ -62,7 +62,7 @@ public partial class MainWindow : Window
         {
             configuration ??= WebViewHostConfiguration.Load(
                 "launcher.settings.json",
-                "/launcher");
+                "/exams");
             diagnosticLog.Write(
                 "configuration-loaded",
                 new { page = WebViewDiagnosticLog.DescribeUri(configuration.PageUri.AbsoluteUri) });

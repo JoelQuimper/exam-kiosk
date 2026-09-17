@@ -29,6 +29,8 @@
   <data name="Greeting" xml:space="preserve"><value>Bonjour {0}, voici vos examens</value></data>
   <data name="SelectExam" xml:space="preserve"><value>Sélectionnez un examen disponible pour consulter ses détails.</value></data>
   <data name="AvailableExams" xml:space="preserve"><value>Examens disponibles</value></data>
+  <data name="NoExamsAssigned" xml:space="preserve"><value>Aucun examen attribué</value></data>
+  <data name="NoExamsAssignedDetails" xml:space="preserve"><value>Aucun examen n'est actuellement attribué à votre compte.</value></data>
   <data name="DurationMinutes" xml:space="preserve"><value>{0} min</value></data>
   <data name="Available" xml:space="preserve"><value>Disponibilité</value></data>
   <data name="Tools" xml:space="preserve"><value>Outils</value></data>
@@ -36,9 +38,6 @@
   <data name="StartExam" xml:space="preserve"><value>Commencer l'examen</value></data>
   <data name="LaunchPhaseNote" xml:space="preserve"><value>Le lancement des examens sera activé dans l'application de bureau.</value></data>
   <data name="Student" xml:space="preserve"><value>Étudiant</value></data>
-  <data name="BogusExamTitle" xml:space="preserve"><value>Examen fictif</value></data>
-  <data name="PrototypeAssessment" xml:space="preserve"><value>Évaluation prototype en mathématique</value></data>
-  <data name="BogusExamDescription" xml:space="preserve"><value>L'évaluation initiale du kiosque d'examen utilisée pour valider l'expérience d'examen sécurisé.</value></data>
   <data name="AvailableNow" xml:space="preserve"><value>Disponible maintenant</value></data>
   <data name="MicrosoftEdge" xml:space="preserve"><value>Microsoft Edge</value></data>
   <data name="Calculator" xml:space="preserve"><value>Calculatrice</value></data>

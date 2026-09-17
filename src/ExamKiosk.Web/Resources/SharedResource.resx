@@ -29,6 +29,8 @@
   <data name="Greeting" xml:space="preserve"><value>Hi {0}, here are your exams</value></data>
   <data name="SelectExam" xml:space="preserve"><value>Select an available exam to review its details.</value></data>
   <data name="AvailableExams" xml:space="preserve"><value>Available exams</value></data>
+  <data name="NoExamsAssigned" xml:space="preserve"><value>No exams assigned</value></data>
+  <data name="NoExamsAssignedDetails" xml:space="preserve"><value>There are currently no exams assigned to your account.</value></data>
   <data name="DurationMinutes" xml:space="preserve"><value>{0} min</value></data>
   <data name="Available" xml:space="preserve"><value>Available</value></data>
   <data name="Tools" xml:space="preserve"><value>Tools</value></data>
@@ -36,9 +38,6 @@
   <data name="StartExam" xml:space="preserve"><value>Start exam</value></data>
   <data name="LaunchPhaseNote" xml:space="preserve"><value>Exam launching will be enabled in the desktop app.</value></data>
   <data name="Student" xml:space="preserve"><value>Student</value></data>
-  <data name="BogusExamTitle" xml:space="preserve"><value>Bogus exam</value></data>
-  <data name="PrototypeAssessment" xml:space="preserve"><value>Prototype assessment in mathematics</value></data>
-  <data name="BogusExamDescription" xml:space="preserve"><value>The initial Exam Kiosk assessment used to validate the secure exam experience.</value></data>
   <data name="AvailableNow" xml:space="preserve"><value>Available now</value></data>
   <data name="MicrosoftEdge" xml:space="preserve"><value>Microsoft Edge</value></data>
   <data name="Calculator" xml:space="preserve"><value>Calculator</value></data>

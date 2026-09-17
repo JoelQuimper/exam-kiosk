@@ -1,10 +1,13 @@
 using System.Globalization;
+using ExamKiosk.Web.Authentication;
 using ExamKiosk.Web.Components;
-using ExamKiosk.Web.Exams;
+using ExamKiosk.Web.ExamAssignments;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization.Policy;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
@@ -43,7 +46,10 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
     ];
 });
 builder.Services.AddRazorComponents();
-builder.Services.AddSingleton<IExamCatalog, ExamCatalog>();
+builder.Services.AddSingleton<IExamAssignmentService, StubExamAssignmentService>();
+builder.Services.AddSingleton<
+    IAuthorizationMiddlewareResultHandler,
+    ApiAuthorizationMiddlewareResultHandler>();
 
 var app = builder.Build();
 
@@ -53,7 +59,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
 
-app.MapControllers();
+app.MapControllers().RequireAuthorization();
 app.MapGet(
         "/authentication/login",
         (string? returnUrl) =>
@@ -77,7 +83,7 @@ app.MapPost(
             }
 
             return Results.SignOut(
-                new AuthenticationProperties { RedirectUri = "/" },
+                new AuthenticationProperties { RedirectUri = "/exams" },
                 [
                     CookieAuthenticationDefaults.AuthenticationScheme,
                     OpenIdConnectDefaults.AuthenticationScheme,
@@ -95,7 +101,7 @@ static string NormalizeReturnUrl(string? returnUrl)
         || returnUrl.StartsWith("//", StringComparison.Ordinal)
         || returnUrl.StartsWith("/\\", StringComparison.Ordinal))
     {
-        return "/";
+        return "/exams";
     }
 
     return returnUrl;

@@ -1,7 +1,6 @@
 using System.Net;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
-using ExamKiosk.Web.Exams;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Hosting;
@@ -18,21 +17,6 @@ namespace ExamKiosk.Web.Tests;
 public sealed class HomePageTests
 {
     [Fact]
-    public async Task Home_WhenAnonymous_RedirectsToSignIn()
-    {
-        await using var application = CreateApplication(authenticated: false);
-        using var client = application.CreateClient(
-            new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-
-        var response = await client.GetAsync("/");
-
-        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
-        Assert.Equal(
-            "/authentication/login?returnUrl=%2F",
-            response.Headers.Location?.OriginalString);
-    }
-
-    [Fact]
     public async Task Exams_WhenAnonymous_RedirectsToSignIn()
     {
         await using var application = CreateApplication(authenticated: false);
@@ -48,41 +32,29 @@ public sealed class HomePageTests
     }
 
     [Fact]
-    public async Task Launcher_WhenAnonymous_RedirectsToSignIn()
-    {
-        await using var application = CreateApplication(authenticated: false);
-        using var client = application.CreateClient(
-            new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-
-        var response = await client.GetAsync("/launcher");
-
-        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
-        Assert.Equal(
-            "/authentication/login?returnUrl=%2Flauncher",
-            response.Headers.Location?.OriginalString);
-    }
-
-    [Theory]
-    [InlineData("/")]
-    [InlineData("/exams")]
-    public async Task ExamList_WhenAuthenticated_RendersGreetingAndAssignedExam(string path)
+    public async Task Exams_WhenAuthenticated_RendersAssignedExams()
     {
         await using var application = CreateApplication(authenticated: true);
         using var client = application.CreateClient();
 
-        var response = await client.GetAsync(path);
-        var content = await response.Content.ReadAsStringAsync();
+        var response = await client.GetAsync("/exams");
+        var content = WebUtility.HtmlDecode(
+            await response.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("<h1>Hi Joel, here are your exams</h1>", content);
         Assert.Contains("Joel Student", content);
-        Assert.Contains("Bogus exam", content);
+        Assert.Contains("Mathématiques secondaire 4 — Modélisation financière", content);
+        Assert.Contains("Sciences secondaire 4 — Analyse de données", content);
         Assert.Contains("aria-hidden=\"true\">+/-</div>", content);
+        Assert.Contains("aria-hidden=\"true\">|||</div>", content);
         Assert.Contains("<dt>Tools</dt>", content);
-        Assert.Contains("Microsoft Edge", content);
         Assert.Contains("Calculator", content);
+        Assert.Contains("<span>None</span>", content);
+        Assert.DoesNotContain("Bogus exam", content);
+        Assert.DoesNotContain("Microsoft Edge", content);
         Assert.DoesNotContain("<dt>Format</dt>", content);
-        Assert.Contains("Exam launching will be enabled in the desktop app.", content);
+        Assert.Contains("Open this page in the installed Exam Kiosk Launcher", content);
     }
 
     [Fact]
@@ -92,22 +64,21 @@ public sealed class HomePageTests
         using var client = application.CreateClient();
 
         var response = await client.GetAsync("/sign-in-required");
-        var content = await response.Content.ReadAsStringAsync();
+        var content = WebUtility.HtmlDecode(
+            await response.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("You must sign in to view your exams.", content);
-        Assert.Contains("/authentication/login?returnUrl=%2F", content);
+        Assert.Contains("/authentication/login?returnUrl=%2Fexams", content);
     }
 
     [Fact]
-    public async Task ExamList_WhenProfileAllowsNoTools_RendersNone()
+    public async Task Exams_WhenAssignmentAllowsNoTools_RendersNone()
     {
-        await using var application = CreateApplication(
-            authenticated: true,
-            allowedTools: []);
+        await using var application = CreateApplication(authenticated: true);
         using var client = application.CreateClient();
 
-        var response = await client.GetAsync("/");
+        var response = await client.GetAsync("/exams");
         var content = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -116,20 +87,61 @@ public sealed class HomePageTests
     }
 
     [Fact]
-    public async Task Launcher_WhenAuthenticated_RendersNativeBridgeControls()
+    public async Task Exams_WhenAuthenticated_RendersNativeBridgeControlsForEveryAssignment()
     {
         await using var application = CreateApplication(authenticated: true);
         using var client = application.CreateClient();
 
-        var response = await client.GetAsync("/launcher");
+        var response = await client.GetAsync("/exams");
+        var content = WebUtility.HtmlDecode(
+            await response.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(
+            2,
+            CountOccurrences(
+                content,
+                "class=\"button button-primary exam-action launcher-start-exam\""));
+        Assert.Contains("data-assignment-id=\"student1-exam1\"", content);
+        Assert.Contains("data-assignment-id=\"student1-exam2\"", content);
+        Assert.Contains(
+            "data-exam-title=\"Mathématiques secondaire 4 — Modélisation financière\"",
+            content);
+        Assert.Contains(
+            "data-exam-title=\"Sciences secondaire 4 — Analyse de données\"",
+            content);
+        Assert.Contains("id=\"launcher-status\"", content);
+        Assert.Contains("launcher-bridge.js", content);
+    }
+
+    [Theory]
+    [InlineData("/")]
+    [InlineData("/launcher")]
+    public async Task RemovedExamAliases_ReturnNotFound(string path)
+    {
+        await using var application = CreateApplication(authenticated: true);
+        using var client = application.CreateClient();
+
+        var response = await client.GetAsync(path);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Exams_WhenStudentHasNoAssignments_RendersEmptyState()
+    {
+        await using var application = CreateApplication(
+            authenticated: true,
+            userPrincipalName: "student4@jqdev.onmicrosoft.com");
+        using var client = application.CreateClient();
+
+        var response = await client.GetAsync("/exams");
         var content = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("id=\"launcher-start-exam\"", content);
-        Assert.Contains("data-exam-title=\"Bogus exam\"", content);
-        Assert.Contains("id=\"launcher-status\"", content);
-        Assert.Contains("launcher-bridge.js", content);
-        Assert.DoesNotContain("Exam launching will be enabled in the desktop app.", content);
+        Assert.Contains("No exams assigned", content);
+        Assert.DoesNotContain("launcher-start-exam", content);
+        Assert.DoesNotContain("launcher-status", content);
     }
 
     [Fact]
@@ -148,7 +160,7 @@ public sealed class HomePageTests
     }
 
     [Fact]
-    public async Task ExamSession_WhenAuthenticated_RendersAssignedExamAndRestrictedClientBridge()
+    public async Task ExamSession_WhenAuthenticated_DoesNotRenderPrototypeExam()
     {
         await using var application = CreateApplication(authenticated: true);
         using var client = application.CreateClient();
@@ -157,13 +169,13 @@ public sealed class HomePageTests
         var content = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("<h1>Bogus exam</h1>", content);
+        Assert.Contains("<h1>Exam in progress</h1>", content);
         Assert.Contains("id=\"session-open-exam\"", content);
         Assert.Contains("id=\"session-finish-exam\"", content);
         Assert.Contains("id=\"session-status\"", content);
         Assert.Contains("exam-session-bridge.js", content);
-        Assert.Contains("Microsoft Edge</li>", content);
-        Assert.Contains("Calculator</li>", content);
+        Assert.DoesNotContain("Bogus exam", content);
+        Assert.DoesNotContain("<dt>Tools</dt>", content);
         Assert.DoesNotContain("/authentication/login", content);
     }
 
@@ -190,15 +202,17 @@ public sealed class HomePageTests
         using var client = application.CreateClient();
         client.DefaultRequestHeaders.AcceptLanguage.ParseAdd("fr");
 
-        var response = await client.GetAsync("/");
+        var response = await client.GetAsync("/exams");
         var content = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("<html lang=\"fr\">", content);
         Assert.Contains("<h1>Bonjour Joel, voici vos examens</h1>", content);
-        Assert.Contains("Examen fictif", content);
+        Assert.Contains("Mathématiques secondaire 4 — Modélisation financière", content);
+        Assert.Contains("Sciences secondaire 4 — Analyse de données", content);
         Assert.Contains("<dt>Outils</dt>", content);
         Assert.Contains("Calculatrice", content);
+        Assert.DoesNotContain("Examen fictif", content);
         Assert.Contains("Se déconnecter", content);
     }
 
@@ -268,9 +282,9 @@ public sealed class HomePageTests
     }
 
     [Theory]
-    [InlineData(null, "/")]
-    [InlineData("https://attacker.example", "/")]
-    [InlineData("//attacker.example", "/")]
+    [InlineData(null, "/exams")]
+    [InlineData("https://attacker.example", "/exams")]
+    [InlineData("//attacker.example", "/exams")]
     [InlineData("/exams", "/exams")]
     public async Task Login_NormalizesReturnUrl(string? returnUrl, string expectedReturnUrl)
     {
@@ -289,18 +303,13 @@ public sealed class HomePageTests
 
     private static WebApplicationFactory<Program> CreateApplication(
         bool authenticated,
-        IReadOnlyList<string>? allowedTools = null)
+        string userPrincipalName = "student1@jqdev.onmicrosoft.com")
     {
         return new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
             ConfigureTestEntraSettings(builder);
             builder.ConfigureTestServices(services =>
             {
-                if (allowedTools is not null)
-                {
-                    services.AddSingleton<IExamCatalog>(new TestExamCatalog(allowedTools));
-                }
-
                 services
                     .AddAuthentication(options =>
                     {
@@ -309,24 +318,11 @@ public sealed class HomePageTests
                     })
                     .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
                         TestAuthenticationHandler.SchemeName,
-                        options => options.ClaimsIssuer = authenticated ? "authenticated" : null);
+                        options => options.ClaimsIssuer = authenticated
+                            ? userPrincipalName
+                            : null);
             });
         });
-    }
-
-    private sealed class TestExamCatalog(IReadOnlyList<string> allowedTools) : IExamCatalog
-    {
-        public IReadOnlyList<ExamSummary> GetAssignedExams() =>
-        [
-            new(
-                "Profile test exam",
-                "Test course",
-                "Tests the effective profile.",
-                60,
-                "Available now",
-                allowedTools,
-                "Ready"),
-        ];
     }
 
     internal static void ConfigureTestEntraSettings(IWebHostBuilder builder)
@@ -359,6 +355,7 @@ public sealed class HomePageTests
                 new(ClaimTypes.Name, "joel@example.edu"),
                 new(ClaimTypes.GivenName, "Joel"),
                 new("name", "Joel Student"),
+                new("preferred_username", Options.ClaimsIssuer),
             ];
             var identity = new ClaimsIdentity(claims, SchemeName);
             var principal = new ClaimsPrincipal(identity);
@@ -375,4 +372,7 @@ public sealed class HomePageTests
             return Task.CompletedTask;
         }
     }
+
+    private static int CountOccurrences(string value, string substring) =>
+        value.Split(substring, StringSplitOptions.None).Length - 1;
 }

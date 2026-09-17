@@ -25,7 +25,7 @@ Voulez-vous terminer ?</value></data>
   <data name="EdgeOpenFailed" xml:space="preserve"><value>Microsoft Edge n'a pas pu être ouvert.
 
 </value></data>
-  <data name="ExamSessionTitle" xml:space="preserve"><value>Examen fictif</value></data>
+  <data name="ExamSessionTitle" xml:space="preserve"><value>Kiosque d'examen</value></data>
   <data name="AgentStatusUnavailable" xml:space="preserve"><value>L'agent de l'appareil d'examen n'est pas disponible. Réessayez lorsque le service est en cours d'exécution.</value></data>
   <data name="LoadingWebContent" xml:space="preserve"><value>Chargement de vos examens...</value></data>
   <data name="LauncherConfigurationInvalid" xml:space="preserve"><value>L'adresse de l'application Web du lanceur est absente ou non valide. Communiquez avec l'administrateur du test.</value></data>
