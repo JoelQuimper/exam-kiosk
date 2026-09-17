@@ -11,14 +11,32 @@ public sealed class TransitionManager
     private readonly ILogger<TransitionManager> logger;
     private readonly string statePath;
     private readonly SessionJournal sessionJournal;
+    private readonly Func<
+        string,
+        IReadOnlyList<string>,
+        CancellationToken,
+        Task<string>>? scriptRunner;
+    private readonly Func<DateTimeOffset> restartScheduler;
     private bool initialized;
 
     public TransitionManager(ILogger<TransitionManager> logger)
+        : this(logger, GetDataDirectory(), null, null)
+    {
+    }
+
+    internal TransitionManager(
+        ILogger<TransitionManager> logger,
+        string dataDirectory,
+        Func<
+            string,
+            IReadOnlyList<string>,
+            CancellationToken,
+            Task<string>>? scriptRunner,
+        Func<DateTimeOffset>? restartScheduler)
     {
         this.logger = logger;
-        var dataDirectory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-            "ExamKiosk");
+        this.scriptRunner = scriptRunner;
+        this.restartScheduler = restartScheduler ?? ScheduleRestart;
         Directory.CreateDirectory(dataDirectory);
         statePath = Path.Combine(dataDirectory, "agent-state.json");
         sessionJournal = new SessionJournal(Path.Combine(dataDirectory, "session-journal.json"));
@@ -134,12 +152,17 @@ public sealed class TransitionManager
                 "Start-Exam.ps1",
                 ["-ConfigurationPath", configurationPath],
                 cancellationToken);
+            if (!await IsExamModeConfiguredAsync(cancellationToken))
+            {
+                throw new InvalidOperationException(
+                    "Assigned Access verification did not find the expected Exam Kiosk profile.");
+            }
             await sessionJournal.RecordStepAsync(
                 "AssignedAccessApply",
                 "completed",
                 null,
                 cancellationToken);
-            var restartAtUtc = ScheduleRestart();
+            var restartAtUtc = restartScheduler();
             await sessionJournal.RecordStepAsync(
                 "Restart",
                 "scheduled",
@@ -153,8 +176,108 @@ public sealed class TransitionManager
         catch (Exception exception)
         {
             logger.LogError(exception, "Failed to enter exam mode");
+            await TryRecordJournalStepAsync(
+                "AssignedAccessApply",
+                "failed",
+                exception.Message);
+
+            var recoveryException = await TryRecoverFailedStartAsync();
+            if (recoveryException is null)
+            {
+                return Failure(
+                    request,
+                    $"Exam mode could not be applied and was removed safely: {exception.Message}");
+            }
+
+            return Failure(
+                request,
+                "Exam mode could not be applied and automatic cleanup failed. "
+                + $"Manual recovery is required: {recoveryException.Message}");
+        }
+    }
+
+    private async Task<Exception?> TryRecoverFailedStartAsync()
+    {
+        await TryRecordJournalStepAsync(
+            "AssignedAccessRecovery",
+            "started",
+            null);
+
+        try
+        {
+            if (await IsExamModeConfiguredAsync(CancellationToken.None))
+            {
+                await RunPowerShellAsync(
+                    "Stop-Exam.ps1",
+                    [],
+                    CancellationToken.None);
+                if (await IsExamModeConfiguredAsync(CancellationToken.None))
+                {
+                    throw new InvalidOperationException(
+                        "The expected Exam Kiosk Assigned Access profile remained configured after cleanup.");
+                }
+            }
+
+            await sessionJournal.SetStateAsync(
+                AgentState.Available,
+                CancellationToken.None);
+            await TryRecordJournalStepAsync(
+                "AssignedAccessRecovery",
+                "completed",
+                null);
+            await SetStateAsync(AgentState.Available, CancellationToken.None);
+            return null;
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(
+                exception,
+                "Automatic cleanup after an Assigned Access apply failure failed");
+            await TryRecordJournalStepAsync(
+                "AssignedAccessRecovery",
+                "failed",
+                exception.Message);
+            await TrySetJournalStateAsync(AgentState.Failed);
             await SetStateAsync(AgentState.Failed, CancellationToken.None);
-            return Failure(request, $"Exam mode could not be applied: {exception.Message}");
+            return exception;
+        }
+    }
+
+    private async Task TryRecordJournalStepAsync(
+        string name,
+        string status,
+        string? error)
+    {
+        try
+        {
+            await sessionJournal.RecordStepAsync(
+                name,
+                status,
+                error,
+                CancellationToken.None);
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(
+                exception,
+                "Failed to record session journal step {StepName} with status {StepStatus}",
+                name,
+                status);
+        }
+    }
+
+    private async Task TrySetJournalStateAsync(AgentState state)
+    {
+        try
+        {
+            await sessionJournal.SetStateAsync(state, CancellationToken.None);
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(
+                exception,
+                "Failed to set session journal state to {State}",
+                state);
         }
     }
 
@@ -247,6 +370,11 @@ public sealed class TransitionManager
         IReadOnlyList<string> arguments,
         CancellationToken cancellationToken)
     {
+        if (scriptRunner is not null)
+        {
+            return await scriptRunner(scriptName, arguments, cancellationToken);
+        }
+
         var scriptPath = Path.Combine(AppContext.BaseDirectory, "Scripts", scriptName);
         if (!File.Exists(scriptPath))
         {
@@ -338,6 +466,11 @@ public sealed class TransitionManager
         _ = RestartAtAsync(restartAtUtc);
         return restartAtUtc;
     }
+
+    private static string GetDataDirectory() =>
+        Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+            "ExamKiosk");
 
     private async Task RestartAtAsync(DateTimeOffset restartAtUtc)
     {
