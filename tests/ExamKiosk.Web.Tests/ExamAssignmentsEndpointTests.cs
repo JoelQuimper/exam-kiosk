@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
+using ExamKiosk.Contracts;
 using ExamKiosk.Web.Authentication;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
@@ -131,6 +132,46 @@ public sealed class ExamAssignmentsEndpointTests
         Assert.Equal(
             ["word", "calculator", "dictionary"],
             assignment.Tools.Select(tool => tool.Icon));
+    }
+
+    [Fact]
+    public async Task GetProfile_ReturnsGeneratedProfileForOwnedAssignment()
+    {
+        await using var application = CreateApplication(
+            authenticated: true,
+            "student1@jqdev.onmicrosoft.com");
+        using var client = application.CreateClient();
+
+        var response = await client.GetAsync(
+            "/api/v1/exam-assignments/student1-exam1/profile");
+        var profile = await response.Content
+            .ReadFromJsonAsync<EffectiveExamProfile>();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(profile);
+        Assert.Equal("student1-exam1", profile.AssignmentId);
+        Assert.Equal(
+            "student1@jqdev.onmicrosoft.com",
+            profile.Student.UserPrincipalName);
+        Assert.Equal(
+            "windowsAssignedAccessXml",
+            profile.WindowsConfiguration.AssignedAccess.Format);
+        Assert.False(string.IsNullOrWhiteSpace(
+            profile.WindowsConfiguration.AssignedAccess.Xml));
+    }
+
+    [Fact]
+    public async Task GetProfile_WhenAssignmentBelongsToAnotherStudent_ReturnsNotFound()
+    {
+        await using var application = CreateApplication(
+            authenticated: true,
+            "student1@jqdev.onmicrosoft.com");
+        using var client = application.CreateClient();
+
+        var response = await client.GetAsync(
+            "/api/v1/exam-assignments/student3-exam2/profile");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]

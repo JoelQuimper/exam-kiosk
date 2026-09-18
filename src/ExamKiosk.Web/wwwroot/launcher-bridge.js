@@ -1,7 +1,7 @@
 (() => {
     "use strict";
 
-    const protocolVersion = 1;
+    const protocolVersion = 2;
 
     function initialize() {
         const startButtons = Array.from(
@@ -70,7 +70,7 @@
         });
 
         startButtons.forEach(startButton => {
-            startButton.addEventListener("click", () => {
+            startButton.addEventListener("click", async () => {
                 if (startButton.disabled || startRequestId !== null) {
                     return;
                 }
@@ -78,11 +78,32 @@
                 setStartButtonsDisabled(true);
                 status.textContent = status.dataset.starting;
                 startRequestId = crypto.randomUUID();
-                post("startExam", startRequestId, {
-                    exam: {
-                        title: startButton.dataset.examTitle
+                try {
+                    const assignmentId = startButton.dataset.assignmentId;
+                    const response = await fetch(
+                        `/api/v1/exam-assignments/${encodeURIComponent(assignmentId)}/profile`,
+                        {
+                            credentials: "same-origin",
+                            headers: { "Accept": "application/json" }
+                        });
+                    if (!response.ok) {
+                        throw new Error(`Profile request failed with status ${response.status}.`);
                     }
-                });
+
+                    const profile = await response.json();
+                    post("startExam", startRequestId, {
+                        exam: {
+                            title: startButton.dataset.examTitle,
+                            profile
+                        }
+                    });
+                } catch (error) {
+                    console.error("Unable to load the effective exam profile.", error);
+                    statusRequestId = crypto.randomUUID();
+                    startRequestId = null;
+                    status.textContent = status.dataset.unavailable;
+                    post("clientReady", statusRequestId);
+                }
             });
         });
 

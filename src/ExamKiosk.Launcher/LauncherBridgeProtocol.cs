@@ -1,4 +1,5 @@
 using System.Text.Json;
+using ExamKiosk.Contracts;
 
 namespace ExamKiosk.Launcher;
 
@@ -13,12 +14,14 @@ public sealed record LauncherBridgeRequest(
     Guid RequestId,
     LauncherExamDescriptor? Exam);
 
-public sealed record LauncherExamDescriptor(string Title);
+public sealed record LauncherExamDescriptor(
+    string Title,
+    EffectiveExamProfile Profile);
 
 public static class LauncherBridgeProtocol
 {
-    public const int Version = 1;
-    public const int MaximumMessageLength = 4096;
+    public const int Version = 2;
+    public const int MaximumMessageLength = 262144;
     public const int MaximumExamTitleLength = 200;
 
     public static bool TryParseRequest(
@@ -67,6 +70,7 @@ public static class LauncherBridgeProtocol
             }
 
             string? examTitle = null;
+            EffectiveExamProfile? profile = null;
             if (requestType == LauncherBridgeRequestType.StartExam)
             {
                 if (properties.Length != 4
@@ -77,9 +81,11 @@ public static class LauncherBridgeProtocol
                 }
 
                 var examProperties = examElement.EnumerateObject().ToArray();
-                if (examProperties.Length != 1
+                if (examProperties.Length != 2
                     || !examElement.TryGetProperty("title", out var examTitleElement)
-                    || examTitleElement.ValueKind != JsonValueKind.String)
+                    || examTitleElement.ValueKind != JsonValueKind.String
+                    || !examElement.TryGetProperty("profile", out var profileElement)
+                    || profileElement.ValueKind != JsonValueKind.Object)
                 {
                     return false;
                 }
@@ -88,6 +94,24 @@ public static class LauncherBridgeProtocol
                 if (string.IsNullOrWhiteSpace(examTitle)
                     || examTitle.Length > MaximumExamTitleLength
                     || examTitle.Any(char.IsControl))
+                {
+                    return false;
+                }
+
+                profile = profileElement.Deserialize<EffectiveExamProfile>(
+                    AgentProtocol.SerializerOptions);
+                if (profile is null
+                    || profile.SchemaVersion != 1
+                    || string.IsNullOrWhiteSpace(profile.AssignmentId)
+                    || profile.Student is null
+                    || profile.Exam is null
+                    || profile.Tools is null
+                    || profile.EdgePolicy is null
+                    || profile.WindowsConfiguration is null
+                    || !string.Equals(
+                        profile.Exam.Title,
+                        examTitle,
+                        StringComparison.Ordinal))
                 {
                     return false;
                 }
@@ -100,10 +124,16 @@ public static class LauncherBridgeProtocol
             request = new LauncherBridgeRequest(
                 requestType.Value,
                 requestIdValue,
-                examTitle is null ? null : new LauncherExamDescriptor(examTitle));
+                examTitle is null
+                    ? null
+                    : new LauncherExamDescriptor(examTitle, profile!));
             return true;
         }
         catch (JsonException)
+        {
+            return false;
+        }
+        catch (NotSupportedException)
         {
             return false;
         }

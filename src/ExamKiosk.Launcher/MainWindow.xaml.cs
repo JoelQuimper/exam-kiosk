@@ -233,7 +233,7 @@ public partial class MainWindow : Window
                     await SendAgentStatusAsync(request.RequestId);
                     break;
                 case LauncherBridgeRequestType.StartExam:
-                    await StartExamAsync(request.RequestId, request.Exam!.Title);
+                    await StartExamAsync(request.RequestId, request.Exam!);
                     break;
             }
         }
@@ -282,7 +282,9 @@ public partial class MainWindow : Window
         }
     }
 
-    private async Task StartExamAsync(Guid requestId, string examTitle)
+    private async Task StartExamAsync(
+        Guid requestId,
+        LauncherExamDescriptor exam)
     {
         if (startInProgress)
         {
@@ -302,7 +304,7 @@ public partial class MainWindow : Window
                 string.Format(
                     CultureInfo.CurrentUICulture,
                     AppResources.StartWarningTitle,
-                    examTitle),
+                    exam.Title),
                 AppResources.StartWarning,
                 AppResources.StartExam,
                 AppResources.PreparingDevice,
