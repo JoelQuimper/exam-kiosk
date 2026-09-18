@@ -142,7 +142,21 @@ public sealed class TransitionManagerTests
             journal.ProfileSha256);
         Assert.Equal("ProfileReceived", journal.Steps[0].Name);
         Assert.Equal("completed", journal.Steps[0].Status);
-        Assert.Equal("AssignedAccessApply", journal.Steps[1].Name);
+        Assert.Equal("GeneratedAssignedAccessPreview", journal.Steps[1].Name);
+        Assert.Equal("AssignedAccessApply", journal.Steps[2].Name);
+        Assert.Equal(
+            request.StartExam.Profile.WindowsConfiguration.AssignedAccess.Xml,
+            await File.ReadAllTextAsync(
+                Path.Combine(
+                    directory.Path,
+                    "Configuration",
+                    "AssignedAccess.generated.temp.xml")));
+        Assert.False(
+            File.Exists(
+                Path.Combine(
+                    directory.Path,
+                    "Configuration",
+                    "AssignedAccess.generated.temp.xml.tmp")));
     }
 
     [Fact]

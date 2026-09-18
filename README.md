@@ -230,6 +230,17 @@ events. Once dynamic enforcement is implemented, the Agent must record the
 exact configuration it actually applied; a Launcher entry records what was
 requested, not proof that Windows applied it.
 
+For development comparison, the Device Agent also writes the received
+Assigned Access XML beside the packaged configuration:
+
+```text
+%ProgramFiles%\ExamKiosk\Agent\Configuration\AssignedAccess.generated.temp.xml
+```
+
+The file is atomically replaced on each start request. The Agent continues to
+pass only `AssignedAccess.xml` to the MDM Bridge until dynamic enforcement is
+implemented.
+
 ### Administrator recovery
 
 If a test device remains restricted after a failed transition, sign in to an

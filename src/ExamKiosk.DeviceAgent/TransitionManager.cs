@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 using System.Text.Json;
 using ExamKiosk.Contracts;
 
@@ -9,6 +10,7 @@ public sealed class TransitionManager
     private const string ProfileId = "{9A2A490F-10F6-4764-974A-43B19E722C23}";
     private readonly SemaphoreSlim transitionLock = new(1, 1);
     private readonly ILogger<TransitionManager> logger;
+    private readonly string configurationDirectory;
     private readonly string statePath;
     private readonly SessionJournal sessionJournal;
     private readonly Func<
@@ -20,7 +22,12 @@ public sealed class TransitionManager
     private bool initialized;
 
     public TransitionManager(ILogger<TransitionManager> logger)
-        : this(logger, GetDataDirectory(), null, null)
+        : this(
+            logger,
+            GetDataDirectory(),
+            null,
+            null,
+            Path.Combine(AppContext.BaseDirectory, "Configuration"))
     {
     }
 
@@ -32,11 +39,14 @@ public sealed class TransitionManager
             IReadOnlyList<string>,
             CancellationToken,
             Task<string>>? scriptRunner,
-        Func<DateTimeOffset>? restartScheduler)
+        Func<DateTimeOffset>? restartScheduler,
+        string? configurationDirectory = null)
     {
         this.logger = logger;
         this.scriptRunner = scriptRunner;
         this.restartScheduler = restartScheduler ?? ScheduleRestart;
+        this.configurationDirectory = configurationDirectory
+            ?? Path.Combine(dataDirectory, "Configuration");
         Directory.CreateDirectory(dataDirectory);
         statePath = Path.Combine(dataDirectory, "agent-state.json");
         sessionJournal = new SessionJournal(Path.Combine(dataDirectory, "session-journal.json"));
@@ -153,14 +163,21 @@ public sealed class TransitionManager
                 "completed",
                 null,
                 cancellationToken);
+            await WriteGeneratedAssignedAccessPreviewAsync(
+                startExam.Profile.WindowsConfiguration.AssignedAccess,
+                cancellationToken);
+            await sessionJournal.RecordStepAsync(
+                "GeneratedAssignedAccessPreview",
+                "completed",
+                null,
+                cancellationToken);
             await sessionJournal.RecordStepAsync(
                 "AssignedAccessApply",
                 "started",
                 null,
                 cancellationToken);
             var configurationPath = Path.Combine(
-                AppContext.BaseDirectory,
-                "Configuration",
+                configurationDirectory,
                 "AssignedAccess.xml");
             await RunPowerShellAsync(
                 "Start-Exam.ps1",
@@ -360,6 +377,28 @@ public sealed class TransitionManager
 
     internal static bool CanStartExam(AgentState state) =>
         state is AgentState.Available or AgentState.InExam;
+
+    private async Task WriteGeneratedAssignedAccessPreviewAsync(
+        AssignedAccessArtifact assignedAccess,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(assignedAccess);
+        Directory.CreateDirectory(configurationDirectory);
+        var previewPath = Path.Combine(
+            configurationDirectory,
+            "AssignedAccess.generated.temp.xml");
+        var temporaryPath = previewPath + ".tmp";
+        await File.WriteAllTextAsync(
+            temporaryPath,
+            assignedAccess.Xml,
+            new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+            cancellationToken);
+        File.Move(temporaryPath, previewPath, overwrite: true);
+        logger.LogInformation(
+            "Wrote generated Assigned Access preview {PreviewPath} with declared SHA-256 {Sha256}",
+            previewPath,
+            assignedAccess.Sha256);
+    }
 
     private async Task<bool> IsExamModeConfiguredAsync(CancellationToken cancellationToken)
     {

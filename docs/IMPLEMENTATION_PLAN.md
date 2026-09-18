@@ -86,6 +86,8 @@ Implemented on 2026-09-18:
 - Launcher forwarding of the bridge-validated session and profile;
 - a Launcher diagnostic snapshot containing the complete requested profile,
   exact Assigned Access XML, Edge policy, shortcuts, and deterministic digest;
+- an atomically written `AssignedAccess.generated.temp.xml` preview beside the
+  packaged Agent configuration for manual comparison, without applying it;
 - local journal persistence of the Web session ID and deterministic profile
   SHA-256 before privileged application begins.
 
