@@ -8,6 +8,7 @@ public interface IAssignedAccessXmlGenerator
 
     EffectiveWindowsConfiguration Generate(
         WindowsClientVersion clientVersion,
+        EffectiveStudent student,
         EffectiveExam exam,
         IReadOnlyList<ToolDefinition> tools);
 }

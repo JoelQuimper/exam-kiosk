@@ -109,6 +109,9 @@ public sealed class AssignedAccessXmlGeneratorTests
             "{9A2A490F-10F6-4764-974A-43B19E722C23}",
             (string?)profileElement.Attribute("Id"));
         Assert.Equal(
+            $"EXAM — student3 — {profile.Exam.Id}",
+            (string?)profileElement.Attribute("Name"));
+        Assert.Equal(
             (string?)profileElement.Attribute("Id"),
             (string?)defaultProfile.Attribute("Id"));
     }
@@ -215,7 +218,7 @@ public sealed class AssignedAccessXmlGeneratorTests
 
         Assert.Null(document.DocumentType);
         Assert.Equal(
-            assignment.Exam.Title,
+            $"EXAM — student1 — {assignment.Exam.ExamId}",
             (string?)document
                 .Descendants(AssignedAccessNamespace + "Profile")
                 .Single()
@@ -231,6 +234,7 @@ public sealed class AssignedAccessXmlGeneratorTests
         var exception = Assert.Throws<NotSupportedException>(
                 () => assignedAccessFactory.Create(
                     new WindowsClientVersion(10, 0, 19045),
+                    profile.Student,
                     profile.Exam,
                     profile.Tools));
 

@@ -33,15 +33,17 @@ public sealed class ExamProfileOrchestrator(
                 true));
         var tools = assignment.Tools.ToArray();
         var edgePolicy = edgePolicyFactory.Create(tools);
+        var student = new EffectiveStudent(userPrincipalName.Trim());
         var windowsConfiguration = assignedAccessFactory.Create(
             PreviewClientWindowsVersion,
+            student,
             exam,
             tools);
 
         return new EffectiveExamProfile(
             SchemaVersion,
             assignment.AssignmentId,
-            new EffectiveStudent(userPrincipalName.Trim()),
+            student,
             exam,
             tools,
             edgePolicy,

@@ -26,6 +26,10 @@ Restricted Client, or a healthy Device Agent.
 - Stop the Device Agent to prevent concurrent transitions.
 - Execute the Assigned Access removal through a temporary `LocalSystem` task.
 - Remove only the known Exam Kiosk profile by default.
+- Name generated profiles `EXAM — <student alias> — <exam ID>` for operator
+  visibility and inventory. Recovery must not use that prefix alone as proof
+  of ownership; deletion remains bound to the known profile GUID or an
+  Agent-owned receipt.
 - Verify that Assigned Access is clear.
 - Reset the local Agent state and append a manual-recovery journal step.
 - Preserve a recovery result for operator diagnostics.

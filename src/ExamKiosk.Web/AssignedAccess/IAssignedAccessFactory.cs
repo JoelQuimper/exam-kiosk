@@ -6,6 +6,7 @@ public interface IAssignedAccessFactory
 {
     EffectiveWindowsConfiguration Create(
         WindowsClientVersion clientVersion,
+        EffectiveStudent student,
         EffectiveExam exam,
         IReadOnlyList<ToolDefinition> tools);
 }

@@ -50,10 +50,12 @@ public sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerator
 
     public EffectiveWindowsConfiguration Generate(
         WindowsClientVersion clientVersion,
+        EffectiveStudent student,
         EffectiveExam exam,
         IReadOnlyList<ToolDefinition> tools)
     {
         ArgumentNullException.ThrowIfNull(exam);
+        ArgumentNullException.ThrowIfNull(student);
         ArgumentNullException.ThrowIfNull(tools);
         if (!Supports(clientVersion))
         {
@@ -77,7 +79,9 @@ public sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerator
                     new XElement(
                         AssignedAccessNamespace + "Profile",
                         new XAttribute("Id", ProfileId),
-                        new XAttribute("Name", exam.Title),
+                        new XAttribute(
+                            "Name",
+                            CreateProfileName(student, exam)),
                         new XElement(
                             AssignedAccessNamespace + "AllAppsList",
                             new XElement(
@@ -119,6 +123,20 @@ public sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerator
                 sha256,
                 xml),
             shortcuts);
+    }
+
+    private static string CreateProfileName(
+        EffectiveStudent student,
+        EffectiveExam exam)
+    {
+        var separatorIndex = student.UserPrincipalName.IndexOf('@');
+        if (separatorIndex <= 0)
+        {
+            throw new InvalidOperationException(
+                "The student user principal name does not contain an alias.");
+        }
+
+        return $"EXAM — {student.UserPrincipalName[..separatorIndex]} — {exam.Id}";
     }
 
     private static XElement[] CreateAllowedApps(

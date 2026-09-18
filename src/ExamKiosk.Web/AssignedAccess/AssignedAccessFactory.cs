@@ -14,10 +14,12 @@ public sealed class AssignedAccessFactory(
 
     public EffectiveWindowsConfiguration Create(
         WindowsClientVersion clientVersion,
+        EffectiveStudent student,
         EffectiveExam exam,
         IReadOnlyList<ToolDefinition> tools)
     {
         ArgumentNullException.ThrowIfNull(clientVersion);
+        ArgumentNullException.ThrowIfNull(student);
         ArgumentNullException.ThrowIfNull(exam);
         ArgumentNullException.ThrowIfNull(tools);
 
@@ -28,7 +30,11 @@ public sealed class AssignedAccessFactory(
             .ToArray();
         if (matchingGenerators.Length == 1)
         {
-            return matchingGenerators[0].Generate(clientVersion, exam, tools);
+            return matchingGenerators[0].Generate(
+                clientVersion,
+                student,
+                exam,
+                tools);
         }
 
         if (matchingGenerators.Length > 1)
