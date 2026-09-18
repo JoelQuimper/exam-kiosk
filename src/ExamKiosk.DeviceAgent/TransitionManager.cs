@@ -229,12 +229,11 @@ public sealed class TransitionManager
                 cancellationToken);
             var configurationPath = Path.Combine(
                 configurationDirectory,
-                "AssignedAccess.xml");
-            // Temporarily disabled while comparing fixed and generated Assigned Access XML.
-            // await RunPowerShellAsync(
-            //     "Start-Exam.ps1",
-            //     ["-ConfigurationPath", configurationPath],
-            //     cancellationToken);
+                "AssignedAccess.generated.temp.xml");
+            await RunPowerShellAsync(
+                "Start-Exam.ps1",
+                ["-ConfigurationPath", configurationPath],
+                cancellationToken);
             if (!await IsExamModeConfiguredAsync(cancellationToken))
             {
                 throw new InvalidOperationException(

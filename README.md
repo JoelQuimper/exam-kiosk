@@ -242,9 +242,10 @@ writes the generated Assigned Access XML beside the packaged configuration:
 ```
 
 The file is atomically replaced on each valid start request and its SHA-256 is
-recorded in the local session journal. During the current comparison phase,
-the `Start-Exam.ps1` call and automatic restart are temporarily commented out,
-so neither the generated nor packaged configuration is applied.
+recorded in the local session journal. `Start-Exam.ps1` applies this generated
+file and the Agent verifies that its profile is configured. Automatic restart
+remains temporarily commented out so the operator controls the reboot during
+PoC testing.
 
 For this PoC, the Web is a controlled stub and its hard-coded exam intent is
 treated as valid. The Device Agent's self-contained Windows configuration

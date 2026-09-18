@@ -95,11 +95,10 @@ Implemented on 2026-09-18:
 - local journal persistence of the Web session ID and deterministic profile
   SHA-256 before privileged application begins.
 
-Step 4 added an atomically written `AssignedAccess.generated.temp.xml` preview
-beside the packaged Agent configuration for manual comparison. The
-`Start-Exam.ps1` invocation and automatic restart remain temporarily commented
-out, so no Assigned Access profile is applied during comparison. Dynamic
-enforcement remains Step 5.
+Step 4 added an atomically written `AssignedAccess.generated.temp.xml` beside
+the packaged Agent configuration. Step 5A now passes that generated file to
+`Start-Exam.ps1` and verifies the configured profile. Automatic restart remains
+temporarily commented out so the operator controls reboot during PoC testing.
 
 Before Step 3 is enabled outside the development PoC, complete the applicable
 named-pipe identity work in
@@ -123,8 +122,8 @@ remains gated on all pre-profile controls in that plan.
 
 ## Step 5 - Apply dynamic Assigned Access and shortcuts
 
-- Promote the locally generated and validated XML from the comparison path to
-  an administrator-owned application path.
+- **Implemented in Step 5A:** apply the locally generated and validated XML
+  through `Start-Exam.ps1`, then verify that the expected profile is configured.
 - Verify its digest after writing.
 - Apply that XML instead of the packaged fixed file.
 - Create only the tool shortcut artifacts declared by the profile. The exam
