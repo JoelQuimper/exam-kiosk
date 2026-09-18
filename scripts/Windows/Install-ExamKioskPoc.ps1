@@ -106,6 +106,12 @@ try {
             -Recurse
     }
 
+    $recoveryDirectory = Join-Path $installRoot 'Recovery'
+    New-Item -ItemType Directory -Path $recoveryDirectory -Force | Out-Null
+    Copy-Item `
+        -LiteralPath (Join-Path $PSScriptRoot 'Recover-ExamKioskDevice.ps1') `
+        -Destination $recoveryDirectory
+
     [ordered]@{
         webAppUrl = $normalizedWebAppUrl
     } |
@@ -148,6 +154,21 @@ try {
     $shortcut.TargetPath = Join-Path $installRoot 'Launcher\ExamKiosk.Launcher.exe'
     $shortcut.WorkingDirectory = Join-Path $installRoot 'Launcher'
     $shortcut.Save()
+
+    $recoveryShortcut = $shell.CreateShortcut(
+        (Join-Path $shortcutDirectory 'Recover Exam Kiosk Device.lnk'))
+    $recoveryShortcut.TargetPath = Join-Path `
+        $env:SystemRoot `
+        'System32\WindowsPowerShell\v1.0\powershell.exe'
+    $recoveryScriptPath = Join-Path `
+        $recoveryDirectory `
+        'Recover-ExamKioskDevice.ps1'
+    $recoveryShortcut.Arguments = (
+        '-NoProfile -ExecutionPolicy Bypass -File "{0}"' -f
+        $recoveryScriptPath)
+    $recoveryShortcut.WorkingDirectory = $recoveryDirectory
+    $recoveryShortcut.Description = 'Remove Exam Kiosk restrictions from an administrator session.'
+    $recoveryShortcut.Save()
 
     $desktopShortcutPath = Join-Path ([Environment]::GetFolderPath('Desktop')) 'Reset Exam Kiosk PoC.lnk'
     $resetShortcut = $shell.CreateShortcut($desktopShortcutPath)

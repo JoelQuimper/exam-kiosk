@@ -124,9 +124,9 @@ It validates the WebView2 Runtime, copies the administrator-owned web
 application origin into the installed Launcher and Restricted Client
 directories, registers
 `ExamKioskDeviceAgent` as an automatic `LocalSystem` service, and adds
-**Exam Kiosk Launcher** to the all-users Start menu. In a managed rollout,
-Intune would perform this administrator-controlled installation before exam
-day.
+**Exam Kiosk Launcher** and **Recover Exam Kiosk Device** to the all-users
+Start menu. In a managed rollout, Intune would perform this
+administrator-controlled installation before exam day.
 
 ### Optional local Windows configuration
 
@@ -219,6 +219,34 @@ page content, cookies, and authentication tokens are not recorded. Each log
 rotates at 5 MB and retains one previous file. These student-writable diagnostic
 logs are useful for troubleshooting but are not an authoritative audit record.
 
+### Administrator recovery
+
+If a test device remains restricted after a failed transition, sign in to an
+administrator session and run **Recover Exam Kiosk Device** from the Start
+menu, or run:
+
+```powershell
+& "$env:ProgramFiles\ExamKiosk\Recovery\Recover-ExamKioskDevice.ps1"
+```
+
+The script stops the Device Agent, runs a one-time recovery worker as
+`LocalSystem`, removes and verifies only the known Exam Kiosk Assigned Access
+profile, resets the local Agent state, and restarts the service if it was
+running. It writes a bounded recovery result under
+`%ProgramData%\ExamKiosk\Recovery`. It does not restart Windows automatically;
+after successful recovery, run:
+
+```powershell
+shutdown.exe /r /t 0
+```
+
+If the configured Assigned Access profile is not owned by Exam Kiosk, the
+script refuses to remove it. `-ForceForeignAssignedAccess` is an emergency
+override for administrators who have independently verified that the foreign
+configuration must be removed. Future Edge-policy work must extend this
+recovery script to restore the Agent-owned policy backup rather than deleting
+machine policies indiscriminately.
+
 The PoC states are `available`, `enteringExam`, `inExam`, `exitingExam`, and
 `failed`. The agent remains in `enteringExam` or `exitingExam` throughout the
 restart countdown, so the opposite command is rejected. On service startup it
@@ -227,8 +255,9 @@ queries the Assigned Access CSP and reconciles every persisted state to
 Access is absent. It enters `failed` rather than replacing an unrelated
 Assigned Access configuration. Starting from `inExam` is idempotent: the agent
 reapplies its profile and schedules the restart. A transition failure that does
-not restart the device moves the agent to `failed`. For this disposable PoC,
-replace or restore the test device rather than attempting an in-place repair.
+not restart the device moves the agent to `failed`. Use the administrator
+recovery command for the known Exam Kiosk profile; restore the test device from
+a trusted snapshot if recovery cannot verify that restrictions were removed.
 
 ### Uninstall
 
@@ -265,5 +294,7 @@ phase.
 
 ## Architecture
 
-See [DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md) for the architecture, security
-boundaries, implementation stack, and phased development plan.
+See [DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md) for the architecture and
+security boundaries, and
+[IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) for the incremental
+implementation sequence.
