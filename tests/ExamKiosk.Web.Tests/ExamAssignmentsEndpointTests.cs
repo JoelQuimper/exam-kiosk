@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
+using System.Text.RegularExpressions;
 using ExamKiosk.Contracts;
 using ExamKiosk.Web.Authentication;
 using Microsoft.AspNetCore.Authentication;
@@ -175,6 +176,96 @@ public sealed class ExamAssignmentsEndpointTests
     }
 
     [Fact]
+    public async Task StartSession_CreatesStartingSessionWithEffectiveProfile()
+    {
+        await using var application = CreateApplication(
+            authenticated: true,
+            "student1@jqdev.onmicrosoft.com");
+        using var client = application.CreateClient();
+        var antiforgeryToken = await GetAntiforgeryTokenAsync(client);
+
+        using var response = await PostStartSessionAsync(
+            client,
+            "student1-exam1",
+            antiforgeryToken);
+        var session = await response.Content.ReadFromJsonAsync<ExamSession>();
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.NotNull(session);
+        Assert.NotEqual(Guid.Empty, session.SessionId);
+        Assert.Equal(ExamSessionState.Starting, session.State);
+        Assert.Equal("student1-exam1", session.Profile.AssignmentId);
+        Assert.Equal(
+            "student1@jqdev.onmicrosoft.com",
+            session.Profile.Student.UserPrincipalName);
+        Assert.Equal(
+            TimeSpan.FromMinutes(15),
+            session.ExpiresAtUtc - session.CreatedAtUtc);
+    }
+
+    [Fact]
+    public async Task StartSession_WhenStudentAlreadyHasSession_ReturnsConflict()
+    {
+        await using var application = CreateApplication(
+            authenticated: true,
+            "student1@jqdev.onmicrosoft.com");
+        using var client = application.CreateClient();
+        var antiforgeryToken = await GetAntiforgeryTokenAsync(client);
+
+        using var firstResponse = await PostStartSessionAsync(
+            client,
+            "student1-exam1",
+            antiforgeryToken);
+        var firstSession = await firstResponse.Content
+            .ReadFromJsonAsync<ExamSession>();
+        using var secondResponse = await PostStartSessionAsync(
+            client,
+            "student1-exam2",
+            antiforgeryToken);
+        var existingSession = await secondResponse.Content
+            .ReadFromJsonAsync<ExamSession>();
+
+        Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, secondResponse.StatusCode);
+        Assert.Equal(firstSession?.SessionId, existingSession?.SessionId);
+        Assert.Equal(
+            firstSession?.Profile.AssignmentId,
+            existingSession?.Profile.AssignmentId);
+    }
+
+    [Fact]
+    public async Task StartSession_WithoutAntiforgeryToken_ReturnsBadRequest()
+    {
+        await using var application = CreateApplication(
+            authenticated: true,
+            "student1@jqdev.onmicrosoft.com");
+        using var client = application.CreateClient();
+
+        using var response = await client.PostAsync(
+            "/api/v1/exam-assignments/student1-exam1/sessions",
+            content: null);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task StartSession_WhenAssignmentBelongsToAnotherStudent_ReturnsNotFound()
+    {
+        await using var application = CreateApplication(
+            authenticated: true,
+            "student1@jqdev.onmicrosoft.com");
+        using var client = application.CreateClient();
+        var antiforgeryToken = await GetAntiforgeryTokenAsync(client);
+
+        using var response = await PostStartSessionAsync(
+            client,
+            "student3-exam2",
+            antiforgeryToken);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
     public void UpnResolver_FallsBackToStandardUpnClaim()
     {
         var principal = new ClaimsPrincipal(
@@ -216,6 +307,32 @@ public sealed class ExamAssignmentsEndpointTests
                 []
             },
         };
+
+    private static async Task<string> GetAntiforgeryTokenAsync(
+        HttpClient client)
+    {
+        var html = await client.GetStringAsync("/exams");
+        var input = Regex.Match(
+            html,
+            """<input[^>]*name="__RequestVerificationToken"[^>]*>""");
+        Assert.True(input.Success, "The exams page did not contain an antiforgery token.");
+
+        var value = Regex.Match(input.Value, "value=\"([^\"]+)\"");
+        Assert.True(value.Success, "The antiforgery input did not contain a value.");
+        return WebUtility.HtmlDecode(value.Groups[1].Value);
+    }
+
+    private static Task<HttpResponseMessage> PostStartSessionAsync(
+        HttpClient client,
+        string assignmentId,
+        string antiforgeryToken)
+    {
+        var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"/api/v1/exam-assignments/{assignmentId}/sessions");
+        request.Headers.Add("X-XSRF-TOKEN", antiforgeryToken);
+        return client.SendAsync(request);
+    }
 
     private static WebApplicationFactory<Program> CreateApplication(
         bool authenticated,

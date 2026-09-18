@@ -7,6 +7,7 @@ using ExamKiosk.Web.Components;
 using ExamKiosk.Web.EdgePolicy;
 using ExamKiosk.Web.EdgePolicy.Validation;
 using ExamKiosk.Web.ExamAssignments;
+using ExamKiosk.Web.ExamSessions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -37,6 +38,8 @@ builder.Services.Configure<OpenIdConnectOptions>(
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddControllers();
+builder.Services.AddAntiforgery(
+    options => options.HeaderName = "X-XSRF-TOKEN");
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
@@ -69,6 +72,8 @@ builder.Services.AddSingleton<IEdgePolicyFactory, EdgePolicyFactory>();
 builder.Services.AddSingleton<
     IExamProfileOrchestrator,
     ExamProfileOrchestrator>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<IExamSessionStore, InMemoryExamSessionStore>();
 builder.Services.AddSingleton<
     IAuthorizationMiddlewareResultHandler,
     ApiAuthorizationMiddlewareResultHandler>();
