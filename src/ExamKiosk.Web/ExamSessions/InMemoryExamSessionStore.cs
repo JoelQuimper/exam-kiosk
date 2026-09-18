@@ -81,6 +81,65 @@ public sealed class InMemoryExamSessionStore(TimeProvider timeProvider)
         }
     }
 
+    public ExamSessionCancellationResult Cancel(
+        string userPrincipalName,
+        Guid sessionId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(userPrincipalName);
+        if (sessionId == Guid.Empty)
+        {
+            return new ExamSessionCancellationResult(
+                ExamSessionCancellationStatus.NotFound,
+                null);
+        }
+
+        var normalizedUpn = userPrincipalName.Trim();
+        lock (syncRoot)
+        {
+            if (!sessions.TryGetValue(sessionId, out var session)
+                || !string.Equals(
+                    session.Profile.Student.UserPrincipalName,
+                    normalizedUpn,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return new ExamSessionCancellationResult(
+                    ExamSessionCancellationStatus.NotFound,
+                    null);
+            }
+
+            if (session.State == ExamSessionState.Starting
+                && session.ExpiresAtUtc <= timeProvider.GetUtcNow())
+            {
+                session = Expire(session);
+            }
+
+            if (session.State == ExamSessionState.Cancelled)
+            {
+                return new ExamSessionCancellationResult(
+                    ExamSessionCancellationStatus.Cancelled,
+                    session);
+            }
+
+            if (session.State != ExamSessionState.Starting)
+            {
+                return new ExamSessionCancellationResult(
+                    ExamSessionCancellationStatus.Conflict,
+                    session);
+            }
+
+            var cancelled = session with
+            {
+                State = ExamSessionState.Cancelled,
+                ExpiresAtUtc = null,
+            };
+            sessions[session.SessionId] = cancelled;
+            nonterminalSessionIdsByStudent.Remove(normalizedUpn);
+            return new ExamSessionCancellationResult(
+                ExamSessionCancellationStatus.Cancelled,
+                cancelled);
+        }
+    }
+
     private void ExpireStartingSession(
         string userPrincipalName,
         DateTimeOffset now)

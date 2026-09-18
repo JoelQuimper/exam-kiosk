@@ -37,31 +37,6 @@ public sealed class ExamAssignmentsController(
         return Ok(response);
     }
 
-    [HttpGet("{assignmentId}/profile")]
-    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-    [ProducesResponseType<EffectiveExamProfile>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<EffectiveExamProfile> GetProfile(string assignmentId)
-    {
-        var userPrincipalName = AuthenticatedUpnResolver.Resolve(User);
-        if (userPrincipalName is null)
-        {
-            return Forbid();
-        }
-
-        var assignment = examAssignmentService.GetAssignment(
-            userPrincipalName,
-            assignmentId);
-        if (assignment is null)
-        {
-            return NotFound();
-        }
-
-        return Ok(examProfileOrchestrator.Create(userPrincipalName, assignment));
-    }
-
     [HttpPost("{assignmentId}/sessions")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     [ProducesResponseType<ExamSession>(StatusCodes.Status201Created)]

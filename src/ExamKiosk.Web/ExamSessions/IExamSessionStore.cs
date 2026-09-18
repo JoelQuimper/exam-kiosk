@@ -9,8 +9,23 @@ public interface IExamSessionStore
         EffectiveExamProfile profile);
 
     ExamSession? Get(Guid sessionId);
+
+    ExamSessionCancellationResult Cancel(
+        string userPrincipalName,
+        Guid sessionId);
 }
 
 public sealed record ExamSessionStartResult(
     bool Created,
     ExamSession Session);
+
+public enum ExamSessionCancellationStatus
+{
+    Cancelled,
+    NotFound,
+    Conflict,
+}
+
+public sealed record ExamSessionCancellationResult(
+    ExamSessionCancellationStatus Status,
+    ExamSession? Session);

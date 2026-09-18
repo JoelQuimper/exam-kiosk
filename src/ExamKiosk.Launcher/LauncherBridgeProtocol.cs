@@ -16,11 +16,12 @@ public sealed record LauncherBridgeRequest(
 
 public sealed record LauncherExamDescriptor(
     string Title,
+    Guid SessionId,
     EffectiveExamProfile Profile);
 
 public static class LauncherBridgeProtocol
 {
-    public const int Version = 2;
+    public const int Version = 3;
     public const int MaximumMessageLength = 262144;
     public const int MaximumExamTitleLength = 200;
 
@@ -70,6 +71,7 @@ public static class LauncherBridgeProtocol
             }
 
             string? examTitle = null;
+            Guid sessionId = Guid.Empty;
             EffectiveExamProfile? profile = null;
             if (requestType == LauncherBridgeRequestType.StartExam)
             {
@@ -81,9 +83,13 @@ public static class LauncherBridgeProtocol
                 }
 
                 var examProperties = examElement.EnumerateObject().ToArray();
-                if (examProperties.Length != 2
+                if (examProperties.Length != 3
                     || !examElement.TryGetProperty("title", out var examTitleElement)
                     || examTitleElement.ValueKind != JsonValueKind.String
+                    || !examElement.TryGetProperty("sessionId", out var sessionIdElement)
+                    || sessionIdElement.ValueKind != JsonValueKind.String
+                    || !Guid.TryParse(sessionIdElement.GetString(), out sessionId)
+                    || sessionId == Guid.Empty
                     || !examElement.TryGetProperty("profile", out var profileElement)
                     || profileElement.ValueKind != JsonValueKind.Object)
                 {
@@ -126,7 +132,10 @@ public static class LauncherBridgeProtocol
                 requestIdValue,
                 examTitle is null
                     ? null
-                    : new LauncherExamDescriptor(examTitle, profile!));
+                    : new LauncherExamDescriptor(
+                        examTitle,
+                        sessionId,
+                        profile!));
             return true;
         }
         catch (JsonException)

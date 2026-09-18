@@ -1,13 +1,15 @@
 (() => {
     "use strict";
 
-    const protocolVersion = 2;
+    const protocolVersion = 3;
 
     function initialize() {
         const startButtons = Array.from(
             document.querySelectorAll(".launcher-start-exam"));
         const status = document.getElementById("launcher-status");
-        if (startButtons.length === 0 || !status) {
+        const antiforgeryToken = document.querySelector(
+            "#launcher-antiforgery input[name='__RequestVerificationToken']")?.value;
+        if (startButtons.length === 0 || !status || !antiforgeryToken) {
             return;
         }
 
@@ -19,6 +21,7 @@
 
         let statusRequestId = crypto.randomUUID();
         let startRequestId = null;
+        let startingSessionId = null;
 
         function setStartButtonsDisabled(disabled) {
             startButtons.forEach(button => {
@@ -35,7 +38,34 @@
             });
         }
 
-        webview.addEventListener("message", event => {
+        async function cancelSession(sessionId) {
+            try {
+                const response = await fetch(
+                    `/api/v1/exam-sessions/${encodeURIComponent(sessionId)}/cancel`,
+                    {
+                        method: "POST",
+                        credentials: "same-origin",
+                        headers: { "X-XSRF-TOKEN": antiforgeryToken }
+                    });
+                if (!response.ok) {
+                    throw new Error(
+                        `Session cancellation failed with status ${response.status}.`);
+                }
+
+                return true;
+            } catch (error) {
+                console.error("Unable to cancel the prepared exam session.", error);
+                return false;
+            }
+        }
+
+        function requestAgentStatus(message) {
+            statusRequestId = crypto.randomUUID();
+            status.textContent = message || status.dataset.connecting;
+            post("clientReady", statusRequestId);
+        }
+
+        webview.addEventListener("message", async event => {
             const message = event.data;
             if (!message || message.version !== protocolVersion) {
                 return;
@@ -59,10 +89,15 @@
             if (message.state === "cancelled"
                 || message.state === "failed"
                 || message.state === "busy") {
-                statusRequestId = crypto.randomUUID();
+                const sessionId = startingSessionId;
                 startRequestId = null;
-                status.textContent = message.message || status.dataset.connecting;
-                post("clientReady", statusRequestId);
+                startingSessionId = null;
+                if (!sessionId || !await cancelSession(sessionId)) {
+                    status.textContent = status.dataset.unavailable;
+                    return;
+                }
+
+                requestAgentStatus(message.message);
                 return;
             }
 
@@ -81,28 +116,44 @@
                 try {
                     const assignmentId = startButton.dataset.assignmentId;
                     const response = await fetch(
-                        `/api/v1/exam-assignments/${encodeURIComponent(assignmentId)}/profile`,
+                        `/api/v1/exam-assignments/${encodeURIComponent(assignmentId)}/sessions`,
                         {
+                            method: "POST",
                             credentials: "same-origin",
-                            headers: { "Accept": "application/json" }
+                            headers: {
+                                "Accept": "application/json",
+                                "X-XSRF-TOKEN": antiforgeryToken
+                            }
                         });
-                    if (!response.ok) {
-                        throw new Error(`Profile request failed with status ${response.status}.`);
+                    if (response.status !== 201) {
+                        throw new Error(
+                            `Session creation failed with status ${response.status}.`);
                     }
 
-                    const profile = await response.json();
+                    const session = await response.json();
+                    if (!session?.sessionId
+                        || session.state !== "starting"
+                        || !session.profile?.exam?.title) {
+                        throw new Error("Session creation returned an invalid response.");
+                    }
+
+                    startingSessionId = session.sessionId;
                     post("startExam", startRequestId, {
                         exam: {
-                            title: startButton.dataset.examTitle,
-                            profile
+                            title: session.profile.exam.title,
+                            sessionId: session.sessionId,
+                            profile: session.profile
                         }
                     });
                 } catch (error) {
-                    console.error("Unable to load the effective exam profile.", error);
-                    statusRequestId = crypto.randomUUID();
+                    console.error("Unable to prepare the exam session.", error);
+                    const sessionId = startingSessionId;
                     startRequestId = null;
+                    startingSessionId = null;
+                    if (sessionId) {
+                        await cancelSession(sessionId);
+                    }
                     status.textContent = status.dataset.unavailable;
-                    post("clientReady", statusRequestId);
                 }
             });
         });

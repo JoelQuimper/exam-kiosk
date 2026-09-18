@@ -297,4 +297,6 @@ phase.
 See [DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md) for the architecture and
 security boundaries, and
 [IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) for the incremental
-implementation sequence.
+implementation sequence. Deferred named-pipe and privileged profile controls
+are tracked in
+[SECURITY_HARDENING_PLAN.md](docs/SECURITY_HARDENING_PLAN.md).

@@ -78,7 +78,6 @@
                 <div class="exam-controls">
                     <button class="button button-primary exam-action launcher-start-exam"
                             data-assignment-id="@assignment.AssignmentId"
-                            data-exam-title="@assignment.Exam.Title"
                             type="button"
                             disabled>
                         @Localizer["StartExam"]
@@ -89,6 +88,9 @@
     </section>
     @if (AssignedExams.Count > 0)
     {
+        <form id="launcher-antiforgery" hidden>
+            <AntiforgeryToken />
+        </form>
         <p class="phase-note launcher-status"
            id="launcher-status"
            aria-live="polite"

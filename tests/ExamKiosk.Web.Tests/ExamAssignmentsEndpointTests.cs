@@ -136,46 +136,6 @@ public sealed class ExamAssignmentsEndpointTests
     }
 
     [Fact]
-    public async Task GetProfile_ReturnsGeneratedProfileForOwnedAssignment()
-    {
-        await using var application = CreateApplication(
-            authenticated: true,
-            "student1@jqdev.onmicrosoft.com");
-        using var client = application.CreateClient();
-
-        var response = await client.GetAsync(
-            "/api/v1/exam-assignments/student1-exam1/profile");
-        var profile = await response.Content
-            .ReadFromJsonAsync<EffectiveExamProfile>();
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.NotNull(profile);
-        Assert.Equal("student1-exam1", profile.AssignmentId);
-        Assert.Equal(
-            "student1@jqdev.onmicrosoft.com",
-            profile.Student.UserPrincipalName);
-        Assert.Equal(
-            "windowsAssignedAccessXml",
-            profile.WindowsConfiguration.AssignedAccess.Format);
-        Assert.False(string.IsNullOrWhiteSpace(
-            profile.WindowsConfiguration.AssignedAccess.Xml));
-    }
-
-    [Fact]
-    public async Task GetProfile_WhenAssignmentBelongsToAnotherStudent_ReturnsNotFound()
-    {
-        await using var application = CreateApplication(
-            authenticated: true,
-            "student1@jqdev.onmicrosoft.com");
-        using var client = application.CreateClient();
-
-        var response = await client.GetAsync(
-            "/api/v1/exam-assignments/student3-exam2/profile");
-
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-    }
-
-    [Fact]
     public async Task StartSession_CreatesStartingSessionWithEffectiveProfile()
     {
         await using var application = CreateApplication(
@@ -188,9 +148,11 @@ public sealed class ExamAssignmentsEndpointTests
             client,
             "student1-exam1",
             antiforgeryToken);
+        var json = await response.Content.ReadAsStringAsync();
         var session = await response.Content.ReadFromJsonAsync<ExamSession>();
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.Contains("\"state\":\"starting\"", json);
         Assert.NotNull(session);
         Assert.NotEqual(Guid.Empty, session.SessionId);
         Assert.Equal(ExamSessionState.Starting, session.State);
@@ -266,6 +228,67 @@ public sealed class ExamAssignmentsEndpointTests
     }
 
     [Fact]
+    public async Task CancelSession_CancelsOwnedStartingSession()
+    {
+        await using var application = CreateApplication(
+            authenticated: true,
+            "student1@jqdev.onmicrosoft.com");
+        using var client = application.CreateClient();
+        var antiforgeryToken = await GetAntiforgeryTokenAsync(client);
+        using var startResponse = await PostStartSessionAsync(
+            client,
+            "student1-exam1",
+            antiforgeryToken);
+        var started = await startResponse.Content.ReadFromJsonAsync<ExamSession>();
+
+        using var cancelResponse = await PostCancelSessionAsync(
+            client,
+            started!.SessionId,
+            antiforgeryToken);
+        var cancelled = await cancelResponse.Content
+            .ReadFromJsonAsync<ExamSession>();
+        using var nextStartResponse = await PostStartSessionAsync(
+            client,
+            "student1-exam2",
+            antiforgeryToken);
+
+        Assert.Equal(HttpStatusCode.OK, cancelResponse.StatusCode);
+        Assert.Equal(ExamSessionState.Cancelled, cancelled?.State);
+        Assert.Equal(HttpStatusCode.Created, nextStartResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task CancelSession_WithoutAntiforgeryToken_ReturnsBadRequest()
+    {
+        await using var application = CreateApplication(
+            authenticated: true,
+            "student1@jqdev.onmicrosoft.com");
+        using var client = application.CreateClient();
+
+        using var response = await client.PostAsync(
+            $"/api/v1/exam-sessions/{Guid.NewGuid()}/cancel",
+            content: null);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CancelSession_WhenSessionDoesNotExist_ReturnsNotFound()
+    {
+        await using var application = CreateApplication(
+            authenticated: true,
+            "student1@jqdev.onmicrosoft.com");
+        using var client = application.CreateClient();
+        var antiforgeryToken = await GetAntiforgeryTokenAsync(client);
+        using var response = await PostCancelSessionAsync(
+            client,
+            Guid.NewGuid(),
+            antiforgeryToken);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
     public void UpnResolver_FallsBackToStandardUpnClaim()
     {
         var principal = new ClaimsPrincipal(
@@ -330,6 +353,18 @@ public sealed class ExamAssignmentsEndpointTests
         var request = new HttpRequestMessage(
             HttpMethod.Post,
             $"/api/v1/exam-assignments/{assignmentId}/sessions");
+        request.Headers.Add("X-XSRF-TOKEN", antiforgeryToken);
+        return client.SendAsync(request);
+    }
+
+    private static Task<HttpResponseMessage> PostCancelSessionAsync(
+        HttpClient client,
+        Guid sessionId,
+        string antiforgeryToken)
+    {
+        var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"/api/v1/exam-sessions/{sessionId}/cancel");
         request.Headers.Add("X-XSRF-TOKEN", antiforgeryToken);
         return client.SendAsync(request);
     }

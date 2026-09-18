@@ -107,13 +107,9 @@ public sealed class HomePageTests
                 "class=\"button button-primary exam-action launcher-start-exam\""));
         Assert.Contains("data-assignment-id=\"student1-exam1\"", content);
         Assert.Contains("data-assignment-id=\"student1-exam2\"", content);
-        Assert.Contains(
-            "data-exam-title=\"Mathématiques secondaire 4 — Modélisation financière\"",
-            content);
-        Assert.Contains(
-            "data-exam-title=\"Sciences secondaire 4 — Analyse de données\"",
-            content);
+        Assert.DoesNotContain("data-exam-title", content);
         Assert.Contains("id=\"launcher-status\"", content);
+        Assert.Contains("id=\"launcher-antiforgery\"", content);
         Assert.DoesNotContain("data-preview-", content);
         Assert.DoesNotContain("profile-preview-dialog", content);
         Assert.Contains("launcher-bridge.js", content);

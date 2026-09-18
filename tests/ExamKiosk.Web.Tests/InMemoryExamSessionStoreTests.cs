@@ -73,6 +73,80 @@ public sealed class InMemoryExamSessionStoreTests
     }
 
     [Fact]
+    public void Cancel_WhenSessionIsStarting_CancelsAndAllowsAnotherStart()
+    {
+        var store = new InMemoryExamSessionStore(
+            new TestTimeProvider(DateTimeOffset.UtcNow));
+        var first = store.Start("student@example.com", CreateProfile());
+
+        var cancellation = store.Cancel(
+            "student@example.com",
+            first.Session.SessionId);
+        var second = store.Start("student@example.com", CreateProfile());
+
+        Assert.Equal(
+            ExamSessionCancellationStatus.Cancelled,
+            cancellation.Status);
+        Assert.Equal(ExamSessionState.Cancelled, cancellation.Session?.State);
+        Assert.Null(cancellation.Session?.ExpiresAtUtc);
+        Assert.True(second.Created);
+    }
+
+    [Fact]
+    public void Cancel_WhenAlreadyCancelled_IsIdempotent()
+    {
+        var store = new InMemoryExamSessionStore(
+            new TestTimeProvider(DateTimeOffset.UtcNow));
+        var started = store.Start("student@example.com", CreateProfile());
+        var first = store.Cancel(
+            "student@example.com",
+            started.Session.SessionId);
+
+        var second = store.Cancel(
+            "STUDENT@example.com",
+            started.Session.SessionId);
+
+        Assert.Equal(
+            ExamSessionCancellationStatus.Cancelled,
+            second.Status);
+        Assert.Equal(first.Session, second.Session);
+    }
+
+    [Fact]
+    public void Cancel_WhenSessionBelongsToAnotherStudent_ReturnsNotFound()
+    {
+        var store = new InMemoryExamSessionStore(
+            new TestTimeProvider(DateTimeOffset.UtcNow));
+        var started = store.Start("student@example.com", CreateProfile());
+
+        var result = store.Cancel(
+            "other@example.com",
+            started.Session.SessionId);
+
+        Assert.Equal(ExamSessionCancellationStatus.NotFound, result.Status);
+        Assert.Null(result.Session);
+        Assert.Equal(
+            ExamSessionState.Starting,
+            store.Get(started.Session.SessionId)?.State);
+    }
+
+    [Fact]
+    public void Cancel_WhenStartingSessionExpired_ReturnsConflict()
+    {
+        var timeProvider = new TestTimeProvider(DateTimeOffset.UtcNow);
+        var store = new InMemoryExamSessionStore(timeProvider);
+        var started = store.Start("student@example.com", CreateProfile());
+        timeProvider.Advance(InMemoryExamSessionStore.StartingLifetime);
+
+        var result = store.Cancel(
+            "student@example.com",
+            started.Session.SessionId);
+
+        Assert.Equal(ExamSessionCancellationStatus.Conflict, result.Status);
+        Assert.Equal(ExamSessionState.Expired, result.Session?.State);
+    }
+
+    [Fact]
     public void Start_WhenProfileBelongsToAnotherStudent_Throws()
     {
         var store = new InMemoryExamSessionStore(
