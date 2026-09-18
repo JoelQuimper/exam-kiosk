@@ -286,8 +286,28 @@ public partial class MainWindow : Window
         Guid requestId,
         LauncherExamDescriptor exam)
     {
+        var profileSha256 = EffectiveProfileDigest.Compute(exam.Profile);
+        diagnosticLog.Write(
+            "start-profile-received",
+            new
+            {
+                requestId,
+                exam.SessionId,
+                profileSha256,
+                profile = exam.Profile,
+            });
+
         if (startInProgress)
         {
+            diagnosticLog.Write(
+                "start-profile-rejected",
+                new
+                {
+                    requestId,
+                    exam.SessionId,
+                    profileSha256,
+                    reason = "busy",
+                });
             PostBridgeResponse(
                 "startExamResult",
                 requestId,
@@ -309,12 +329,22 @@ public partial class MainWindow : Window
                 AppResources.StartExam,
                 AppResources.PreparingDevice,
                 AppResources.PreparationFailed,
-                () => AgentClient.SendAsync(
-                    AgentCommand.StartExam,
+                () => AgentClient.StartExamAsync(
+                    new AgentStartExamPayload(
+                        exam.SessionId,
+                        exam.Profile),
                     TimeSpan.FromSeconds(30)));
             dialog.ShowDialog();
             if (dialog.WasCancelled)
             {
+                diagnosticLog.Write(
+                    "start-profile-cancelled",
+                    new
+                    {
+                        requestId,
+                        exam.SessionId,
+                        profileSha256,
+                    });
                 PostBridgeResponse(
                     "startExamResult",
                     requestId,
@@ -324,14 +354,35 @@ public partial class MainWindow : Window
             }
 
             var response = dialog.Response;
+            diagnosticLog.Write(
+                "start-agent-result",
+                new
+                {
+                    requestId,
+                    exam.SessionId,
+                    profileSha256,
+                    success = response?.Success == true,
+                    state = response?.State.ToString(),
+                    response?.RestartAtUtc,
+                });
             PostBridgeResponse(
                 "startExamResult",
                 requestId,
                 response?.Success == true ? "accepted" : "failed",
                 response?.Success == true ? AppResources.PreparingDevice : AppResources.PreparationFailed);
         }
-        catch (Exception)
+        catch (Exception exception)
         {
+            diagnosticLog.Write(
+                "start-agent-failed",
+                new
+                {
+                    requestId,
+                    exam.SessionId,
+                    profileSha256,
+                    exceptionType = exception.GetType().FullName,
+                    exception.Message,
+                });
             PostBridgeResponse(
                 "startExamResult",
                 requestId,

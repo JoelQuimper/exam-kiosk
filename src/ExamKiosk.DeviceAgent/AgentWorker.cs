@@ -64,14 +64,14 @@ public sealed class AgentWorker(
                 throw new InvalidDataException("The request body is invalid.");
             }
 
-            if (request.ProtocolVersion != AgentProtocol.Version)
+            if (!AgentProtocol.TryValidateRequest(request, out var validationError))
             {
                 response = new AgentResponse(
                     AgentProtocol.Version,
                     request.RequestId,
                     false,
                     transitionManager.CurrentState,
-                    "The client protocol version is not supported.");
+                    validationError!);
             }
             else if (!TryAuthorizeClient(pipe, request.Command, out var clientName))
             {

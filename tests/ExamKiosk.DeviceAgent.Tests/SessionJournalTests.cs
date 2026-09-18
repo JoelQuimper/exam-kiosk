@@ -50,6 +50,25 @@ public sealed class SessionJournalTests
         Assert.Equal("test failure", step.Error);
     }
 
+    [Fact]
+    public async Task Journal_BeginWithProfileReceipt_PersistsBackendSession()
+    {
+        using var temporaryDirectory = new TemporaryDirectory();
+        var journalPath = Path.Combine(temporaryDirectory.Path, "session-journal.json");
+        var journal = new SessionJournal(journalPath);
+        var sessionId = Guid.NewGuid();
+
+        await journal.BeginAsync(
+            sessionId,
+            "abc123",
+            CancellationToken.None);
+
+        var reloaded = new SessionJournal(journalPath).Current;
+        Assert.NotNull(reloaded);
+        Assert.Equal(sessionId, reloaded.SessionId);
+        Assert.Equal("abc123", reloaded.ProfileSha256);
+    }
+
     private sealed class TemporaryDirectory : IDisposable
     {
         internal TemporaryDirectory()

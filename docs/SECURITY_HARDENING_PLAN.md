@@ -14,8 +14,9 @@ Agent trusts remotely composed profiles.
 - Response request IDs must match their request.
 - Privileged PowerShell uses fixed Agent-owned scripts and structured argument
   lists.
-- Current requests do not provide script paths, commands, filesystem
-  destinations, or Assigned Access XML to `LocalSystem`.
+- The transported profile now contains Assigned Access XML and artifact
+  metadata, but current privileged execution does not use those fields for
+  scripts, commands, filesystem destinations, or applied configuration.
 
 These controls reduce the attack surface but do not fully authenticate the
 interactive client or the named-pipe server.
@@ -46,7 +47,7 @@ checks, including a user in another interactive or remote session.
 
 ## Finding 2 - Authenticate the named-pipe server
 
-**Priority:** Low before profile transport; higher once profiles cross the pipe  
+**Priority:** Medium now that profiles cross the pipe
 **Confidence:** High
 
 Clients currently connect using only the public pipe name. If the service is
@@ -68,9 +69,10 @@ status or transition responses.
 
 ## Gate before dynamic profile enforcement
 
-Before a Web-generated profile can affect privileged state, the Agent must:
+The Agent now receives a transport DTO containing the session ID and profile.
+Before that Web-generated profile can affect privileged state, the Agent must:
 
-- receive a session ID and a signature-ready profile envelope;
+- replace or wrap the transport DTO with a signature-ready profile envelope;
 - authenticate and integrity-bind the profile to its backend assignment,
   student, device, and expiration;
 - reject replayed, expired, unsigned, or mismatched envelopes;

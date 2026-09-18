@@ -215,9 +215,20 @@ The Launcher and Restricted Client write bounded JSON-lines diagnostics to:
 ```
 
 Navigation entries contain only the origin and path. Query strings, fragments,
-page content, cookies, and authentication tokens are not recorded. Each log
-rotates at 5 MB and retains one previous file. These student-writable diagnostic
-logs are useful for troubleshooting but are not an authoritative audit record.
+page content, cookies, and authentication tokens are not recorded. When an
+exam start is prepared, the Launcher log records the Web session ID,
+deterministic profile digest, complete effective profile, exact Assigned Access
+XML, Edge policy, shortcut artifacts, and Agent transition result. These
+configuration entries contain student identity, exam URLs, executable paths,
+and policy data and must be handled as sensitive operational diagnostics.
+
+Each log rotates at 5 MB and retains one previous file. These student-writable
+diagnostic logs are useful for troubleshooting but are not an authoritative
+audit record. The Device Agent enforcement receipt is the local authority for
+what it accepted, and the backend must eventually receive protected audit
+events. Once dynamic enforcement is implemented, the Agent must record the
+exact configuration it actually applied; a Launcher entry records what was
+requested, not proof that Windows applied it.
 
 ### Administrator recovery
 

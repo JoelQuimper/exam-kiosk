@@ -119,6 +119,33 @@ public sealed class TransitionManagerTests
     }
 
     [Fact]
+    public async Task StartExam_PersistsSessionAndProfileReceiptBeforeApply()
+    {
+        using var directory = new TemporaryDirectory();
+        var scripts = new ScriptSequence(
+            ("Start-Exam.ps1", "applied", null),
+            ("Get-ExamMode.ps1", "Configured", null));
+        var manager = CreateManager(directory.Path, scripts);
+        var request = StartRequest();
+
+        var response = await manager.HandleAsync(
+            request,
+            CancellationToken.None);
+
+        var journal = new SessionJournal(
+            Path.Combine(directory.Path, "session-journal.json")).Current;
+        Assert.True(response.Success);
+        Assert.NotNull(journal);
+        Assert.Equal(request.StartExam!.SessionId, journal.SessionId);
+        Assert.Equal(
+            EffectiveProfileDigest.Compute(request.StartExam.Profile),
+            journal.ProfileSha256);
+        Assert.Equal("ProfileReceived", journal.Steps[0].Name);
+        Assert.Equal("completed", journal.Steps[0].Status);
+        Assert.Equal("AssignedAccessApply", journal.Steps[1].Name);
+    }
+
+    [Fact]
     public async Task StartExam_WhenReadBackVerificationFails_DoesNotScheduleRestart()
     {
         using var directory = new TemporaryDirectory();
@@ -244,7 +271,10 @@ public sealed class TransitionManagerTests
         new(
             AgentProtocol.Version,
             Guid.NewGuid(),
-            AgentCommand.StartExam);
+            AgentCommand.StartExam,
+            new AgentStartExamPayload(
+                Guid.NewGuid(),
+                EffectiveProfileTestData.Create()));
 
     private static void AssertRecoveryJournal(
         string dataDirectory,

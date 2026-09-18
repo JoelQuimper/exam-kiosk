@@ -10,8 +10,8 @@ be understood, tested, and demonstrated independently.
   including Assigned Access XML, shortcut artifacts, and Edge policy.
 - The Launcher page atomically creates a `Starting` session and transports its
   ID and immutable profile through bridge protocol version 3.
-- The Device Agent still receives a command without a profile and applies its
-  fixed Assigned Access XML.
+- The Device Agent receives the session ID and immutable profile, persists
+  their local receipt, and still applies its fixed Assigned Access XML.
 - The Restricted Client still relies on the local Agent state and opens a
   placeholder URL.
 
@@ -76,12 +76,21 @@ Implemented on 2026-09-18:
 
 ## Step 3 - Launcher-to-Agent profile transport
 
-- Add a typed Agent start request containing the session ID and effective
-  profile.
-- Increase and enforce the bounded named-pipe message size.
-- Increment the Agent protocol version.
-- Persist the received session ID and profile digest without changing dynamic
-  Windows configuration yet.
+Implemented on 2026-09-18:
+
+- Agent protocol version 2 and pipe name `ExamKiosk.DeviceAgent.v2`;
+- a typed `StartExam` payload containing the Web session ID and immutable
+  effective profile;
+- a 256 KiB request limit enforced by both client and service;
+- command-specific payload validation;
+- Launcher forwarding of the bridge-validated session and profile;
+- a Launcher diagnostic snapshot containing the complete requested profile,
+  exact Assigned Access XML, Edge policy, shortcuts, and deterministic digest;
+- local journal persistence of the Web session ID and deterministic profile
+  SHA-256 before privileged application begins.
+
+The Agent still applies the packaged fixed XML. Profile semantics and dynamic
+enforcement remain Steps 4 and 5.
 
 Before Step 3 is enabled outside the development PoC, complete the applicable
 named-pipe identity work in

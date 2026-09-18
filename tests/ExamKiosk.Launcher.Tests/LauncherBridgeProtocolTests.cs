@@ -101,6 +101,33 @@ public sealed class LauncherBridgeProtocolTests
         Assert.Null(request);
     }
 
+    [Fact]
+    public void DiagnosticProfileSnapshot_SerializesExactAssignedAccessXml()
+    {
+        var profile = JsonSerializer.Deserialize<EffectiveExamProfile>(
+            CreateProfileJson(),
+            AgentProtocol.SerializerOptions);
+        Assert.NotNull(profile);
+
+        var snapshotJson = JsonSerializer.Serialize(
+            new
+            {
+                sessionId = Guid.NewGuid(),
+                profileSha256 = EffectiveProfileDigest.Compute(profile),
+                profile,
+            });
+        using var snapshot = JsonDocument.Parse(snapshotJson);
+
+        Assert.Equal(
+            "<AssignedAccessConfiguration />",
+            snapshot.RootElement
+                .GetProperty("profile")
+                .GetProperty("WindowsConfiguration")
+                .GetProperty("AssignedAccess")
+                .GetProperty("Xml")
+                .GetString());
+    }
+
     private static string CreateProfileJson()
     {
         var profile = new EffectiveExamProfile(

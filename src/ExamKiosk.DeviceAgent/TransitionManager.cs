@@ -130,6 +130,10 @@ public sealed class TransitionManager
         AgentRequest request,
         CancellationToken cancellationToken)
     {
+        if (request.StartExam is not { } startExam)
+        {
+            return Failure(request, "The StartExam payload is required.");
+        }
         if (!CanStartExam(CurrentState))
         {
             return Failure(request, $"An exam cannot start while the agent state is {CurrentState}.");
@@ -138,7 +142,17 @@ public sealed class TransitionManager
         await SetStateAsync(AgentState.EnteringExam, cancellationToken);
         try
         {
-            await sessionJournal.BeginAsync(cancellationToken);
+            var profileSha256 = EffectiveProfileDigest.Compute(
+                startExam.Profile);
+            await sessionJournal.BeginAsync(
+                startExam.SessionId,
+                profileSha256,
+                cancellationToken);
+            await sessionJournal.RecordStepAsync(
+                "ProfileReceived",
+                "completed",
+                null,
+                cancellationToken);
             await sessionJournal.RecordStepAsync(
                 "AssignedAccessApply",
                 "started",
