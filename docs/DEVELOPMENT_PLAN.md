@@ -304,6 +304,29 @@ A required accommodation that is missing or not ready must block exam entry and
 produce a visible readiness failure. The system must not silently fall back to
 the standard profile.
 
+### Resolved prototype policy model
+
+The prototype uses complete backend-owned definitions rather than fixed client
+capability enums. Its durable model separates:
+
+- student identity and exam assignments;
+- exam metadata and the authoritative SharePoint folder;
+- desktop, packaged, and Web tool definitions;
+- applications required for enforcement, including unpinned helper processes;
+- native and Web launch targets;
+- exact Edge blocklist and allowlist values;
+- generated Assigned Access and shortcut artifacts;
+- the immutable effective profile stored with an exam session.
+
+An `ExamSession` has a unique identifier, normalized student identity,
+assignment, immutable effective profile, issue and expiry timestamps, and a
+lifecycle state. The current lifecycle contract includes `Starting`, `Active`,
+`Completing`, `Completed`, `Cancelled`, and `Expired`.
+
+The API is authoritative for assignment ownership, session lifecycle, exam
+metadata, and URLs. The Device Agent persists only the enforcement receipt and
+local information required to reconcile or undo Windows changes.
+
 ## 7. District Extension Model
 
 Each approved tool is represented by a signed, versioned package installed
@@ -351,6 +374,24 @@ The final schema remains to be designed.
 Tools are not assumed to be compatible automatically. Each one requires a
 district certification test covering executables, helper processes, services,
 licensing, protocol handlers, browser extensions, and network dependencies.
+
+### Tool definitions and launch targets
+
+Tools are catalog entities referenced by ID from exams and assignments. A tool
+may contain multiple application definitions because desktop software can
+require helper executables. Applications without a launch target remain
+available to the tool but hidden from Start and the taskbar.
+
+A desktop launch target references a validated application definition. A Web
+launch target contains a backend-owned HTTPS entry URL and required Web
+destinations. Native clients and browser content cannot replace those targets
+with arbitrary paths or URLs.
+
+The initial prototype catalog exercises all supported shapes:
+
+- Microsoft Word as a desktop application;
+- Windows Calculator as a packaged application;
+- Usito Dictionary as a Web-only tool.
 
 ## 8. Assigned Access and AppLocker
 
@@ -413,6 +454,18 @@ not sufficient.
 Conditional Access, interactive MFA, Terms of Use, or other authentication
 requirements may prevent or delay exam entry and must be tested with district
 identity administrators.
+
+### Edge policy ownership
+
+Assigned Access controls whether Edge may run; it does not restrict Edge
+destinations. The backend therefore composes the exact temporary Edge policy
+from the exam workspace, Microsoft authentication dependencies, and assigned
+Web tools. The effective policy blocks all other destinations.
+
+The Agent must independently validate this policy, preserve the values it will
+replace, apply and verify the temporary values, and restore the prior values on
+completion or recovery. It must never indiscriminately delete unrelated
+administrator or MDM policy.
 
 ## 10. Network Architecture
 
@@ -793,11 +846,8 @@ The following decisions should be resolved before or during feasibility work:
 
 ## 19. Immediate Next Steps
 
-1. Select the first supported Windows edition and build for feasibility tests.
-2. Choose one representative SharePoint Office document, one desktop
-   accessibility tool, and one browser-based accommodation.
-3. Define a test district's exam SSID/VLAN and endpoint allowlist.
-4. Write short architecture decision records for the shared local account,
-   Assigned Access ownership, district extension trust, and network layering.
-5. Execute Phase 0 feasibility spikes before committing to the recommended
-  application stack and its production packaging details.
+This document owns long-term architecture and security boundaries. Current
+implementation status and the next executable increment are maintained in
+[IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). Privileged protocol and
+profile-enforcement gates are maintained in
+[SECURITY_HARDENING_PLAN.md](SECURITY_HARDENING_PLAN.md).
