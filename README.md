@@ -67,8 +67,10 @@ Normal student launcher
 ```
 
 The agent accepts only `GetStatus`, `StartExam`, and `FinishExam`. Assigned
-Access XML and PowerShell script paths are fixed agent-owned resources; clients
-cannot provide scripts, commands, executable paths, account names, or XML.
+Access XML and PowerShell script paths are agent-owned resources; clients
+cannot substitute scripts, commands, account names, or XML. `StartExam`
+transports backend-owned executable metadata as part of the immutable exam
+intent, which the Agent validates before generating Windows configuration.
 The service resolves each named-pipe client's process ID and executable path:
 only the installed launcher can request `StartExam`, and only the installed
 restricted client can request `FinishExam`. Both must run in an interactive
@@ -217,10 +219,11 @@ The Launcher and Restricted Client write bounded JSON-lines diagnostics to:
 Navigation entries contain only the origin and path. Query strings, fragments,
 page content, cookies, and authentication tokens are not recorded. When an
 exam start is prepared, the Launcher log records the Web session ID,
-deterministic profile digest, complete effective profile, exact Assigned Access
-XML, Edge policy, shortcut artifacts, and Agent transition result. These
-configuration entries contain student identity, exam URLs, executable paths,
-and policy data and must be handled as sensitive operational diagnostics.
+deterministic profile digest, complete effective exam intent, Edge policy, and
+Agent transition result. These configuration entries contain student identity,
+exam URLs, executable paths, and policy data and must be handled as sensitive
+operational diagnostics. Generated Assigned Access XML and shortcut artifacts
+do not cross the Web-to-Launcher or Launcher-to-Agent boundaries.
 
 Each log rotates at 5 MB and retains one previous file. These student-writable
 diagnostic logs are useful for troubleshooting but are not an authoritative
@@ -230,16 +233,27 @@ events. Once dynamic enforcement is implemented, the Agent must record the
 exact configuration it actually applied; a Launcher entry records what was
 requested, not proof that Windows applied it.
 
-For development comparison, the Device Agent also writes the received
-Assigned Access XML beside the packaged configuration:
+For development comparison, the Device Agent compiles the Windows
+configuration from the validated intent and detected Windows version, then
+writes the generated Assigned Access XML beside the packaged configuration:
 
 ```text
 %ProgramFiles%\ExamKiosk\Agent\Configuration\AssignedAccess.generated.temp.xml
 ```
 
-The file is atomically replaced on each start request. The Agent continues to
-pass only `AssignedAccess.xml` to the MDM Bridge until dynamic enforcement is
-implemented.
+The file is atomically replaced on each valid start request and its SHA-256 is
+recorded in the local session journal. During the current comparison phase,
+the `Start-Exam.ps1` call and automatic restart are temporarily commented out,
+so neither the generated nor packaged configuration is applied.
+
+The Web and Device Agent both execute the platform-neutral
+`ExamKiosk.ProfileValidation` rules on the immutable exam intent. The Agent
+then uses `ExamKiosk.WindowsConfiguration` to select the supported
+Windows-specific generator and validate artifact metadata, SHA-256 integrity,
+bounded secure XML parsing, Exam Kiosk profile identity and naming, Restricted
+Client auto-launch, and the absence of an exam shortcut before writing the
+preview. Device-specific executable, publisher, ACL, reparse-point, and
+current-policy checks remain Agent-only work.
 
 ### Administrator recovery
 

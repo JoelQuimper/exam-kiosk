@@ -172,17 +172,7 @@ public sealed class InMemoryExamSessionStoreTests
                     true,
                     true)),
             [],
-            new EffectiveEdgePolicy(["*"], ["https://example.com"]),
-            new EffectiveWindowsConfiguration(
-                new WindowsClientVersion(10, 0, 22621),
-                new AssignedAccessArtifact(
-                    "windowsAssignedAccessXml",
-                    "2022",
-                    new AssignedAccessSource("generated", 1),
-                    "utf-8",
-                    "digest",
-                    "<AssignedAccessConfiguration />"),
-                []));
+            new EffectiveEdgePolicy(["*"], ["https://example.com"]));
 
     private sealed class TestTimeProvider(DateTimeOffset utcNow) : TimeProvider
     {

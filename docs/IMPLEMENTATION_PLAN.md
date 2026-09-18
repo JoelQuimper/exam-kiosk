@@ -6,12 +6,13 @@ be understood, tested, and demonstrated independently.
 ## Current foundation
 
 - The Web application resolves the authenticated student's assignments.
-- The Web application composes and validates the effective exam profile,
-  including Assigned Access XML, shortcut artifacts, and Edge policy.
+- The Web application composes and validates platform-neutral effective exam
+  intent, including tools and Edge policy.
 - The Launcher page atomically creates a `Starting` session and transports its
-  ID and immutable profile through bridge protocol version 3.
+  ID and immutable intent through bridge protocol version 4.
 - The Device Agent receives the session ID and immutable profile, persists
-  their local receipt, and still applies its fixed Assigned Access XML.
+  their local receipt, validates the intent, detects the local Windows version,
+  and generates and validates the Windows configuration locally.
 - The Restricted Client still relies on the local Agent state and opens a
   placeholder URL.
 
@@ -70,7 +71,8 @@ Implemented on 2026-09-18:
 
 - the Launcher page creates a `Starting` session through the atomic start
   operation and sends its ID and immutable profile to the Launcher;
-- bridge protocol version 3 requires a nonempty session ID;
+- bridge protocol version 4 requires a nonempty session ID and carries no
+  generated Windows artifacts;
 - student cancellation, Launcher busy state, and Agent failure cancel the
   prepared Web session;
 - cancellation is authenticated, antiforgery-protected, owner-scoped, and
@@ -82,21 +84,22 @@ Implemented on 2026-09-18:
 
 Implemented on 2026-09-18:
 
-- Agent protocol version 2 and pipe name `ExamKiosk.DeviceAgent.v2`;
+- Agent protocol version 3 and pipe name `ExamKiosk.DeviceAgent.v3`;
 - a typed `StartExam` payload containing the Web session ID and immutable
-  effective profile;
+  effective exam intent;
 - a 256 KiB request limit enforced by both client and service;
 - command-specific payload validation;
 - Launcher forwarding of the bridge-validated session and profile;
 - a Launcher diagnostic snapshot containing the complete requested profile,
-  exact Assigned Access XML, Edge policy, shortcuts, and deterministic digest;
-- an atomically written `AssignedAccess.generated.temp.xml` preview beside the
-  packaged Agent configuration for manual comparison, without applying it;
+  Edge policy, and deterministic digest, but no generated Windows artifact;
 - local journal persistence of the Web session ID and deterministic profile
   SHA-256 before privileged application begins.
 
-The Agent still applies the packaged fixed XML. Profile semantics and dynamic
-enforcement remain Steps 4 and 5.
+Step 4 added an atomically written `AssignedAccess.generated.temp.xml` preview
+beside the packaged Agent configuration for manual comparison. The
+`Start-Exam.ps1` invocation and automatic restart remain temporarily commented
+out, so no Assigned Access profile is applied during comparison. Dynamic
+enforcement remains Step 5.
 
 Before Step 3 is enabled outside the development PoC, complete the applicable
 named-pipe identity work in
@@ -105,16 +108,25 @@ remains gated on all pre-profile controls in that plan.
 
 ## Step 4 - Agent validation and enforcement receipt
 
-- Independently validate schema versions, Windows version, identifiers, XML
-  digest, paths, shortcuts, and Edge policy.
+- **Implemented in Step 4A:** the shared `ExamKiosk.ProfileValidation` library
+  validates platform-neutral intent in both the Web and Device Agent, including
+  schema, identifiers, URLs, tools, application metadata, pin intent, and Edge
+  policy bounds and consistency.
+- **Implemented in Step 4B:** the Agent detects the actual Windows version and
+  uses `ExamKiosk.WindowsConfiguration` to generate Assigned Access XML and
+  shortcut artifacts locally. The Windows-specific validator verifies artifact
+  metadata, Windows/schema versions, SHA-256, bounded secure XML parsing,
+  profile/default IDs, profile naming, Restricted Client auto-launch, and
+  absence of an exam shortcut before the preview is written.
 - Reject unknown, excessive, malformed, or inconsistent profile data.
 - Persist a local enforcement receipt containing session, assignment, profile
   digest, Assigned Access digest, and completed steps.
 - Keep signature and replay-protection fields ready for production hardening.
 
-## Step 5 - Dynamic Assigned Access and shortcuts
+## Step 5 - Apply dynamic Assigned Access and shortcuts
 
-- Write the validated XML to an administrator-owned temporary location.
+- Promote the locally generated and validated XML from the comparison path to
+  an administrator-owned application path.
 - Verify its digest after writing.
 - Apply that XML instead of the packaged fixed file.
 - Create only the tool shortcut artifacts declared by the profile. The exam

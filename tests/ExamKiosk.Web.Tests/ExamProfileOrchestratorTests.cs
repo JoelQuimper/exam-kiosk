@@ -1,7 +1,5 @@
 using ExamKiosk.Contracts;
-using ExamKiosk.Web.AssignedAccess;
-using ExamKiosk.Web.AssignedAccess.Generators;
-using ExamKiosk.Web.AssignedAccess.Validation;
+using ExamKiosk.ProfileValidation;
 using ExamKiosk.Web.EdgePolicy;
 using ExamKiosk.Web.EdgePolicy.Validation;
 using ExamKiosk.Web.ExamAssignments;
@@ -12,11 +10,7 @@ namespace ExamKiosk.Web.Tests;
 public sealed class ExamProfileOrchestratorTests
 {
     private readonly ExamProfileOrchestrator orchestrator =
-        new(
-            new EdgePolicyFactory(new EdgePolicyConfigurationValidator()),
-            new AssignedAccessFactory(
-                new AssignedAccessConfigurationValidator(),
-                [new AssignedAccess2022XmlGenerator()]));
+        new(new EdgePolicyFactory(new EdgePolicyConfigurationValidator()));
 
     [Fact]
     public void Create_WhenDesktopShortcutDoesNotReferencePrimaryApplication_Throws()
@@ -37,7 +31,7 @@ public sealed class ExamProfileOrchestratorTests
                 new DesktopLaunchTarget("editor", "Editor", true, true)));
         var assignment = ValidAssignment() with { Tools = [tool] };
 
-        var exception = Assert.Throws<InvalidOperationException>(
+        var exception = Assert.Throws<ProfileValidationException>(
             () => orchestrator.Create(
                 "student1@jqdev.onmicrosoft.com",
                 assignment));
@@ -62,7 +56,7 @@ public sealed class ExamProfileOrchestratorTests
                     true)));
         var assignment = ValidAssignment() with { Tools = [tool] };
 
-        var exception = Assert.Throws<InvalidOperationException>(
+        var exception = Assert.Throws<ProfileValidationException>(
             () => orchestrator.Create(
                 "student1@jqdev.onmicrosoft.com",
                 assignment));

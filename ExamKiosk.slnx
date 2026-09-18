@@ -3,13 +3,17 @@
     <Project Path="src/ExamKiosk.Contracts/ExamKiosk.Contracts.csproj" />
     <Project Path="src/ExamKiosk.DeviceAgent/ExamKiosk.DeviceAgent.csproj" />
     <Project Path="src/ExamKiosk.Launcher/ExamKiosk.Launcher.csproj" />
+    <Project Path="src/ExamKiosk.ProfileValidation/ExamKiosk.ProfileValidation.csproj" />
     <Project Path="src/ExamKiosk.RestrictedClient/ExamKiosk.RestrictedClient.csproj" />
     <Project Path="src/ExamKiosk.Web/ExamKiosk.Web.csproj" />
+    <Project Path="src/ExamKiosk.WindowsConfiguration/ExamKiosk.WindowsConfiguration.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ExamKiosk.DeviceAgent.Tests/ExamKiosk.DeviceAgent.Tests.csproj" />
     <Project Path="tests/ExamKiosk.Launcher.Tests/ExamKiosk.Launcher.Tests.csproj" />
+    <Project Path="tests/ExamKiosk.ProfileValidation.Tests/ExamKiosk.ProfileValidation.Tests.csproj" />
     <Project Path="tests/ExamKiosk.RestrictedClient.Tests/ExamKiosk.RestrictedClient.Tests.csproj" />
     <Project Path="tests/ExamKiosk.Web.Tests/ExamKiosk.Web.Tests.csproj" />
+    <Project Path="tests/ExamKiosk.WindowsConfiguration.Tests/ExamKiosk.WindowsConfiguration.Tests.csproj" />
   </Folder>
 </Solution>

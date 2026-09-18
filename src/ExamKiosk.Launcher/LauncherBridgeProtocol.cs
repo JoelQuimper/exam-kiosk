@@ -21,7 +21,7 @@ public sealed record LauncherExamDescriptor(
 
 public static class LauncherBridgeProtocol
 {
-    public const int Version = 3;
+    public const int Version = 4;
     public const int MaximumMessageLength = 262144;
     public const int MaximumExamTitleLength = 200;
 
@@ -113,7 +113,6 @@ public static class LauncherBridgeProtocol
                     || profile.Exam is null
                     || profile.Tools is null
                     || profile.EdgePolicy is null
-                    || profile.WindowsConfiguration is null
                     || !string.Equals(
                         profile.Exam.Title,
                         examTitle,

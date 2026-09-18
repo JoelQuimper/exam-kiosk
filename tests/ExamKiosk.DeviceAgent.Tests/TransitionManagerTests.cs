@@ -1,4 +1,6 @@
+using System.Security.Cryptography;
 using ExamKiosk.Contracts;
+using ExamKiosk.WindowsConfiguration.Models;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ExamKiosk.DeviceAgent.Tests;
@@ -142,21 +144,74 @@ public sealed class TransitionManagerTests
             journal.ProfileSha256);
         Assert.Equal("ProfileReceived", journal.Steps[0].Name);
         Assert.Equal("completed", journal.Steps[0].Status);
-        Assert.Equal("GeneratedAssignedAccessPreview", journal.Steps[1].Name);
-        Assert.Equal("AssignedAccessApply", journal.Steps[2].Name);
+        Assert.Equal("ProfileValidation", journal.Steps[1].Name);
+        Assert.Equal("completed", journal.Steps[1].Status);
+        Assert.Equal("WindowsConfigurationGenerated", journal.Steps[2].Name);
+        Assert.Equal("GeneratedAssignedAccessPreview", journal.Steps[3].Name);
+        Assert.Equal("AssignedAccessApply", journal.Steps[4].Name);
+        var previewPath = Path.Combine(
+            directory.Path,
+            "Configuration",
+            "AssignedAccess.generated.temp.xml");
         Assert.Equal(
-            request.StartExam.Profile.WindowsConfiguration.AssignedAccess.Xml,
-            await File.ReadAllTextAsync(
-                Path.Combine(
-                    directory.Path,
-                    "Configuration",
-                    "AssignedAccess.generated.temp.xml")));
+            journal.AssignedAccessSha256,
+            Convert.ToHexStringLower(
+                SHA256.HashData(await File.ReadAllBytesAsync(previewPath))));
+        Assert.False(
+            File.Exists(
+                previewPath + ".tmp"));
+    }
+
+    [Fact]
+    public async Task StartExam_WhenIntentValidationFails_RejectsBeforeGeneration()
+    {
+        using var directory = new TemporaryDirectory();
+        var scripts = new ScriptSequence();
+        var restartScheduled = false;
+        var manager = CreateManager(
+            directory.Path,
+            scripts,
+            () =>
+            {
+                restartScheduled = true;
+                return DateTimeOffset.UtcNow;
+            });
+        var request = StartRequest();
+        request = request with
+        {
+            StartExam = request.StartExam! with
+            {
+                Profile = request.StartExam.Profile with
+                {
+                    EdgePolicy = request.StartExam.Profile.EdgePolicy with
+                    {
+                        UrlBlocklist = [],
+                    },
+                },
+            },
+        };
+
+        var response = await manager.HandleAsync(request, CancellationToken.None);
+
+        Assert.False(response.Success);
+        Assert.Equal(AgentState.Available, response.State);
+        Assert.Contains("rejected", response.Message);
+        Assert.Empty(scripts.Calls);
+        Assert.False(restartScheduled);
         Assert.False(
             File.Exists(
                 Path.Combine(
                     directory.Path,
                     "Configuration",
-                    "AssignedAccess.generated.temp.xml.tmp")));
+                    "AssignedAccess.generated.temp.xml")));
+
+        var journal = new SessionJournal(
+            Path.Combine(directory.Path, "session-journal.json")).Current;
+        Assert.NotNull(journal);
+        var validationStep = Assert.Single(
+            journal.Steps,
+            step => step.Name == "ProfileValidation");
+        Assert.Equal("failed", validationStep.Status);
     }
 
     [Fact]
@@ -279,7 +334,8 @@ public sealed class TransitionManagerTests
             NullLogger<TransitionManager>.Instance,
             dataDirectory,
             scripts.RunAsync,
-            restartScheduler ?? (() => DateTimeOffset.UtcNow.AddSeconds(5)));
+            restartScheduler ?? (() => DateTimeOffset.UtcNow.AddSeconds(5)),
+            windowsClientVersionProvider: () => new WindowsClientVersion(10, 0, 22621));
 
     private static AgentRequest StartRequest() =>
         new(

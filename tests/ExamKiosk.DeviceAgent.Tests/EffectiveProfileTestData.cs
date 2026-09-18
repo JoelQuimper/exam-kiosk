@@ -4,8 +4,9 @@ namespace ExamKiosk.DeviceAgent.Tests;
 
 internal static class EffectiveProfileTestData
 {
-    internal static EffectiveExamProfile Create() =>
-        new(
+    internal static EffectiveExamProfile Create()
+    {
+        return new(
             1,
             "assignment-1",
             new EffectiveStudent("student@example.com"),
@@ -20,15 +21,6 @@ internal static class EffectiveProfileTestData
                     true,
                     true)),
             [],
-            new EffectiveEdgePolicy(["*"], ["https://example.com"]),
-            new EffectiveWindowsConfiguration(
-                new WindowsClientVersion(10, 0, 22621),
-                new AssignedAccessArtifact(
-                    "windowsAssignedAccessXml",
-                    "2022",
-                    new AssignedAccessSource("generated", 1),
-                    "utf-8",
-                    "digest",
-                    "<AssignedAccessConfiguration />"),
-                []));
+            new EffectiveEdgePolicy(["*"], ["https://example.com"]));
+    }
 }

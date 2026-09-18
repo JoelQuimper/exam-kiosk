@@ -102,7 +102,7 @@ public sealed class LauncherBridgeProtocolTests
     }
 
     [Fact]
-    public void DiagnosticProfileSnapshot_SerializesExactAssignedAccessXml()
+    public void DiagnosticProfileSnapshot_SerializesOnlyEffectiveIntent()
     {
         var profile = JsonSerializer.Deserialize<EffectiveExamProfile>(
             CreateProfileJson(),
@@ -118,14 +118,10 @@ public sealed class LauncherBridgeProtocolTests
             });
         using var snapshot = JsonDocument.Parse(snapshotJson);
 
-        Assert.Equal(
-            "<AssignedAccessConfiguration />",
+        Assert.False(
             snapshot.RootElement
                 .GetProperty("profile")
-                .GetProperty("WindowsConfiguration")
-                .GetProperty("AssignedAccess")
-                .GetProperty("Xml")
-                .GetString());
+                .TryGetProperty("WindowsConfiguration", out _));
     }
 
     private static string CreateProfileJson()
@@ -145,17 +141,7 @@ public sealed class LauncherBridgeProtocolTests
                     true,
                     true)),
             [],
-            new EffectiveEdgePolicy([], []),
-            new EffectiveWindowsConfiguration(
-                new WindowsClientVersion(10, 0, 22621),
-                new AssignedAccessArtifact(
-                    "windowsAssignedAccessXml",
-                    "2022",
-                    new AssignedAccessSource("generated", 1),
-                    "utf-8",
-                    "digest",
-                    "<AssignedAccessConfiguration />"),
-                []));
+            new EffectiveEdgePolicy(["*"], ["https://example.com"]));
 
         return JsonSerializer.Serialize(profile, AgentProtocol.SerializerOptions);
     }

@@ -1,10 +1,12 @@
 using ExamKiosk.DeviceAgent;
+using ExamKiosk.WindowsConfiguration;
 
 var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddWindowsService(options =>
 {
 	options.ServiceName = "Exam Kiosk Device Agent";
 });
+builder.Services.AddSingleton<WindowsConfigurationCompiler>();
 builder.Services.AddSingleton<TransitionManager>();
 builder.Services.AddHostedService<AgentWorker>();
 

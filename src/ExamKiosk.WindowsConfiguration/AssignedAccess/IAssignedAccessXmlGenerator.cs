@@ -1,8 +1,9 @@
 using ExamKiosk.Contracts;
+using ExamKiosk.WindowsConfiguration.Models;
 
-namespace ExamKiosk.Web.AssignedAccess.Generators;
+namespace ExamKiosk.WindowsConfiguration.AssignedAccess;
 
-public interface IAssignedAccessXmlGenerator
+internal interface IAssignedAccessXmlGenerator
 {
     bool Supports(WindowsClientVersion clientVersion);
 

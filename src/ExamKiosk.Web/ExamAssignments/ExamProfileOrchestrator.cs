@@ -1,18 +1,14 @@
 using ExamKiosk.Contracts;
-using ExamKiosk.Web.AssignedAccess;
+using ExamKiosk.ProfileValidation;
 using ExamKiosk.Web.EdgePolicy;
 using ExamKiosk.Web.ExamAssignments.Models;
 
 namespace ExamKiosk.Web.ExamAssignments;
 
-public sealed class ExamProfileOrchestrator(
-    IEdgePolicyFactory edgePolicyFactory,
-    IAssignedAccessFactory assignedAccessFactory)
+public sealed class ExamProfileOrchestrator(IEdgePolicyFactory edgePolicyFactory)
     : IExamProfileOrchestrator
 {
     private const int SchemaVersion = 1;
-    private static readonly WindowsClientVersion PreviewClientWindowsVersion =
-        new(10, 0, 22621);
 
     public EffectiveExamProfile Create(
         string userPrincipalName,
@@ -29,24 +25,20 @@ public sealed class ExamProfileOrchestrator(
             new WebLaunchTarget(
                 assignment.SharePointFolderUrl,
                 "Open exam",
-                true,
-                true));
+                false,
+                false));
         var tools = assignment.Tools.ToArray();
         var edgePolicy = edgePolicyFactory.Create(tools);
         var student = new EffectiveStudent(userPrincipalName.Trim());
-        var windowsConfiguration = assignedAccessFactory.Create(
-            PreviewClientWindowsVersion,
-            student,
-            exam,
-            tools);
 
-        return new EffectiveExamProfile(
+        var profile = new EffectiveExamProfile(
             SchemaVersion,
             assignment.AssignmentId,
             student,
             exam,
             tools,
-            edgePolicy,
-            windowsConfiguration);
+            edgePolicy);
+        EffectiveExamIntentValidator.Validate(profile);
+        return profile;
     }
 }

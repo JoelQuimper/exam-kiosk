@@ -36,18 +36,14 @@ public sealed class AgentProtocolTests
     }
 
     [Fact]
-    public async Task StartExamAsync_WhenProfileExceedsLimit_ThrowsBeforeConnecting()
+    public async Task StartExamAsync_WhenIntentExceedsLimit_ThrowsBeforeConnecting()
     {
         var profile = EffectiveProfileTestData.Create();
-        var oversizedArtifact = profile.WindowsConfiguration.AssignedAccess with
-        {
-            Xml = new string('x', AgentProtocol.MaximumMessageLength),
-        };
         profile = profile with
         {
-            WindowsConfiguration = profile.WindowsConfiguration with
+            Exam = profile.Exam with
             {
-                AssignedAccess = oversizedArtifact,
+                Title = new string('x', AgentProtocol.MaximumMessageLength),
             },
         };
 

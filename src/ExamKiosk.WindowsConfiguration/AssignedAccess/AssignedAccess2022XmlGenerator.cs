@@ -5,15 +5,15 @@ using System.Text.Json.Serialization;
 using System.Xml;
 using System.Xml.Linq;
 using ExamKiosk.Contracts;
-using ExamKiosk.Web.AssignedAccess.Generators.Models;
+using ExamKiosk.WindowsConfiguration.AssignedAccess.Models;
+using ExamKiosk.WindowsConfiguration.Models;
 
-namespace ExamKiosk.Web.AssignedAccess.Generators;
+namespace ExamKiosk.WindowsConfiguration.AssignedAccess;
 
-public sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerator
+internal sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerator
 {
     private const int WindowsNtMajorVersion = 10;
     private const int Windows11Version22H2Build = 22621;
-    private const string ProfileId = "{9A2A490F-10F6-4764-974A-43B19E722C23}";
     private const string ShortcutRoot =
         @"%ALLUSERSPROFILE%\Microsoft\Windows\Start Menu\Programs\Exam Kiosk";
 
@@ -78,10 +78,14 @@ public sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerator
                     AssignedAccessNamespace + "Profiles",
                     new XElement(
                         AssignedAccessNamespace + "Profile",
-                        new XAttribute("Id", ProfileId),
+                        new XAttribute(
+                            "Id",
+                            AssignedAccessProfileConventions.ProfileId),
                         new XAttribute(
                             "Name",
-                            CreateProfileName(student, exam)),
+                            AssignedAccessProfileConventions.CreateProfileName(
+                                student,
+                                exam)),
                         new XElement(
                             AssignedAccessNamespace + "AllAppsList",
                             new XElement(
@@ -107,7 +111,9 @@ public sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerator
                                 "Exam Kiosk")),
                         new XElement(
                             AssignedAccessNamespace + "DefaultProfile",
-                            new XAttribute("Id", ProfileId))))));
+                            new XAttribute(
+                                "Id",
+                                AssignedAccessProfileConventions.ProfileId))))));
 
         var xmlBytes = SerializeXml(document);
         var xml = Encoding.UTF8.GetString(xmlBytes);
@@ -116,27 +122,15 @@ public sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerator
         return new EffectiveWindowsConfiguration(
             clientVersion,
             new AssignedAccessArtifact(
-                "windowsAssignedAccessXml",
-                "2022",
-                new AssignedAccessSource("generated", 1),
-                "utf-8",
+                AssignedAccessProfileConventions.ArtifactFormat,
+                AssignedAccessProfileConventions.ArtifactSchemaVersion,
+                new AssignedAccessSource(
+                    AssignedAccessProfileConventions.ArtifactSourceType,
+                    AssignedAccessProfileConventions.ArtifactGeneratorVersion),
+                AssignedAccessProfileConventions.ContentEncoding,
                 sha256,
                 xml),
             shortcuts);
-    }
-
-    private static string CreateProfileName(
-        EffectiveStudent student,
-        EffectiveExam exam)
-    {
-        var separatorIndex = student.UserPrincipalName.IndexOf('@');
-        if (separatorIndex <= 0)
-        {
-            throw new InvalidOperationException(
-                "The student user principal name does not contain an alias.");
-        }
-
-        return $"EXAM — {student.UserPrincipalName[..separatorIndex]} — {exam.Id}";
     }
 
     private static XElement[] CreateAllowedApps(
@@ -145,7 +139,7 @@ public sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerator
         var applications = new List<XElement>
         {
             DesktopApp(
-                @"%ProgramFiles%\ExamKiosk\RestrictedClient\ExamKiosk.RestrictedClient.exe",
+                AssignedAccessProfileConventions.RestrictedClientPath,
                 autoLaunch: true),
             DesktopApp(
                 @"%ProgramFiles(x86)%\Microsoft\EdgeWebView\Application\*\msedgewebview2.exe"),

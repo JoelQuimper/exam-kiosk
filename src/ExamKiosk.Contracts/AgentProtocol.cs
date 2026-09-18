@@ -7,8 +7,8 @@ namespace ExamKiosk.Contracts;
 
 public static class AgentProtocol
 {
-    public const string PipeName = "ExamKiosk.DeviceAgent.v2";
-    public const int Version = 2;
+    public const string PipeName = "ExamKiosk.DeviceAgent.v3";
+    public const int Version = 3;
     public const int MaximumMessageLength = 262144;
 
     public static JsonSerializerOptions SerializerOptions { get; } = new()
@@ -61,8 +61,7 @@ public static class AgentProtocol
             || payload.Profile.Exam is null
             || string.IsNullOrWhiteSpace(payload.Profile.Exam.Title)
             || payload.Profile.Tools is null
-            || payload.Profile.EdgePolicy is null
-            || payload.Profile.WindowsConfiguration is null)
+            || payload.Profile.EdgePolicy is null)
         {
             error = "The StartExam payload is invalid.";
             return false;

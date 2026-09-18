@@ -1,7 +1,7 @@
 (() => {
     "use strict";
 
-    const protocolVersion = 3;
+    const protocolVersion = 4;
 
     function initialize() {
         const startButtons = Array.from(

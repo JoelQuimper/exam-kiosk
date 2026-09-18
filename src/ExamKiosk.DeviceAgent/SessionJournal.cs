@@ -31,10 +31,25 @@ internal sealed class SessionJournal
         document = new JournalDocument(
             sessionId,
             profileSha256,
+            null,
             AgentState.EnteringExam,
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow,
             []);
+        await WriteAsync(cancellationToken);
+    }
+
+    internal async Task SetAssignedAccessSha256Async(
+        string assignedAccessSha256,
+        CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(assignedAccessSha256);
+        EnsureDocument();
+        document = document! with
+        {
+            AssignedAccessSha256 = assignedAccessSha256,
+            LastUpdatedAtUtc = DateTimeOffset.UtcNow
+        };
         await WriteAsync(cancellationToken);
     }
 
@@ -72,6 +87,7 @@ internal sealed class SessionJournal
     {
         document ??= new JournalDocument(
             Guid.NewGuid(),
+            null,
             null,
             AgentState.Available,
             DateTimeOffset.UtcNow,
@@ -116,6 +132,7 @@ internal sealed class SessionJournal
 internal sealed record JournalDocument(
     Guid SessionId,
     string? ProfileSha256,
+    string? AssignedAccessSha256,
     AgentState State,
     DateTimeOffset StartedAtUtc,
     DateTimeOffset LastUpdatedAtUtc,

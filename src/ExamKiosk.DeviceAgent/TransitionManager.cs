@@ -2,6 +2,9 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using ExamKiosk.Contracts;
+using ExamKiosk.ProfileValidation;
+using ExamKiosk.WindowsConfiguration;
+using ExamKiosk.WindowsConfiguration.Models;
 
 namespace ExamKiosk.DeviceAgent;
 
@@ -19,15 +22,20 @@ public sealed class TransitionManager
         CancellationToken,
         Task<string>>? scriptRunner;
     private readonly Func<DateTimeOffset> restartScheduler;
+    private readonly WindowsConfigurationCompiler windowsConfigurationCompiler;
+    private readonly Func<WindowsClientVersion> windowsClientVersionProvider;
     private bool initialized;
 
-    public TransitionManager(ILogger<TransitionManager> logger)
+    public TransitionManager(
+        ILogger<TransitionManager> logger,
+        WindowsConfigurationCompiler windowsConfigurationCompiler)
         : this(
             logger,
             GetDataDirectory(),
             null,
             null,
-            Path.Combine(AppContext.BaseDirectory, "Configuration"))
+            Path.Combine(AppContext.BaseDirectory, "Configuration"),
+            windowsConfigurationCompiler)
     {
     }
 
@@ -40,11 +48,17 @@ public sealed class TransitionManager
             CancellationToken,
             Task<string>>? scriptRunner,
         Func<DateTimeOffset>? restartScheduler,
-        string? configurationDirectory = null)
+        string? configurationDirectory = null,
+        WindowsConfigurationCompiler? windowsConfigurationCompiler = null,
+        Func<WindowsClientVersion>? windowsClientVersionProvider = null)
     {
         this.logger = logger;
         this.scriptRunner = scriptRunner;
         this.restartScheduler = restartScheduler ?? ScheduleRestart;
+        this.windowsConfigurationCompiler =
+            windowsConfigurationCompiler ?? new WindowsConfigurationCompiler();
+        this.windowsClientVersionProvider =
+            windowsClientVersionProvider ?? GetCurrentWindowsClientVersion;
         this.configurationDirectory = configurationDirectory
             ?? Path.Combine(dataDirectory, "Configuration");
         Directory.CreateDirectory(dataDirectory);
@@ -163,8 +177,76 @@ public sealed class TransitionManager
                 "completed",
                 null,
                 cancellationToken);
+            try
+            {
+                EffectiveExamIntentValidator.Validate(startExam.Profile);
+                await sessionJournal.RecordStepAsync(
+                    "ProfileValidation",
+                    "completed",
+                    null,
+                    cancellationToken);
+            }
+            catch (ProfileValidationException exception)
+            {
+                logger.LogWarning(
+                    exception,
+                    "Rejected invalid effective exam profile");
+                await sessionJournal.RecordStepAsync(
+                    "ProfileValidation",
+                    "failed",
+                    exception.Message,
+                    cancellationToken);
+                await sessionJournal.SetStateAsync(
+                    AgentState.Available,
+                    cancellationToken);
+                await SetStateAsync(
+                    AgentState.Available,
+                    cancellationToken);
+                return Failure(
+                    request,
+                    $"The effective exam profile was rejected: {exception.Message}");
+            }
+
+            EffectiveWindowsConfiguration windowsConfiguration;
+            try
+            {
+                windowsConfiguration = windowsConfigurationCompiler.Compile(
+                    windowsClientVersionProvider(),
+                    startExam.Profile);
+                await sessionJournal.SetAssignedAccessSha256Async(
+                    windowsConfiguration.AssignedAccess.Sha256,
+                    cancellationToken);
+                await sessionJournal.RecordStepAsync(
+                    "WindowsConfigurationGenerated",
+                    "completed",
+                    null,
+                    cancellationToken);
+            }
+            catch (Exception exception)
+                when (exception is ProfileValidationException
+                    or NotSupportedException)
+            {
+                logger.LogWarning(
+                    exception,
+                    "Could not generate a valid Windows configuration");
+                await sessionJournal.RecordStepAsync(
+                    "WindowsConfigurationGenerated",
+                    "failed",
+                    exception.Message,
+                    cancellationToken);
+                await sessionJournal.SetStateAsync(
+                    AgentState.Available,
+                    cancellationToken);
+                await SetStateAsync(
+                    AgentState.Available,
+                    cancellationToken);
+                return Failure(
+                    request,
+                    $"The Windows configuration could not be generated: {exception.Message}");
+            }
+
             await WriteGeneratedAssignedAccessPreviewAsync(
-                startExam.Profile.WindowsConfiguration.AssignedAccess,
+                windowsConfiguration.AssignedAccess,
                 cancellationToken);
             await sessionJournal.RecordStepAsync(
                 "GeneratedAssignedAccessPreview",
@@ -399,6 +481,15 @@ public sealed class TransitionManager
             "Wrote generated Assigned Access preview {PreviewPath} with declared SHA-256 {Sha256}",
             previewPath,
             assignedAccess.Sha256);
+    }
+
+    private static WindowsClientVersion GetCurrentWindowsClientVersion()
+    {
+        var version = Environment.OSVersion.Version;
+        return new WindowsClientVersion(
+            version.Major,
+            version.Minor,
+            version.Build);
     }
 
     private async Task<bool> IsExamModeConfiguredAsync(CancellationToken cancellationToken)

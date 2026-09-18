@@ -1,8 +1,5 @@
 using System.Globalization;
 using ExamKiosk.Web.Authentication;
-using ExamKiosk.Web.AssignedAccess;
-using ExamKiosk.Web.AssignedAccess.Generators;
-using ExamKiosk.Web.AssignedAccess.Validation;
 using ExamKiosk.Web.Components;
 using ExamKiosk.Web.EdgePolicy;
 using ExamKiosk.Web.EdgePolicy.Validation;
@@ -56,15 +53,6 @@ builder.Services.AddRazorComponents();
 builder.Services.AddSingleton<
     IExamAssignmentService,
     BackendStubExamAssignmentService>();
-builder.Services.AddSingleton<
-    IAssignedAccessXmlGenerator,
-    AssignedAccess2022XmlGenerator>();
-builder.Services.AddSingleton<
-    IAssignedAccessFactory,
-    AssignedAccessFactory>();
-builder.Services.AddSingleton<
-    IAssignedAccessConfigurationValidator,
-    AssignedAccessConfigurationValidator>();
 builder.Services.AddSingleton<
     IEdgePolicyConfigurationValidator,
     EdgePolicyConfigurationValidator>();
