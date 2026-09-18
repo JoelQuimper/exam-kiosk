@@ -3,10 +3,10 @@ using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 using ExamKiosk.Contracts;
-using ExamKiosk.ProfileValidation;
-using ExamKiosk.WindowsConfiguration.Models;
+using ExamKiosk.DeviceAgent.WindowsConfiguration;
+using ExamKiosk.DeviceAgent.WindowsConfiguration.Models;
 
-namespace ExamKiosk.WindowsConfiguration.AssignedAccess;
+namespace ExamKiosk.DeviceAgent.WindowsConfiguration.AssignedAccess;
 
 public static class AssignedAccessArtifactValidator
 {
@@ -28,7 +28,7 @@ public static class AssignedAccessArtifactValidator
             || configuration.AssignedAccess is null
             || configuration.Shortcuts is null)
         {
-            throw new ProfileValidationException(
+            throw new WindowsConfigurationException(
                 "The generated Windows configuration is incomplete.");
         }
 
@@ -48,7 +48,7 @@ public static class AssignedAccessArtifactValidator
             || artifact.Sha256 is null
             || artifact.Xml is null)
         {
-            throw new ProfileValidationException(
+            throw new WindowsConfigurationException(
                 "The Assigned Access artifact is incomplete.");
         }
 
@@ -71,14 +71,14 @@ public static class AssignedAccessArtifactValidator
             || artifact.Source.GeneratorVersion
                 != AssignedAccessProfileConventions.ArtifactGeneratorVersion)
         {
-            throw new ProfileValidationException(
+            throw new WindowsConfigurationException(
                 "The Assigned Access artifact metadata is not supported.");
         }
 
         var xmlBytes = Encoding.UTF8.GetBytes(artifact.Xml);
         if (xmlBytes.Length is 0 or > MaximumAssignedAccessXmlBytes)
         {
-            throw new ProfileValidationException(
+            throw new WindowsConfigurationException(
                 "The Assigned Access XML size is invalid.");
         }
 
@@ -88,7 +88,7 @@ public static class AssignedAccessArtifactValidator
                 ExamShortcutFileName,
                 StringComparison.OrdinalIgnoreCase))
         {
-            throw new ProfileValidationException(
+            throw new WindowsConfigurationException(
                 "The Assigned Access XML must not reference an exam shortcut.");
         }
 
@@ -102,7 +102,7 @@ public static class AssignedAccessArtifactValidator
         if (declaredSha256.Length != 64
             || declaredSha256.Any(character => !Uri.IsHexDigit(character)))
         {
-            throw new ProfileValidationException(
+            throw new WindowsConfigurationException(
                 "The Assigned Access SHA-256 value is invalid.");
         }
 
@@ -112,7 +112,7 @@ public static class AssignedAccessArtifactValidator
                 declaredBytes,
                 computedBytes))
         {
-            throw new ProfileValidationException(
+            throw new WindowsConfigurationException(
                 "The Assigned Access SHA-256 does not match the XML content.");
         }
     }
@@ -135,7 +135,7 @@ public static class AssignedAccessArtifactValidator
         }
         catch (XmlException exception)
         {
-            throw new ProfileValidationException(
+            throw new WindowsConfigurationException(
                 "The Assigned Access XML is not a safe, well-formed document.",
                 exception);
         }
@@ -149,7 +149,7 @@ public static class AssignedAccessArtifactValidator
         if (root?.Name
             != AssignedAccessNamespace + "AssignedAccessConfiguration")
         {
-            throw new ProfileValidationException(
+            throw new WindowsConfigurationException(
                 "The Assigned Access XML root element or namespace is invalid.");
         }
 
@@ -172,7 +172,7 @@ public static class AssignedAccessArtifactValidator
                 AssignedAccessProfileConventions.ProfileId,
                 StringComparison.OrdinalIgnoreCase))
         {
-            throw new ProfileValidationException(
+            throw new WindowsConfigurationException(
                 "The default Assigned Access profile ID is invalid.");
         }
     }
@@ -186,7 +186,7 @@ public static class AssignedAccessArtifactValidator
                 AssignedAccessProfileConventions.ProfileId,
                 StringComparison.OrdinalIgnoreCase))
         {
-            throw new ProfileValidationException(
+            throw new WindowsConfigurationException(
                 "The Assigned Access profile ID is invalid.");
         }
 
@@ -198,7 +198,7 @@ public static class AssignedAccessArtifactValidator
                 expectedName,
                 StringComparison.Ordinal))
         {
-            throw new ProfileValidationException(
+            throw new WindowsConfigurationException(
                 "The Assigned Access profile name does not match the effective profile.");
         }
     }
@@ -219,7 +219,7 @@ public static class AssignedAccessArtifactValidator
                 AssignedAccessProfileConventions.RestrictedClientPath,
                 StringComparison.OrdinalIgnoreCase))
         {
-            throw new ProfileValidationException(
+            throw new WindowsConfigurationException(
                 "Restricted Client must be the only auto-launched application.");
         }
     }
@@ -238,7 +238,7 @@ public static class AssignedAccessArtifactValidator
                         ExamShortcutFileName,
                         StringComparison.OrdinalIgnoreCase)))
         {
-            throw new ProfileValidationException(
+            throw new WindowsConfigurationException(
                 "The exam must be opened by Restricted Client, not by an exam shortcut.");
         }
     }
@@ -250,7 +250,7 @@ public static class AssignedAccessArtifactValidator
         var matches = elements?.Take(2).ToArray() ?? [];
         if (matches.Length != 1)
         {
-            throw new ProfileValidationException(errorMessage);
+            throw new WindowsConfigurationException(errorMessage);
         }
 
         return matches[0];

@@ -1,4 +1,4 @@
-namespace ExamKiosk.WindowsConfiguration.Models;
+namespace ExamKiosk.DeviceAgent.WindowsConfiguration.Models;
 
 public sealed record WebWindowsShortcutArtifact(
     string ShortcutId,

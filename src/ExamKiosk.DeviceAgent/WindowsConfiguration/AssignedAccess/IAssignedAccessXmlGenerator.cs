@@ -1,7 +1,7 @@
 using ExamKiosk.Contracts;
-using ExamKiosk.WindowsConfiguration.Models;
+using ExamKiosk.DeviceAgent.WindowsConfiguration.Models;
 
-namespace ExamKiosk.WindowsConfiguration.AssignedAccess;
+namespace ExamKiosk.DeviceAgent.WindowsConfiguration.AssignedAccess;
 
 internal interface IAssignedAccessXmlGenerator
 {

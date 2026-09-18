@@ -1,5 +1,5 @@
 using ExamKiosk.DeviceAgent;
-using ExamKiosk.WindowsConfiguration;
+using ExamKiosk.DeviceAgent.WindowsConfiguration;
 
 var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddWindowsService(options =>

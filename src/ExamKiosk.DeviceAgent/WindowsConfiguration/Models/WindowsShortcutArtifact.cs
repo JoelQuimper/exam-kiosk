@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace ExamKiosk.WindowsConfiguration.Models;
+namespace ExamKiosk.DeviceAgent.WindowsConfiguration.Models;
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(DesktopWindowsShortcutArtifact), "desktop")]

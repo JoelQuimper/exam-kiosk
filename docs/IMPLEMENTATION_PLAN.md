@@ -106,19 +106,17 @@ named-pipe identity work in
 [SECURITY_HARDENING_PLAN.md](SECURITY_HARDENING_PLAN.md). Dynamic enforcement
 remains gated on all pre-profile controls in that plan.
 
-## Step 4 - Agent validation and enforcement receipt
+## Step 4 - Agent generation and enforcement receipt
 
-- **Implemented in Step 4A:** the shared `ExamKiosk.ProfileValidation` library
-  validates platform-neutral intent in both the Web and Device Agent, including
-  schema, identifiers, URLs, tools, application metadata, pin intent, and Edge
-  policy bounds and consistency.
-- **Implemented in Step 4B:** the Agent detects the actual Windows version and
-  uses `ExamKiosk.WindowsConfiguration` to generate Assigned Access XML and
-  shortcut artifacts locally. The Windows-specific validator verifies artifact
-  metadata, Windows/schema versions, SHA-256, bounded secure XML parsing,
-  profile/default IDs, profile naming, Restricted Client auto-launch, and
-  absence of an exam shortcut before the preview is written.
-- Reject unknown, excessive, malformed, or inconsistent profile data.
+- For this PoC, the Web is a controlled stub and its hard-coded effective exam
+  intent is treated as valid rather than duplicated through a separate
+  validation layer.
+- The Agent detects the actual Windows version and
+  uses its self-contained Windows configuration component to generate Assigned
+  Access XML and shortcut artifacts locally. The Windows-specific validator
+  verifies artifact metadata, Windows/schema versions, SHA-256, bounded secure
+  XML parsing, profile/default IDs, profile naming, Restricted Client
+  auto-launch, and absence of an exam shortcut before the preview is written.
 - Persist a local enforcement receipt containing session, assignment, profile
   digest, Assigned Access digest, and completed steps.
 - Keep signature and replay-protection fields ready for production hardening.

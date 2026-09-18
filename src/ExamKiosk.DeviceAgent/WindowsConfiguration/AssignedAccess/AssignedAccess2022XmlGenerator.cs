@@ -5,10 +5,10 @@ using System.Text.Json.Serialization;
 using System.Xml;
 using System.Xml.Linq;
 using ExamKiosk.Contracts;
-using ExamKiosk.WindowsConfiguration.AssignedAccess.Models;
-using ExamKiosk.WindowsConfiguration.Models;
+using ExamKiosk.DeviceAgent.WindowsConfiguration.AssignedAccess.Models;
+using ExamKiosk.DeviceAgent.WindowsConfiguration.Models;
 
-namespace ExamKiosk.WindowsConfiguration.AssignedAccess;
+namespace ExamKiosk.DeviceAgent.WindowsConfiguration.AssignedAccess;
 
 internal sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerator
 {

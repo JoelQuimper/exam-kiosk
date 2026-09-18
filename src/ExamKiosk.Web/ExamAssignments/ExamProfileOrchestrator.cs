@@ -1,5 +1,4 @@
 using ExamKiosk.Contracts;
-using ExamKiosk.ProfileValidation;
 using ExamKiosk.Web.EdgePolicy;
 using ExamKiosk.Web.ExamAssignments.Models;
 
@@ -31,14 +30,12 @@ public sealed class ExamProfileOrchestrator(IEdgePolicyFactory edgePolicyFactory
         var edgePolicy = edgePolicyFactory.Create(tools);
         var student = new EffectiveStudent(userPrincipalName.Trim());
 
-        var profile = new EffectiveExamProfile(
+        return new EffectiveExamProfile(
             SchemaVersion,
             assignment.AssignmentId,
             student,
             exam,
             tools,
             edgePolicy);
-        EffectiveExamIntentValidator.Validate(profile);
-        return profile;
     }
 }

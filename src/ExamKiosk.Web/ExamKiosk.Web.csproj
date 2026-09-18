@@ -13,7 +13,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ExamKiosk.Contracts\ExamKiosk.Contracts.csproj" />
-    <ProjectReference Include="..\ExamKiosk.ProfileValidation\ExamKiosk.ProfileValidation.csproj" />
   </ItemGroup>
 
 </Project>

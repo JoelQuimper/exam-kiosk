@@ -1,4 +1,4 @@
-namespace ExamKiosk.WindowsConfiguration.AssignedAccess.Models;
+namespace ExamKiosk.DeviceAgent.WindowsConfiguration.AssignedAccess.Models;
 
 internal sealed record StartPin(
     string? DesktopAppLink,

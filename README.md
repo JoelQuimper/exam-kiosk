@@ -246,14 +246,12 @@ recorded in the local session journal. During the current comparison phase,
 the `Start-Exam.ps1` call and automatic restart are temporarily commented out,
 so neither the generated nor packaged configuration is applied.
 
-The Web and Device Agent both execute the platform-neutral
-`ExamKiosk.ProfileValidation` rules on the immutable exam intent. The Agent
-then uses `ExamKiosk.WindowsConfiguration` to select the supported
-Windows-specific generator and validate artifact metadata, SHA-256 integrity,
-bounded secure XML parsing, Exam Kiosk profile identity and naming, Restricted
-Client auto-launch, and the absence of an exam shortcut before writing the
-preview. Device-specific executable, publisher, ACL, reparse-point, and
-current-policy checks remain Agent-only work.
+For this PoC, the Web is a controlled stub and its hard-coded exam intent is
+treated as valid. The Device Agent's self-contained Windows configuration
+component selects the supported generator and validates its generated artifact
+metadata, SHA-256 integrity, bounded secure XML parsing, Exam Kiosk profile
+identity and naming, Restricted Client auto-launch, and the absence of an exam
+shortcut before writing the preview.
 
 ### Administrator recovery
 

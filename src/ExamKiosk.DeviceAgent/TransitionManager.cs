@@ -2,9 +2,8 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using ExamKiosk.Contracts;
-using ExamKiosk.ProfileValidation;
-using ExamKiosk.WindowsConfiguration;
-using ExamKiosk.WindowsConfiguration.Models;
+using ExamKiosk.DeviceAgent.WindowsConfiguration;
+using ExamKiosk.DeviceAgent.WindowsConfiguration.Models;
 
 namespace ExamKiosk.DeviceAgent;
 
@@ -177,36 +176,6 @@ public sealed class TransitionManager
                 "completed",
                 null,
                 cancellationToken);
-            try
-            {
-                EffectiveExamIntentValidator.Validate(startExam.Profile);
-                await sessionJournal.RecordStepAsync(
-                    "ProfileValidation",
-                    "completed",
-                    null,
-                    cancellationToken);
-            }
-            catch (ProfileValidationException exception)
-            {
-                logger.LogWarning(
-                    exception,
-                    "Rejected invalid effective exam profile");
-                await sessionJournal.RecordStepAsync(
-                    "ProfileValidation",
-                    "failed",
-                    exception.Message,
-                    cancellationToken);
-                await sessionJournal.SetStateAsync(
-                    AgentState.Available,
-                    cancellationToken);
-                await SetStateAsync(
-                    AgentState.Available,
-                    cancellationToken);
-                return Failure(
-                    request,
-                    $"The effective exam profile was rejected: {exception.Message}");
-            }
-
             EffectiveWindowsConfiguration windowsConfiguration;
             try
             {
@@ -223,7 +192,7 @@ public sealed class TransitionManager
                     cancellationToken);
             }
             catch (Exception exception)
-                when (exception is ProfileValidationException
+                when (exception is WindowsConfigurationException
                     or NotSupportedException)
             {
                 logger.LogWarning(

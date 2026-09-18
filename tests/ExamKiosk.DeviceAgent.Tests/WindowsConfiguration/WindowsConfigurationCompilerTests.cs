@@ -3,10 +3,11 @@ using System.Text;
 using System.Text.Json;
 using System.Xml.Linq;
 using ExamKiosk.Contracts;
-using ExamKiosk.WindowsConfiguration.AssignedAccess;
-using ExamKiosk.WindowsConfiguration.Models;
+using ExamKiosk.DeviceAgent.WindowsConfiguration;
+using ExamKiosk.DeviceAgent.WindowsConfiguration.AssignedAccess;
+using ExamKiosk.DeviceAgent.WindowsConfiguration.Models;
 
-namespace ExamKiosk.WindowsConfiguration.Tests;
+namespace ExamKiosk.DeviceAgent.Tests.WindowsConfiguration;
 
 public sealed class WindowsConfigurationCompilerTests
 {

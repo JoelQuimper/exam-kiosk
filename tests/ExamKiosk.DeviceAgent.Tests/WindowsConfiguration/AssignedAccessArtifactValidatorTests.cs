@@ -1,8 +1,8 @@
-using ExamKiosk.ProfileValidation;
-using ExamKiosk.WindowsConfiguration.AssignedAccess;
-using ExamKiosk.WindowsConfiguration.Models;
+using ExamKiosk.DeviceAgent.WindowsConfiguration;
+using ExamKiosk.DeviceAgent.WindowsConfiguration.AssignedAccess;
+using ExamKiosk.DeviceAgent.WindowsConfiguration.Models;
 
-namespace ExamKiosk.WindowsConfiguration.Tests;
+namespace ExamKiosk.DeviceAgent.Tests.WindowsConfiguration;
 
 public sealed class AssignedAccessArtifactValidatorTests
 {
@@ -23,7 +23,7 @@ public sealed class AssignedAccessArtifactValidatorTests
             },
         };
 
-        var exception = Assert.Throws<ProfileValidationException>(
+        var exception = Assert.Throws<WindowsConfigurationException>(
             () => AssignedAccessArtifactValidator.Validate(
                 profile,
                 configuration));
@@ -47,7 +47,7 @@ public sealed class AssignedAccessArtifactValidatorTests
             configuration,
             xml);
 
-        var exception = Assert.Throws<ProfileValidationException>(
+        var exception = Assert.Throws<WindowsConfigurationException>(
             () => AssignedAccessArtifactValidator.Validate(
                 profile,
                 configuration));
@@ -70,7 +70,7 @@ public sealed class AssignedAccessArtifactValidatorTests
             configuration,
             xml);
 
-        var exception = Assert.Throws<ProfileValidationException>(
+        var exception = Assert.Throws<WindowsConfigurationException>(
             () => AssignedAccessArtifactValidator.Validate(
                 profile,
                 configuration));

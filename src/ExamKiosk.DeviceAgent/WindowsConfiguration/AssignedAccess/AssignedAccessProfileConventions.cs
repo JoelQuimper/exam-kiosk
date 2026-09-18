@@ -1,7 +1,7 @@
 using ExamKiosk.Contracts;
-using ExamKiosk.ProfileValidation;
+using ExamKiosk.DeviceAgent.WindowsConfiguration;
 
-namespace ExamKiosk.WindowsConfiguration.AssignedAccess;
+namespace ExamKiosk.DeviceAgent.WindowsConfiguration.AssignedAccess;
 
 public static class AssignedAccessProfileConventions
 {
@@ -27,14 +27,14 @@ public static class AssignedAccessProfileConventions
 
         if (string.IsNullOrWhiteSpace(student.UserPrincipalName))
         {
-            throw new ProfileValidationException(
+            throw new WindowsConfigurationException(
                 "The student user principal name is required.");
         }
 
         var separatorIndex = student.UserPrincipalName.IndexOf('@');
         if (separatorIndex <= 0)
         {
-            throw new ProfileValidationException(
+            throw new WindowsConfigurationException(
                 "The student user principal name does not contain an alias.");
         }
 

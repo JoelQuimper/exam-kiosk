@@ -1,9 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
 using ExamKiosk.Contracts;
-using ExamKiosk.WindowsConfiguration.Models;
+using ExamKiosk.DeviceAgent.WindowsConfiguration.Models;
 
-namespace ExamKiosk.WindowsConfiguration.Tests;
+namespace ExamKiosk.DeviceAgent.Tests.WindowsConfiguration;
 
 internal static class WindowsConfigurationTestData
 {

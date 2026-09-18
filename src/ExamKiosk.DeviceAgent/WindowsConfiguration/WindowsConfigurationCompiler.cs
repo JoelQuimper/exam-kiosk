@@ -1,8 +1,8 @@
 using ExamKiosk.Contracts;
-using ExamKiosk.WindowsConfiguration.AssignedAccess;
-using ExamKiosk.WindowsConfiguration.Models;
+using ExamKiosk.DeviceAgent.WindowsConfiguration.AssignedAccess;
+using ExamKiosk.DeviceAgent.WindowsConfiguration.Models;
 
-namespace ExamKiosk.WindowsConfiguration;
+namespace ExamKiosk.DeviceAgent.WindowsConfiguration;
 
 public sealed class WindowsConfigurationCompiler
 {
