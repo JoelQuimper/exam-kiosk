@@ -114,7 +114,7 @@ public sealed class AssignedAccessXmlGeneratorTests
     }
 
     [Fact]
-    public void Create_UsesStartAndTaskbarPinsForAllRequestedTargets()
+    public void Create_UsesStartAndTaskbarPinsForRequestedToolsOnly()
     {
         var profile = CreateStudent3Profile();
         var document = XDocument.Parse(profile.WindowsConfiguration.AssignedAccess.Xml);
@@ -128,7 +128,7 @@ public sealed class AssignedAccessXmlGeneratorTests
             .EnumerateArray()
             .ToArray();
 
-        Assert.Contains(
+        Assert.DoesNotContain(
             pinnedList,
             pin => pin.TryGetProperty("desktopAppLink", out var value)
                 && value.GetString()
@@ -158,7 +158,7 @@ public sealed class AssignedAccessXmlGeneratorTests
             .Descendants(TaskbarNamespace + "DesktopApp")
             .Select(element => (string?)element.Attribute("DesktopApplicationLinkPath"))
             .ToArray();
-        Assert.Contains(
+        Assert.DoesNotContain(
             @"%ALLUSERSPROFILE%\Microsoft\Windows\Start Menu\Programs\Exam Kiosk\exam.lnk",
             taskbarLinks);
         Assert.Contains(
@@ -178,11 +178,9 @@ public sealed class AssignedAccessXmlGeneratorTests
     {
         var shortcuts = CreateStudent3Profile().WindowsConfiguration.Shortcuts;
 
-        var exam = Assert.IsType<WebWindowsShortcutArtifact>(
-            shortcuts.Single(shortcut => shortcut.ShortcutId == "exam"));
-        Assert.Equal(
-            "https://jqdev.sharepoint.com/sites/ExamSite/Shared%20Documents/Student3-Exam2",
-            exam.EntryUrl.AbsoluteUri);
+        Assert.DoesNotContain(
+            shortcuts,
+            shortcut => shortcut.ShortcutId == "exam");
 
         var word = Assert.IsType<DesktopWindowsShortcutArtifact>(
             shortcuts.Single(

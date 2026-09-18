@@ -113,7 +113,9 @@ remains gated on all pre-profile controls in that plan.
 - Write the validated XML to an administrator-owned temporary location.
 - Verify its digest after writing.
 - Apply that XML instead of the packaged fixed file.
-- Create only the shortcut artifacts declared by the profile.
+- Create only the tool shortcut artifacts declared by the profile. The exam
+  itself is opened by the auto-launched Restricted Client and is not represented
+  by a persistent `.lnk` file.
 - Verify Assigned Access after application.
 - Roll back partial changes after failure.
 
@@ -138,9 +140,15 @@ remains gated on all pre-profile controls in that plan.
 ## Step 8 - Open the real exam destination
 
 - Increment the Restricted Client bridge protocol.
-- Send the active session's authorized URL to native code.
+- Retrieve the active session's authorized URL through the Device Agent and
+  send it to native code.
 - Remove the fixed example URL.
 - Validate that the URL belongs to the active session before opening Edge.
+- Keep **Open Exam** available for the full active session so the student can
+  relaunch Edge after closing it. Disable it only while a launch request is in
+  flight, then re-enable it whether that request succeeds or fails.
+- Keep the Restricted Client itself open while the Agent reports `InExam`, and
+  fail closed when Agent status cannot be verified.
 - Keep all arbitrary URLs unavailable to untrusted Web content.
 
 ## Step 9 - Coordinated completion

@@ -62,10 +62,10 @@ public sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerator
                 nameof(clientVersion));
         }
 
-        var shortcuts = CreateShortcuts(exam, tools);
+        var shortcuts = CreateShortcuts(tools);
         var allowedApps = CreateAllowedApps(tools);
-        var startPins = CreateStartPins(exam, tools, shortcuts);
-        var taskbarLayout = CreateTaskbarLayout(exam, tools, shortcuts);
+        var startPins = CreateStartPins(tools, shortcuts);
+        var taskbarLayout = CreateTaskbarLayout(tools, shortcuts);
         var document = new XDocument(
             new XDeclaration("1.0", "utf-8", null),
             new XElement(
@@ -161,20 +161,9 @@ public sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerator
     }
 
     private static IReadOnlyList<WindowsShortcutArtifact> CreateShortcuts(
-        EffectiveExam exam,
         IReadOnlyList<ToolDefinition> tools)
     {
         var shortcuts = new List<WindowsShortcutArtifact>();
-        if (exam.LaunchTarget.PinToStart || exam.LaunchTarget.PinToTaskbar)
-        {
-            shortcuts.Add(
-                new WebWindowsShortcutArtifact(
-                "exam",
-                LinkPath("exam"),
-                exam.LaunchTarget.Label,
-                exam.LaunchTarget.EntryUrl));
-        }
-
         foreach (var tool in tools)
         {
             WindowsShortcutArtifact? shortcut = tool switch
@@ -213,16 +202,10 @@ public sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerator
     }
 
     private static string CreateStartPins(
-        EffectiveExam exam,
         IReadOnlyList<ToolDefinition> tools,
         IReadOnlyList<WindowsShortcutArtifact> shortcuts)
     {
         var pins = new List<StartPin>();
-        if (exam.LaunchTarget.PinToStart)
-        {
-            pins.Add(new StartPin(FindShortcut(shortcuts, "exam").LinkPath, null));
-        }
-
         foreach (var tool in tools)
         {
             switch (tool)
@@ -260,16 +243,10 @@ public sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerator
     }
 
     private static string CreateTaskbarLayout(
-        EffectiveExam exam,
         IReadOnlyList<ToolDefinition> tools,
         IReadOnlyList<WindowsShortcutArtifact> shortcuts)
     {
         var pinList = new XElement(TaskbarNamespace + "TaskbarPinList");
-        if (exam.LaunchTarget.PinToTaskbar)
-        {
-            pinList.Add(TaskbarDesktopPin(FindShortcut(shortcuts, "exam").LinkPath));
-        }
-
         foreach (var tool in tools)
         {
             switch (tool)
