@@ -97,8 +97,8 @@ Implemented on 2026-09-18:
 
 Step 4 added an atomically written `AssignedAccess.generated.temp.xml` beside
 the packaged Agent configuration. Step 5A now passes that generated file to
-`Start-Exam.ps1` and verifies the configured profile. Automatic restart remains
-temporarily commented out so the operator controls reboot during PoC testing.
+`Start-Exam.ps1`, verifies the configured profile, and restarts Windows after
+the application-owned countdown.
 
 Before Step 3 is enabled outside the development PoC, complete the applicable
 named-pipe identity work in

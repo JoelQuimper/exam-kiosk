@@ -154,6 +154,7 @@
                         await cancelSession(sessionId);
                     }
                     status.textContent = status.dataset.unavailable;
+                    setStartButtonsDisabled(false);
                 }
             });
         });

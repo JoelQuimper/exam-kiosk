@@ -14,7 +14,8 @@ public sealed class ExamAssignmentsController(
     IExamAssignmentService examAssignmentService,
     IExamProfileOrchestrator examProfileOrchestrator,
     IExamSessionStore examSessionStore,
-    IAntiforgery antiforgery) : ControllerBase
+    IAntiforgery antiforgery,
+    ILogger<ExamAssignmentsController> logger) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType<IReadOnlyList<ExamAssignmentResponse>>(
@@ -75,8 +76,18 @@ public sealed class ExamAssignmentsController(
             userPrincipalName,
             assignment);
         var result = examSessionStore.Start(userPrincipalName, profile);
-        return result.Created
-            ? StatusCode(StatusCodes.Status201Created, result.Session)
-            : Conflict(result.Session);
+        if (result.Created)
+        {
+            return StatusCode(StatusCodes.Status201Created, result.Session);
+        }
+
+        logger.LogWarning(
+            "Exam session start rejected for assignment {AssignmentId}: "
+            + "session {SessionId} is already {SessionState} until {ExpiresAtUtc}",
+            assignmentId,
+            result.Session.SessionId,
+            result.Session.State,
+            result.Session.ExpiresAtUtc);
+        return Conflict(result.Session);
     }
 }

@@ -399,7 +399,7 @@ public sealed class TransitionManager
                 null,
                 cancellationToken);
             await sessionJournal.SetStateAsync(AgentState.Available, cancellationToken);
-            var restartAtUtc = ScheduleRestart();
+            var restartAtUtc = restartScheduler();
             await sessionJournal.RecordStepAsync(
                 "Restart",
                 "scheduled",
@@ -576,8 +576,7 @@ public sealed class TransitionManager
     private DateTimeOffset ScheduleRestart()
     {
         var restartAtUtc = DateTimeOffset.UtcNow.AddSeconds(RestartSchedule.DelaySeconds);
-        // Temporarily disabled while comparing fixed and generated Assigned Access XML.
-        // _ = RestartAtAsync(restartAtUtc);
+        _ = RestartAtAsync(restartAtUtc);
         return restartAtUtc;
     }
 
