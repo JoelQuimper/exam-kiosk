@@ -187,7 +187,10 @@ internal sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerat
                             .Single(application =>
                                 application.ApplicationId
                                 == desktop.Configuration.LaunchTarget.ApplicationId)
-                            is DesktopExecutableDefinition =>
+                            is DesktopExecutableDefinition
+                            {
+                                DesktopApplicationId: null,
+                            } =>
                     new DesktopWindowsShortcutArtifact(
                         $"tool-{tool.ToolId}",
                         LinkPath($"tool-{tool.ToolId}"),
@@ -229,13 +232,28 @@ internal sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerat
                             candidate.ApplicationId
                             == desktop.Configuration.LaunchTarget.ApplicationId);
                     pins.Add(
-                        application is PackagedApplicationDefinition packaged
-                            ? new StartPin(null, packaged.AppUserModelId)
-                            : new StartPin(
-                                FindShortcut(
-                                    shortcuts,
-                                    $"tool-{tool.ToolId}").LinkPath,
-                                null));
+                        application switch
+                        {
+                            PackagedApplicationDefinition packaged =>
+                                new StartPin(null, null, packaged.AppUserModelId),
+                            DesktopExecutableDefinition
+                            {
+                                DesktopApplicationId: not null,
+                            } executable =>
+                                new StartPin(
+                                    null,
+                                    executable.DesktopApplicationId,
+                                    null),
+                            DesktopExecutableDefinition =>
+                                new StartPin(
+                                    FindShortcut(
+                                        shortcuts,
+                                        $"tool-{tool.ToolId}").LinkPath,
+                                    null,
+                                    null),
+                            _ => throw new InvalidOperationException(
+                                $"Application '{application.ApplicationId}' has an unsupported type."),
+                        });
                     break;
                 case WebToolDefinition web
                     when web.Configuration.LaunchTarget.PinToStart:
@@ -244,6 +262,7 @@ internal sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerat
                             FindShortcut(
                                 shortcuts,
                                 $"tool-{tool.ToolId}").LinkPath,
+                            null,
                             null));
                     break;
             }
@@ -270,21 +289,33 @@ internal sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerat
                             candidate.ApplicationId
                             == desktop.Configuration.LaunchTarget.ApplicationId);
                     pinList.Add(
-                        application is PackagedApplicationDefinition packaged
-                            ? new XElement(
-                                TaskbarNamespace + "UWA",
-                                new XAttribute(
-                                    "AppUserModelID",
-                                    packaged.AppUserModelId))
-                            : TaskbarDesktopPin(
-                                FindShortcut(
-                                    shortcuts,
-                                    $"tool-{tool.ToolId}").LinkPath));
+                        application switch
+                        {
+                            PackagedApplicationDefinition packaged =>
+                                new XElement(
+                                    TaskbarNamespace + "UWA",
+                                    new XAttribute(
+                                        "AppUserModelID",
+                                        packaged.AppUserModelId)),
+                            DesktopExecutableDefinition
+                            {
+                                DesktopApplicationId: not null,
+                            } executable =>
+                                TaskbarDesktopPinById(
+                                    executable.DesktopApplicationId),
+                            DesktopExecutableDefinition =>
+                                TaskbarDesktopPinByLink(
+                                    FindShortcut(
+                                        shortcuts,
+                                        $"tool-{tool.ToolId}").LinkPath),
+                            _ => throw new InvalidOperationException(
+                                $"Application '{application.ApplicationId}' has an unsupported type."),
+                        });
                     break;
                 case WebToolDefinition web
                     when web.Configuration.LaunchTarget.PinToTaskbar:
                     pinList.Add(
-                        TaskbarDesktopPin(
+                        TaskbarDesktopPinByLink(
                             FindShortcut(
                                 shortcuts,
                                 $"tool-{tool.ToolId}").LinkPath));
@@ -330,10 +361,15 @@ internal sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerat
             AssignedAccessNamespace + "App",
             new XAttribute("AppUserModelId", appUserModelId));
 
-    private static XElement TaskbarDesktopPin(string linkPath) =>
+    private static XElement TaskbarDesktopPinByLink(string linkPath) =>
         new(
             TaskbarNamespace + "DesktopApp",
             new XAttribute("DesktopApplicationLinkPath", linkPath));
+
+    private static XElement TaskbarDesktopPinById(string desktopApplicationId) =>
+        new(
+            TaskbarNamespace + "DesktopApp",
+            new XAttribute("DesktopApplicationID", desktopApplicationId));
 
     private static WindowsShortcutArtifact FindShortcut(
         IReadOnlyList<WindowsShortcutArtifact> shortcuts,

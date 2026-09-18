@@ -246,6 +246,10 @@ recorded in the local session journal. `Start-Exam.ps1` applies this generated
 file and the Agent verifies that its profile is configured. Windows then
 restarts automatically after the application-owned countdown.
 
+Desktop tool definitions may provide a Desktop Application ID for Start and
+taskbar pins. The Agent uses that ID directly, as it does for Microsoft Word,
+and declares a `.lnk` shortcut artifact only when a desktop tool has no such ID.
+
 For this PoC, the Web is a controlled stub and its hard-coded exam intent is
 treated as valid. The Device Agent's self-contained Windows configuration
 component selects the supported generator and validates its generated artifact

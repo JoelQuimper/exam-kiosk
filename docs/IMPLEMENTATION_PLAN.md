@@ -128,7 +128,8 @@ remains gated on all pre-profile controls in that plan.
 - Apply that XML instead of the packaged fixed file.
 - Create only the tool shortcut artifacts declared by the profile. The exam
   itself is opened by the auto-launched Restricted Client and is not represented
-  by a persistent `.lnk` file.
+  by a persistent `.lnk` file. Desktop tools with a Desktop Application ID are
+  pinned directly; a `.lnk` is declared only as their fallback.
 - Verify Assigned Access after application.
 - Roll back partial changes after failure.
 

@@ -56,6 +56,7 @@ public sealed class BackendStubExamAssignmentService : IExamAssignmentService
                             "word",
                             ApplicationRole.Primary,
                             "%ProgramFiles%\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                            "Microsoft.Office.WINWORD.EXE.15",
                             new ExecutableValidation(
                                 "Microsoft Corporation",
                                 null)),

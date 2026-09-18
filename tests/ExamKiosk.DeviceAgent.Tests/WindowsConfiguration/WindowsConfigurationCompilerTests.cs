@@ -101,10 +101,8 @@ public sealed class WindowsConfigurationCompilerTests
                     StringComparison.OrdinalIgnoreCase));
         Assert.Contains(
             pinnedList,
-            pin => pin.TryGetProperty("desktopAppLink", out var value)
-                && value.GetString()!.EndsWith(
-                    @"\tool-word.lnk",
-                    StringComparison.Ordinal));
+            pin => pin.TryGetProperty("desktopAppId", out var value)
+                && value.GetString() == "Microsoft.Office.WINWORD.EXE.15");
         Assert.Contains(
             pinnedList,
             pin => pin.TryGetProperty("packagedAppId", out var value)
@@ -113,18 +111,18 @@ public sealed class WindowsConfigurationCompilerTests
 
         var taskbarDocument = XDocument.Parse(
             document.Descendants(V5Namespace + "TaskbarLayout").Single().Value);
-        var taskbarLinks = taskbarDocument
+        var taskbarDesktopApps = taskbarDocument
             .Descendants(TaskbarNamespace + "DesktopApp")
-            .Select(element => (string?)element.Attribute("DesktopApplicationLinkPath"))
             .ToArray();
         Assert.DoesNotContain(
-            taskbarLinks,
-            link => link?.EndsWith(@"\exam.lnk", StringComparison.OrdinalIgnoreCase)
+            taskbarDesktopApps,
+            element => ((string?)element.Attribute("DesktopApplicationLinkPath"))
+                    ?.EndsWith(@"\exam.lnk", StringComparison.OrdinalIgnoreCase)
                 == true);
         Assert.Contains(
-            taskbarLinks,
-            link => link?.EndsWith(@"\tool-word.lnk", StringComparison.Ordinal)
-                == true);
+            taskbarDesktopApps,
+            element => (string?)element.Attribute("DesktopApplicationID")
+                == "Microsoft.Office.WINWORD.EXE.15");
     }
 
     [Fact]
@@ -137,12 +135,48 @@ public sealed class WindowsConfigurationCompilerTests
         Assert.DoesNotContain(
             shortcuts,
             shortcut => shortcut.ShortcutId == "exam");
-        var word = Assert.IsType<DesktopWindowsShortcutArtifact>(
-            shortcuts.Single(shortcut => shortcut.ShortcutId == "tool-word"));
-        Assert.Equal("word", word.ApplicationId);
+        Assert.DoesNotContain(
+            shortcuts,
+            shortcut => shortcut.ShortcutId == "tool-word");
         Assert.DoesNotContain(
             shortcuts,
             shortcut => shortcut.ShortcutId == "tool-calculator");
+    }
+
+    [Fact]
+    public void Compile_WhenDesktopApplicationIdIsMissing_UsesShortcut()
+    {
+        var configuration = compiler.Compile(
+            SupportedVersion(),
+            CreateProfile(wordDesktopApplicationId: null));
+        var document = XDocument.Parse(configuration.AssignedAccess.Xml);
+        var startPins = document
+            .Descendants(V5Namespace + "StartPins")
+            .Single()
+            .Value;
+        using var startDocument = JsonDocument.Parse(startPins);
+
+        Assert.Contains(
+            startDocument.RootElement
+                .GetProperty("pinnedList")
+                .EnumerateArray(),
+            pin => pin.TryGetProperty("desktopAppLink", out var value)
+                && value.GetString()!.EndsWith(
+                    @"\tool-word.lnk",
+                    StringComparison.Ordinal));
+
+        var taskbarDocument = XDocument.Parse(
+            document.Descendants(V5Namespace + "TaskbarLayout").Single().Value);
+        Assert.Contains(
+            taskbarDocument.Descendants(TaskbarNamespace + "DesktopApp"),
+            element => ((string?)element.Attribute("DesktopApplicationLinkPath"))
+                    ?.EndsWith(@"\tool-word.lnk", StringComparison.Ordinal)
+                == true);
+
+        var word = Assert.IsType<DesktopWindowsShortcutArtifact>(
+            configuration.Shortcuts.Single(
+                shortcut => shortcut.ShortcutId == "tool-word"));
+        Assert.Equal("word", word.ApplicationId);
     }
 
     [Fact]
@@ -156,7 +190,9 @@ public sealed class WindowsConfigurationCompilerTests
         Assert.Contains("10.0.19045", exception.Message);
     }
 
-    private static EffectiveExamProfile CreateProfile()
+    private static EffectiveExamProfile CreateProfile(
+        string? wordDesktopApplicationId =
+            "Microsoft.Office.WINWORD.EXE.15")
     {
         ToolDefinition[] tools =
         [
@@ -171,6 +207,7 @@ public sealed class WindowsConfigurationCompilerTests
                             "word",
                             ApplicationRole.Primary,
                             @"%ProgramFiles%\Microsoft Office\root\Office16\WINWORD.EXE",
+                            wordDesktopApplicationId,
                             new ExecutableValidation("Microsoft Corporation", null)),
                     ],
                     new DesktopLaunchTarget("word", "Microsoft Word", true, true))),
