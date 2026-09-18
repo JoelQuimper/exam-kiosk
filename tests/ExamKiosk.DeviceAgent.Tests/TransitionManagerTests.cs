@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text.Json;
 using ExamKiosk.Contracts;
 using ExamKiosk.DeviceAgent.WindowsConfiguration.Models;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -118,6 +119,54 @@ public sealed class TransitionManagerTests
         Assert.Equal(
             ["Start-Exam.ps1", "Get-ExamMode.ps1"],
             scripts.Calls);
+    }
+
+    [Fact]
+    public async Task StartExam_WritesEveryDeclaredWebToolToManifestBeforeApply()
+    {
+        using var directory = new TemporaryDirectory();
+        var scripts = new ScriptSequence(
+            ("Start-Exam.ps1", "applied", null),
+            ("Get-ExamMode.ps1", "Configured", null));
+        var manager = CreateManager(directory.Path, scripts);
+        ToolDefinition[] tools =
+        [
+            WebTool("dictionary", "Dictionary", "https://dictionary.example/"),
+            WebTool("reference", "Reference", "https://reference.example/"),
+        ];
+
+        var response = await manager.HandleAsync(
+            StartRequest(tools),
+            CancellationToken.None);
+
+        Assert.True(response.Success);
+        Assert.Equal(
+            ["Start-Exam.ps1", "Get-ExamMode.ps1"],
+            scripts.Calls);
+        var manifestPath = Path.Combine(
+            directory.Path,
+            "Configuration",
+            "WebShortcuts.generated.temp.json");
+        using var manifest = JsonDocument.Parse(
+            await File.ReadAllTextAsync(manifestPath));
+        var entries = manifest.RootElement.EnumerateArray().ToArray();
+        Assert.Equal(2, entries.Length);
+        Assert.Equal(
+            @"%ALLUSERSPROFILE%\Microsoft\Windows\Start Menu\Programs\Exam Kiosk\tool-dictionary.lnk",
+            entries[0].GetProperty("linkPath").GetString());
+        Assert.Equal(
+            "https://dictionary.example/",
+            entries[0].GetProperty("entryUrl").GetString());
+        Assert.Equal(
+            manifestPath,
+            scripts.Invocations[0].Arguments[3]);
+        Assert.Equal(
+            "GeneratedWebShortcutsManifest",
+            new SessionJournal(
+                Path.Combine(directory.Path, "session-journal.json"))
+                .Current!
+                .Steps[3]
+                .Name);
     }
 
     [Fact]
@@ -283,14 +332,32 @@ public sealed class TransitionManagerTests
             restartScheduler ?? (() => DateTimeOffset.UtcNow.AddSeconds(5)),
             windowsClientVersionProvider: () => new WindowsClientVersion(10, 0, 22621));
 
-    private static AgentRequest StartRequest() =>
+    private static AgentRequest StartRequest(
+        IReadOnlyList<ToolDefinition>? tools = null) =>
         new(
             AgentProtocol.Version,
             Guid.NewGuid(),
             AgentCommand.StartExam,
             new AgentStartExamPayload(
                 Guid.NewGuid(),
-                EffectiveProfileTestData.Create()));
+                EffectiveProfileTestData.Create(tools)));
+
+    private static WebToolDefinition WebTool(
+        string toolId,
+        string label,
+        string entryUrl) =>
+        new(
+            toolId,
+            label,
+            "web",
+            true,
+            new WebToolConfiguration(
+                [entryUrl],
+                new WebLaunchTarget(
+                    new Uri(entryUrl),
+                    label,
+                    true,
+                    true)));
 
     private static void AssertRecoveryJournal(
         string dataDirectory,
@@ -314,15 +381,16 @@ public sealed class TransitionManagerTests
             new(steps);
 
         internal List<string> Calls { get; } = [];
+        internal List<ScriptInvocation> Invocations { get; } = [];
 
         internal Task<string> RunAsync(
             string scriptName,
             IReadOnlyList<string> arguments,
             CancellationToken cancellationToken)
         {
-            _ = arguments;
             cancellationToken.ThrowIfCancellationRequested();
             Calls.Add(scriptName);
+            Invocations.Add(new ScriptInvocation(scriptName, arguments));
 
             var step = remaining.Dequeue();
             Assert.Equal(step.Name, scriptName);
@@ -334,6 +402,10 @@ public sealed class TransitionManagerTests
             return Task.FromResult(step.Output ?? string.Empty);
         }
     }
+
+    private sealed record ScriptInvocation(
+        string Name,
+        IReadOnlyList<string> Arguments);
 
     private sealed class TemporaryDirectory : IDisposable
     {

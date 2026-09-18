@@ -4,7 +4,8 @@ namespace ExamKiosk.DeviceAgent.Tests;
 
 internal static class EffectiveProfileTestData
 {
-    internal static EffectiveExamProfile Create()
+    internal static EffectiveExamProfile Create(
+        IReadOnlyList<ToolDefinition>? tools = null)
     {
         return new(
             1,
@@ -20,7 +21,7 @@ internal static class EffectiveProfileTestData
                     "Open exam",
                     true,
                     true)),
-            [],
+            tools ?? [],
             new EffectiveEdgePolicy(["*"], ["https://example.com"]));
     }
 }

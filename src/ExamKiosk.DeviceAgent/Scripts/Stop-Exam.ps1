@@ -13,4 +13,33 @@ $assignedAccess = Get-CimInstance `
 $assignedAccess.Configuration = $null
 Set-CimInstance -CimInstance $assignedAccess | Out-Null
 
-Write-Output 'Exam mode stopped: Assigned Access configuration removed successfully.'
+$shortcutRoot = Join-Path `
+    $env:ProgramData `
+    'Microsoft\Windows\Start Menu\Programs\Exam Kiosk'
+$removedShortcutCount = 0
+if (Test-Path -LiteralPath $shortcutRoot -PathType Container) {
+    $shortcuts = @(
+        Get-ChildItem `
+            -LiteralPath $shortcutRoot `
+            -Filter 'tool-*.lnk' `
+            -File
+    )
+    foreach ($shortcut in $shortcuts) {
+        Remove-Item -LiteralPath $shortcut.FullName -Force
+    }
+    $removedShortcutCount = $shortcuts.Count
+
+    $remaining = @(
+        Get-ChildItem `
+            -LiteralPath $shortcutRoot `
+            -Filter 'tool-*.lnk' `
+            -File
+    )
+    if ($remaining.Count -ne 0) {
+        throw 'One or more Exam Kiosk tool shortcuts remained after cleanup.'
+    }
+}
+
+Write-Output (
+    'Exam mode stopped: Assigned Access removed and {0} web shortcut(s) deleted.' -f
+    $removedShortcutCount)

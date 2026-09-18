@@ -33,6 +33,35 @@ function Write-WorkerResult {
         Set-Content -LiteralPath $ResultPath -Encoding utf8
 }
 
+function Remove-ExamKioskToolShortcuts {
+    $shortcutRoot = Join-Path `
+        $env:ProgramData `
+        'Microsoft\Windows\Start Menu\Programs\Exam Kiosk'
+    if (-not (Test-Path -LiteralPath $shortcutRoot -PathType Container)) {
+        Write-Verbose 'No Exam Kiosk tool shortcut directory was found.'
+        return
+    }
+
+    Write-Verbose "Removing Exam Kiosk tool shortcuts from '$shortcutRoot'."
+    Get-ChildItem `
+        -LiteralPath $shortcutRoot `
+        -Filter 'tool-*.lnk' `
+        -File |
+        ForEach-Object {
+            Remove-Item -LiteralPath $_.FullName -Force
+        }
+
+    $remaining = @(
+        Get-ChildItem `
+            -LiteralPath $shortcutRoot `
+            -Filter 'tool-*.lnk' `
+            -File
+    )
+    if ($remaining.Count -ne 0) {
+        throw 'One or more Exam Kiosk tool shortcuts remained after recovery.'
+    }
+}
+
 function Invoke-SystemRecovery {
     Write-Verbose 'Starting the LocalSystem recovery worker.'
     if ([Security.Principal.WindowsIdentity]::GetCurrent().Name -ne 'NT AUTHORITY\SYSTEM') {
@@ -49,6 +78,7 @@ function Invoke-SystemRecovery {
             -ClassName 'MDM_AssignedAccess'
         if ([string]::IsNullOrWhiteSpace($assignedAccess.Configuration)) {
             Write-Verbose 'Assigned Access is already clear.'
+            Remove-ExamKioskToolShortcuts
             Write-WorkerResult `
                 -Success $true `
                 -Status 'AlreadyClear' `
@@ -81,6 +111,7 @@ function Invoke-SystemRecovery {
             throw 'Assigned Access remained configured after the recovery attempt.'
         }
 
+        Remove-ExamKioskToolShortcuts
         Write-WorkerResult `
             -Success $true `
             -Status 'Removed' `

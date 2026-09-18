@@ -163,6 +163,7 @@ public sealed class TransitionManager
         }
 
         await SetStateAsync(AgentState.EnteringExam, cancellationToken);
+        var assignedAccessApplyStarted = false;
         try
         {
             var profileSha256 = EffectiveProfileDigest.Compute(
@@ -222,17 +223,34 @@ public sealed class TransitionManager
                 "completed",
                 null,
                 cancellationToken);
+            var webShortcutsPath = await WriteGeneratedWebShortcutsManifestAsync(
+                windowsConfiguration.Shortcuts,
+                cancellationToken);
+            if (windowsConfiguration.Shortcuts.Count > 0)
+            {
+                await sessionJournal.RecordStepAsync(
+                    "GeneratedWebShortcutsManifest",
+                    "completed",
+                    null,
+                    cancellationToken);
+            }
             await sessionJournal.RecordStepAsync(
                 "AssignedAccessApply",
                 "started",
                 null,
                 cancellationToken);
+            assignedAccessApplyStarted = true;
             var configurationPath = Path.Combine(
                 configurationDirectory,
                 "AssignedAccess.generated.temp.xml");
             await RunPowerShellAsync(
                 "Start-Exam.ps1",
-                ["-ConfigurationPath", configurationPath],
+                [
+                    "-ConfigurationPath",
+                    configurationPath,
+                    "-WebShortcutsPath",
+                    webShortcutsPath,
+                ],
                 cancellationToken);
             if (!await IsExamModeConfiguredAsync(cancellationToken))
             {
@@ -258,10 +276,13 @@ public sealed class TransitionManager
         catch (Exception exception)
         {
             logger.LogError(exception, "Failed to enter exam mode");
-            await TryRecordJournalStepAsync(
-                "AssignedAccessApply",
-                "failed",
-                exception.Message);
+            if (assignedAccessApplyStarted)
+            {
+                await TryRecordJournalStepAsync(
+                    "AssignedAccessApply",
+                    "failed",
+                    exception.Message);
+            }
 
             var recoveryException = await TryRecoverFailedStartAsync();
             if (recoveryException is null)
@@ -451,6 +472,50 @@ public sealed class TransitionManager
             assignedAccess.Sha256);
     }
 
+    private async Task<string> WriteGeneratedWebShortcutsManifestAsync(
+        IReadOnlyList<WindowsShortcutArtifact> shortcuts,
+        CancellationToken cancellationToken)
+    {
+        var entries = new List<WebShortcutManifestEntry>();
+        foreach (var shortcut in shortcuts)
+        {
+            switch (shortcut)
+            {
+                case WebWindowsShortcutArtifact web:
+                    entries.Add(
+                        new WebShortcutManifestEntry(
+                            web.LinkPath,
+                            web.Label,
+                            web.EntryUrl));
+                    break;
+                case DesktopWindowsShortcutArtifact:
+                    throw new NotSupportedException(
+                        "Desktop shortcut creation is not implemented. "
+                        + "Provide a Desktop Application ID for the desktop tool.");
+                default:
+                    throw new InvalidOperationException(
+                        $"Shortcut artifact '{shortcut.ShortcutId}' has an unsupported type.");
+            }
+        }
+
+        Directory.CreateDirectory(configurationDirectory);
+        var manifestPath = Path.Combine(
+            configurationDirectory,
+            "WebShortcuts.generated.temp.json");
+        var temporaryPath = manifestPath + ".tmp";
+        await File.WriteAllTextAsync(
+            temporaryPath,
+            JsonSerializer.Serialize(
+                entries,
+                new JsonSerializerOptions(JsonSerializerDefaults.Web)
+                {
+                    WriteIndented = true,
+                }),
+            cancellationToken);
+        File.Move(temporaryPath, manifestPath, overwrite: true);
+        return manifestPath;
+    }
+
     private static WindowsClientVersion GetCurrentWindowsClientVersion()
     {
         var version = Environment.OSVersion.Version;
@@ -623,6 +688,11 @@ public sealed class TransitionManager
         startInfo.ArgumentList.Add("p:4:1");
         return startInfo;
     }
+
+    private sealed record WebShortcutManifestEntry(
+        string LinkPath,
+        string Label,
+        Uri EntryUrl);
 
     private async Task SetStateAsync(AgentState state, CancellationToken cancellationToken)
     {

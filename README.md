@@ -249,6 +249,10 @@ restarts automatically after the application-owned countdown.
 Desktop tool definitions may provide a Desktop Application ID for Start and
 taskbar pins. The Agent uses that ID directly, as it does for Microsoft Word,
 and declares a `.lnk` shortcut artifact only when a desktop tool has no such ID.
+The Agent writes every declared Web tool to a generated shortcut manifest.
+`Start-Exam.ps1` creates those shortcuts before applying Assigned Access and
+rolls them back if application fails. `Stop-Exam.ps1` and administrator
+recovery remove only the Agent-owned dynamic `tool-*.lnk` files.
 
 For this PoC, the Web is a controlled stub and its hard-coded exam intent is
 treated as valid. The Device Agent's self-contained Windows configuration
