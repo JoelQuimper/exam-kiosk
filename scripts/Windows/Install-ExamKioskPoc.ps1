@@ -19,15 +19,18 @@ $stagingRoot = Join-Path $env:TEMP "ExamKiosk-$([guid]::NewGuid())"
 $configurationRoot = Join-Path $env:ProgramData 'ExamKiosk'
 $deploymentConfigurationPath = Join-Path $configurationRoot 'deployment.settings.json'
 
+$deploymentConfiguration = $null
+if (Test-Path -LiteralPath $deploymentConfigurationPath -PathType Leaf) {
+    $deploymentConfiguration = Get-Content `
+        -LiteralPath $deploymentConfigurationPath `
+        -Raw |
+        ConvertFrom-Json
+}
 if (-not $PSBoundParameters.ContainsKey('WebAppUrl')) {
-    if (Test-Path -LiteralPath $deploymentConfigurationPath -PathType Leaf) {
-        $deploymentConfiguration = Get-Content `
-            -LiteralPath $deploymentConfigurationPath `
-            -Raw |
-            ConvertFrom-Json
+    if ($deploymentConfiguration) {
         $WebAppUrl = $deploymentConfiguration.webAppUrl
     }
-    else {
+    if ([string]::IsNullOrWhiteSpace($WebAppUrl)) {
         $WebAppUrl = Read-Host 'Enter the Exam Kiosk web application HTTPS origin'
     }
 }
@@ -45,18 +48,36 @@ if (-not [Uri]::TryCreate($WebAppUrl, [UriKind]::Absolute, [ref]$webAppUri) -or
 $normalizedWebAppUrl = $webAppUri.GetLeftPart([UriPartial]::Authority)
 
 New-Item -ItemType Directory -Path $configurationRoot -Force | Out-Null
+$updatedConfiguration = [ordered]@{}
+if ($deploymentConfiguration) {
+    foreach ($property in $deploymentConfiguration.PSObject.Properties) {
+        $updatedConfiguration[$property.Name] = $property.Value
+    }
+}
+$updatedConfiguration['webAppUrl'] = $normalizedWebAppUrl
+$updatedConfiguration |
+    ConvertTo-Json |
+    Set-Content -LiteralPath $deploymentConfigurationPath -Encoding utf8
+$deploymentConfiguration = [pscustomobject]$updatedConfiguration
+
+foreach ($requiredSetting in @(
+        'tenantId',
+        'webAppClientId',
+        'agentClientId',
+        'agentCertificateThumbprint')) {
+    if ([string]::IsNullOrWhiteSpace($deploymentConfiguration.$requiredSetting)) {
+        throw (
+            "Deployment setting '$requiredSetting' is missing. " +
+            'Run Initialize-ExamKioskDeviceAgentIdentity.ps1, then run this installer again.')
+    }
+}
+
 $logsRoot = Join-Path $configurationRoot 'Logs'
 New-Item -ItemType Directory -Path $logsRoot -Force | Out-Null
 & icacls.exe $logsRoot /grant '*S-1-5-32-545:(OI)(CI)(M)' | Out-Null
 if ($LASTEXITCODE -ne 0) {
     throw "Granting write access to the diagnostic log directory failed with exit code $LASTEXITCODE."
 }
-
-[ordered]@{
-    webAppUrl = $normalizedWebAppUrl
-} |
-    ConvertTo-Json |
-    Set-Content -LiteralPath $deploymentConfigurationPath -Encoding utf8
 
 $webViewRuntime = @(
     'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*'
@@ -120,15 +141,22 @@ try {
             -LiteralPath (Join-Path $installRoot 'Launcher\launcher.settings.json') `
             -Encoding utf8
 
+    $agentPath = Join-Path $installRoot 'Agent\ExamKiosk.DeviceAgent.exe'
     [ordered]@{
-        webAppUrl = $normalizedWebAppUrl
+        DeviceExamApi = [ordered]@{
+            BaseUrl = "$normalizedWebAppUrl/"
+            TenantId = $deploymentConfiguration.tenantId
+            ClientId = $deploymentConfiguration.agentClientId
+            CertificateThumbprint =
+                $deploymentConfiguration.agentCertificateThumbprint
+            Scope = "api://$($deploymentConfiguration.webAppClientId)/.default"
+        }
     } |
-        ConvertTo-Json |
+        ConvertTo-Json -Depth 3 |
         Set-Content `
-            -LiteralPath (Join-Path $installRoot 'RestrictedClient\restricted-client.settings.json') `
+            -LiteralPath (Join-Path $installRoot 'Agent\appsettings.Production.json') `
             -Encoding utf8
 
-    $agentPath = Join-Path $installRoot 'Agent\ExamKiosk.DeviceAgent.exe'
     if ($service) {
         & sc.exe config $serviceName `
             'binPath=' "`"$agentPath`"" `
