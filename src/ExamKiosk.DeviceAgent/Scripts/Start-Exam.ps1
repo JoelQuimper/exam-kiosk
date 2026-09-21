@@ -79,7 +79,7 @@ try {
             $shell = New-Object -ComObject WScript.Shell
             $shortcut = $shell.CreateShortcut($temporaryPath)
             $shortcut.TargetPath = $edgePath
-            $shortcut.Arguments = '--no-first-run --new-window "{0}"' -f $entryUrl.AbsoluteUri
+            $shortcut.Arguments = '--new-window --no-first-run --inprivate "{0}"' -f $entryUrl.AbsoluteUri
             $shortcut.WorkingDirectory = Split-Path -Parent $edgePath
             $shortcut.Description = $webShortcut.label
             $shortcut.IconLocation = if ($webShortcut.iconLocation) {
