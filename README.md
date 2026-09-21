@@ -229,11 +229,10 @@ local session ID, current state, timestamps, and completion status for each
 transition step. It is a local recovery record, not the proctor dashboard
 telemetry channel.
 
-The Launcher and Restricted Client write bounded JSON-lines diagnostics to:
+The Launcher writes bounded JSON-lines diagnostics to:
 
 ```text
 %ProgramData%\ExamKiosk\Logs\launcher.jsonl
-%ProgramData%\ExamKiosk\Logs\restricted-client.jsonl
 ```
 
 Navigation entries contain only the origin and path. Query strings, fragments,
@@ -245,8 +244,8 @@ exam URLs, executable paths, and policy data and must be handled as sensitive
 operational diagnostics. Generated Assigned Access XML and shortcut artifacts
 do not cross the Web-to-Launcher or Launcher-to-Agent boundaries.
 
-Each log rotates at 5 MB and retains one previous file. These student-writable
-diagnostic logs are useful for troubleshooting but are not an authoritative
+The log rotates at 5 MB and retains one previous file. This student-writable
+diagnostic log is useful for troubleshooting but is not an authoritative
 audit record. The Device Agent enforcement receipt is the local authority for
 what it accepted, and the backend must eventually receive protected audit
 events. Once dynamic enforcement is implemented, the Agent must record the
@@ -271,8 +270,9 @@ taskbar pins. The Agent uses that ID directly, as it does for Microsoft Word,
 and declares a `.lnk` shortcut artifact only when a desktop tool has no such ID.
 The Agent writes every declared Web tool to a generated shortcut manifest.
 `Start-Exam.ps1` creates those shortcuts before applying Assigned Access and
-rolls them back if application fails. `Stop-Exam.ps1` and administrator
-recovery remove only the Agent-owned dynamic `tool-*.lnk` files.
+rolls them back if application fails. `Stop-Exam.ps1` removes only the
+Agent-owned dynamic `tool-*.lnk` files during normal exam completion. Emergency
+Recovery intentionally removes only Assigned Access.
 
 For this PoC, the Web is a controlled stub and its hard-coded exam intent is
 treated as valid. The Device Agent's self-contained Windows configuration

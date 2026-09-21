@@ -130,11 +130,11 @@ remains gated on all pre-profile controls in that plan.
 - **Implemented for Web tools:** write every declared Web tool to a generated
   manifest. `Start-Exam.ps1` creates the shortcuts before applying Assigned
   Access and rolls them back on failure; `Stop-Exam.ps1` removes Assigned Access
-  and only the Agent-owned `tool-*.lnk` shortcuts. Administrator recovery
-  performs the same targeted cleanup. The exam
-  itself is opened by the auto-launched Restricted Client and is not represented
-  by a persistent `.lnk` file. Desktop tools with a Desktop Application ID are
-  pinned directly; a `.lnk` is declared only as their fallback.
+  and only the Agent-owned `tool-*.lnk` shortcuts. Emergency Recovery remains
+  limited to Assigned Access. The exam itself is opened by the auto-launched
+  Restricted Client and is not represented by a persistent `.lnk` file. Desktop
+  tools with a Desktop Application ID are pinned directly; a `.lnk` is declared
+  only as their fallback.
 - Verify Assigned Access after application.
 - Roll back partial changes after failure.
 
