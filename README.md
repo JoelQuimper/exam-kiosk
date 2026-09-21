@@ -84,7 +84,8 @@ The agent invokes `Start-Exam.ps1` to apply Assigned Access and
 - A disposable, district-managed Windows 11 test device or virtual machine.
 - A Windows edition that supports the configured Assigned Access experience.
 - .NET 10 SDK to build and install the prototype.
-- PowerShell 7 (`pwsh`) to initialize the Device Agent identity.
+- PowerShell 7 (`pwsh`) to initialize the Device Agent identity and install
+  the PoC. The installed recovery and reset shortcuts also launch PowerShell 7.
 - Microsoft Edge installed in its standard machine-wide location.
 - Microsoft Edge WebView2 Runtime installed machine-wide.
 - A separate local administrator recovery account that is not the kiosk

@@ -18,10 +18,9 @@ if ([Security.Principal.WindowsIdentity]::GetCurrent().Name -ne 'NT AUTHORITY\SY
 $shortcutRoot = Join-Path `
     $env:ProgramData `
     'Microsoft\Windows\Start Menu\Programs\Exam Kiosk\Tools'
-$webShortcuts = @(
-    Get-Content -LiteralPath $WebShortcutsPath -Raw |
-        ConvertFrom-Json
-)
+$webShortcutsDocument = Get-Content -LiteralPath $WebShortcutsPath -Raw |
+    ConvertFrom-Json
+$webShortcuts = @($webShortcutsDocument)
 
 $edgeCandidates = @()
 if (${env:ProgramFiles(x86)}) {
@@ -45,8 +44,9 @@ $createdShortcutPaths = [Collections.Generic.List[string]]::new()
 try {
     foreach ($webShortcut in $webShortcuts) {
         $entryUrl = $null
+        $entryUrlValue = [string]$webShortcut.entryUrl
         if (-not [Uri]::TryCreate(
-                $webShortcut.entryUrl,
+                $entryUrlValue,
                 [UriKind]::Absolute,
                 [ref]$entryUrl) -or
             $entryUrl.Scheme -cne 'https') {

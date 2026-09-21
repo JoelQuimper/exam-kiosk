@@ -18,6 +18,10 @@ $repositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $stagingRoot = Join-Path $env:TEMP "ExamKiosk-$([guid]::NewGuid())"
 $configurationRoot = Join-Path $env:ProgramData 'ExamKiosk'
 $deploymentConfigurationPath = Join-Path $configurationRoot 'deployment.settings.json'
+$powerShellPath = Join-Path $PSHOME 'pwsh.exe'
+if (-not (Test-Path -LiteralPath $powerShellPath -PathType Leaf)) {
+    throw 'Install-ExamKioskPoc.ps1 must run in PowerShell 7.'
+}
 
 $deploymentConfiguration = $null
 if (Test-Path -LiteralPath $deploymentConfigurationPath -PathType Leaf) {
@@ -185,9 +189,7 @@ try {
 
     $recoveryShortcut = $shell.CreateShortcut(
         (Join-Path $shortcutDirectory 'Recover Exam Kiosk Device.lnk'))
-    $recoveryShortcut.TargetPath = Join-Path `
-        $env:SystemRoot `
-        'System32\WindowsPowerShell\v1.0\powershell.exe'
+    $recoveryShortcut.TargetPath = $powerShellPath
     $recoveryScriptPath = Join-Path `
         $recoveryDirectory `
         'Recover-ExamKioskDevice.ps1'
@@ -200,7 +202,7 @@ try {
 
     $desktopShortcutPath = Join-Path ([Environment]::GetFolderPath('Desktop')) 'Reset Exam Kiosk PoC.lnk'
     $resetShortcut = $shell.CreateShortcut($desktopShortcutPath)
-    $resetShortcut.TargetPath = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+    $resetShortcut.TargetPath = $powerShellPath
     $resetShortcut.Arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$(Join-Path $repositoryRoot 'scripts\Windows\Reset-ExamKioskPoc.ps1')`""
     $resetShortcut.WorkingDirectory = Join-Path $repositoryRoot 'scripts\Windows'
     $resetShortcut.Description = 'Uninstall, install, and launch the Exam Kiosk PoC.'
