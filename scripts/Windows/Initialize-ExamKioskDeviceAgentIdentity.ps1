@@ -1,4 +1,3 @@
-#Requires -Version 7.0
 #Requires -RunAsAdministrator
 [CmdletBinding()]
 param(
@@ -35,7 +34,7 @@ $accountJson = & az account show `
 if ($LASTEXITCODE -ne 0) {
     throw "Checking Azure CLI authentication failed with exit code $LASTEXITCODE."
 }
-$account = $accountJson | ConvertFrom-Json
+$account = ConvertFrom-Json -InputObject $accountJson
 
 Write-Verbose "Reading Web app registration '$webDisplayName'."
 $webApplicationsJson = & az ad app list `
@@ -45,7 +44,9 @@ $webApplicationsJson = & az ad app list `
 if ($LASTEXITCODE -ne 0) {
     throw "Reading the Web app registration failed with exit code $LASTEXITCODE."
 }
-$returnedWebApplications = @($webApplicationsJson | ConvertFrom-Json)
+$returnedWebApplicationsDocument = ConvertFrom-Json `
+    -InputObject $webApplicationsJson
+$returnedWebApplications = @($returnedWebApplicationsDocument)
 $webApplications = @(
     $returnedWebApplications |
         Where-Object displayName -CEQ $webDisplayName
@@ -92,10 +93,10 @@ $webPatch = [ordered]@{
 } | ConvertTo-Json -Depth 20 -Compress
 $webPatchPath = Join-Path $env:TEMP "ExamKiosk-WebPatch-$([guid]::NewGuid()).json"
 try {
-    Set-Content `
-        -LiteralPath $webPatchPath `
-        -Value $webPatch `
-        -Encoding utf8NoBOM
+    [IO.File]::WriteAllText(
+        $webPatchPath,
+        $webPatch,
+        [Text.UTF8Encoding]::new($false))
     & az rest `
         --method PATCH `
         --uri "https://graph.microsoft.com/v1.0/applications/$($webApplication.id)" `
@@ -158,7 +159,9 @@ try {
     if ($LASTEXITCODE -ne 0) {
         throw "Listing Agent credentials failed with exit code $LASTEXITCODE."
     }
-    foreach ($credential in @($credentialsJson | ConvertFrom-Json) |
+    $credentialsDocument = ConvertFrom-Json -InputObject $credentialsJson
+    $credentials = @($credentialsDocument)
+    foreach ($credential in $credentials |
             Where-Object displayName -CEQ $certificateDisplayName) {
         & az ad app credential delete `
             --id $agentApplication.ClientId `
@@ -209,7 +212,8 @@ $assignmentsJson = & az rest `
 if ($LASTEXITCODE -ne 0) {
     throw "Reading Agent app-role assignments failed with exit code $LASTEXITCODE."
 }
-$assignments = @((($assignmentsJson | ConvertFrom-Json).value))
+$assignmentsDocument = ConvertFrom-Json -InputObject $assignmentsJson
+$assignments = @($assignmentsDocument.value)
 $hasAssignment = $assignments |
     Where-Object {
         $_.resourceId -eq $webServicePrincipalId -and
@@ -227,10 +231,10 @@ if (-not $hasAssignment) {
         $env:TEMP `
         "ExamKiosk-AppRoleAssignment-$([guid]::NewGuid()).json"
     try {
-        Set-Content `
-            -LiteralPath $assignmentPath `
-            -Value $assignment `
-            -Encoding utf8NoBOM
+        [IO.File]::WriteAllText(
+            $assignmentPath,
+            $assignment,
+            [Text.UTF8Encoding]::new($false))
         & az rest `
             --method POST `
             --uri "https://graph.microsoft.com/v1.0/servicePrincipals/$agentServicePrincipalId/appRoleAssignments" `

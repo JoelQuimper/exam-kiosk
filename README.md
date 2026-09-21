@@ -84,12 +84,10 @@ The agent invokes `Start-Exam.ps1` to apply Assigned Access and
 - A disposable, district-managed Windows 11 test device or virtual machine.
 - A Windows edition that supports the configured Assigned Access experience.
 - .NET 10 SDK to build and install the prototype.
-- PowerShell 7 (`pwsh`) for installation, uninstallation, reset, Entra
-  initialization, and Azure deployment. These scripts declare
-  `#Requires -Version 7.0` and stop immediately under Windows PowerShell 5.1.
-  The installed recovery and reset shortcuts launch PowerShell 7. Recovery
-  uses a separate Windows PowerShell 5.1 script for its temporary
-  `LocalSystem` worker.
+- Inbox Windows PowerShell 5.1 for all managed-device installation,
+  configuration, recovery, and Device Agent scripts. PowerShell 7 is not
+  required on student devices. Azure deployment scripts run from the
+  administrator workstation and require PowerShell 7.
 - Microsoft Edge installed in its standard machine-wide location.
 - Microsoft Edge WebView2 Runtime installed machine-wide.
 - A separate local administrator recovery account that is not the kiosk
@@ -111,7 +109,7 @@ Device Agent identity:
 
 ```powershell
 az login
-pwsh -File .\scripts\Windows\Initialize-ExamKioskDeviceAgentIdentity.ps1 `
+& .\scripts\Windows\Initialize-ExamKioskDeviceAgentIdentity.ps1 `
     -Environment dev
 ```
 
@@ -285,6 +283,10 @@ shortcut before writing the preview.
 
 ### Administrator recovery
 
+Recovery is only an emergency escape from a device trapped in Assigned Access.
+If Windows is already accessible, use the normal Reset, installation, or
+uninstallation scripts instead.
+
 If a test device remains restricted after a failed transition, sign in to an
 administrator session and run **Recover Exam Kiosk Device** from the Start
 menu, or run:
@@ -293,12 +295,12 @@ menu, or run:
 & "$env:ProgramFiles\ExamKiosk\Recovery\Recover-ExamKioskDevice.ps1"
 ```
 
-The script stops the Device Agent, runs a one-time recovery worker as
-`LocalSystem`, removes and verifies only the known Exam Kiosk Assigned Access
-profile, resets the local Agent state, and restarts the service if it was
-running. It writes a bounded recovery result under
-`%ProgramData%\ExamKiosk\Recovery`. It does not restart Windows automatically;
-after successful recovery, run:
+The script stops and leaves stopped the Device Agent, runs a one-time recovery
+worker as `LocalSystem`, and removes and verifies only the known Exam Kiosk
+Assigned Access profile. It does not modify Agent state or session history;
+use the normal Reset, installation, or uninstallation script afterward. It
+writes a bounded recovery result under `%ProgramData%\ExamKiosk\Recovery`. It
+does not restart Windows automatically; after successful recovery, run:
 
 ```powershell
 shutdown.exe /r /t 0

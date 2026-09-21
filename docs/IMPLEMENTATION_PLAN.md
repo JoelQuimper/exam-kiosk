@@ -20,7 +20,9 @@ be understood, tested, and demonstrated independently.
 ## Step 0 - Administrator recovery
 
 Provide an out-of-band recovery path that does not depend on the Launcher,
-Restricted Client, or a healthy Device Agent.
+Restricted Client, or a healthy Device Agent. Its only purpose is to return
+control of Windows to an administrator when Assigned Access traps the device;
+normal maintenance uses Reset, installation, or uninstallation.
 
 ### Scope
 
@@ -33,9 +35,8 @@ Restricted Client, or a healthy Device Agent.
   of ownership; deletion remains bound to the known profile GUID or an
   Agent-owned receipt.
 - Verify that Assigned Access is clear.
-- Reset the local Agent state and append a manual-recovery journal step.
 - Preserve a recovery result for operator diagnostics.
-- Restart the Agent if it was running.
+- Leave the Agent stopped; reset or reinstall it after recovery.
 - Require an explicit emergency option to remove a foreign profile.
 - Leave Windows restart under operator control.
 
@@ -46,7 +47,8 @@ Restricted Client, or a healthy Device Agent.
 - Running recovery when Assigned Access is already clear is idempotent.
 - A foreign Assigned Access configuration is preserved by default.
 - The script returns a nonzero result and a useful message when recovery fails.
-- Successful recovery prints the explicit Windows restart command.
+- Successful recovery prints the explicit Windows restart command and leaves
+  the Agent stopped.
 
 When dynamic Edge policy and shortcuts are introduced, this step must be
 extended to restore the Agent-owned Edge-policy backup and remove only the
@@ -210,8 +212,9 @@ application, API, and certificate identifiers. Each script creates the shared
 configuration when absent and merges only its own properties when present, so
 configuration initialization is order-independent. The installer remains the
 final validation boundary and refuses to deploy an Agent whose combined
-configuration is incomplete. Identity initialization requires PowerShell 7
-and must be invoked with `pwsh`, not Windows PowerShell 5.1. The bootstrap
-certificate is non-exportable in `LocalMachine\My`, but the shared application
-identity is not sufficient for production; replace it with per-device
-identity or equivalent device-bound proof.
+configuration is incomplete. All managed-device scripts, including identity
+initialization, use the inbox Windows PowerShell 5.1 runtime; PowerShell 7 is
+not a device prerequisite. The bootstrap certificate is non-exportable in
+`LocalMachine\My`, but the shared application identity is not sufficient for
+production; replace it with per-device identity or equivalent device-bound
+proof.

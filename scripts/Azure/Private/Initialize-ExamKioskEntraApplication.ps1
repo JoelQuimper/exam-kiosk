@@ -16,8 +16,13 @@ function Initialize-ExamKioskEntraApplication {
     if ($LASTEXITCODE -ne 0) {
         throw "Looking up the Entra app registration failed with exit code $LASTEXITCODE."
     }
-    $matchingApplications = @($matchingApplicationsJson | ConvertFrom-Json) |
-        Where-Object displayName -CEQ $DisplayName
+    $returnedApplicationsDocument = ConvertFrom-Json `
+        -InputObject $matchingApplicationsJson
+    $returnedApplications = @($returnedApplicationsDocument)
+    $matchingApplications = @(
+        $returnedApplications |
+            Where-Object displayName -CEQ $DisplayName
+    )
 
     if ($matchingApplications.Count -gt 1) {
         throw "More than one app registration is named '$DisplayName'. Resolve the duplicate registrations before continuing."
@@ -40,7 +45,7 @@ function Initialize-ExamKioskEntraApplication {
         if ($LASTEXITCODE -ne 0) {
             throw "Creating the Entra app registration failed with exit code $LASTEXITCODE."
         }
-        $application = $applicationJson | ConvertFrom-Json
+        $application = ConvertFrom-Json -InputObject $applicationJson
     }
     else {
         $application = $matchingApplications[0]
@@ -71,7 +76,9 @@ function Initialize-ExamKioskEntraApplication {
     if ($LASTEXITCODE -ne 0) {
         throw "Looking up the Entra service principal failed with exit code $LASTEXITCODE."
     }
-    $servicePrincipals = @($servicePrincipalsJson | ConvertFrom-Json)
+    $servicePrincipalsDocument = ConvertFrom-Json `
+        -InputObject $servicePrincipalsJson
+    $servicePrincipals = @($servicePrincipalsDocument)
 
     if ($servicePrincipals.Count -gt 1) {
         throw "Entra returned multiple service principals for the unique client ID '$($application.appId)'."

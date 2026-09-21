@@ -1,4 +1,3 @@
-#Requires -Version 7.0
 #Requires -RunAsAdministrator
 [CmdletBinding()]
 param(
@@ -19,7 +18,9 @@ $repositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $stagingRoot = Join-Path $env:TEMP "ExamKiosk-$([guid]::NewGuid())"
 $configurationRoot = Join-Path $env:ProgramData 'ExamKiosk'
 $deploymentConfigurationPath = Join-Path $configurationRoot 'deployment.settings.json'
-$powerShellPath = Join-Path $PSHOME 'pwsh.exe'
+$powerShellPath = Join-Path `
+    $env:SystemRoot `
+    'System32\WindowsPowerShell\v1.0\powershell.exe'
 
 $deploymentConfiguration = $null
 if (Test-Path -LiteralPath $deploymentConfigurationPath -PathType Leaf) {
@@ -133,9 +134,6 @@ try {
     New-Item -ItemType Directory -Path $recoveryDirectory -Force | Out-Null
     Copy-Item `
         -LiteralPath (Join-Path $PSScriptRoot 'Recovery\Recover-ExamKioskDevice.ps1') `
-        -Destination $recoveryDirectory
-    Copy-Item `
-        -LiteralPath (Join-Path $PSScriptRoot 'Recovery\Recover-ExamKioskDeviceAgent.ps1') `
         -Destination $recoveryDirectory
     Copy-Item `
         -LiteralPath (Join-Path $PSScriptRoot 'Recovery\README.md') `

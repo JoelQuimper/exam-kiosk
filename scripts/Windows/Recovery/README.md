@@ -1,12 +1,14 @@
 # Exam Kiosk recovery
 
-Use this recovery path when an exam transition fails, Assigned Access remains
-configured, or the normal Restricted Client cannot complete the exam.
+Use this emergency path only when Assigned Access leaves a device trapped in
+the kiosk experience and an administrator must regain control of Windows.
+Recovery is not an installation, uninstallation, reset, or Device Agent repair
+workflow.
 
 ## Run recovery
 
 Prefer the installed **Recover Exam Kiosk Device** Start-menu shortcut. From an
-elevated PowerShell 7 terminal, the equivalent command is:
+elevated Windows PowerShell 5.1 terminal, the equivalent command is:
 
 ```powershell
 & "$env:ProgramFiles\ExamKiosk\Recovery\Recover-ExamKioskDevice.ps1"
@@ -15,7 +17,7 @@ elevated PowerShell 7 terminal, the equivalent command is:
 From a repository checkout:
 
 ```powershell
-pwsh -File .\scripts\Windows\Recovery\Recover-ExamKioskDevice.ps1
+& .\scripts\Windows\Recovery\Recover-ExamKioskDevice.ps1
 ```
 
 After successful recovery, restart Windows:
@@ -35,35 +37,49 @@ verified the configuration. Only then use:
 
 ## Execution order
 
-1. `Recover-ExamKioskDevice.ps1` starts in PowerShell 7 and requests
+1. `Recover-ExamKioskDevice.ps1` starts in Windows PowerShell 5.1 and requests
    administrator elevation when necessary.
 2. It stops the Device Agent service to prevent concurrent transitions.
+   The service remains stopped after recovery.
 3. It registers a temporary scheduled task running as `LocalSystem`.
-4. The task starts `Recover-ExamKioskDeviceAgent.ps1` with Windows PowerShell
-   5.1.
-5. The Agent recovery script reads Assigned Access through the MDM Bridge,
-   verifies Exam Kiosk ownership, clears and verifies the configuration, and
-   removes only Exam Kiosk tool shortcuts.
-6. The Agent recovery script writes a bounded result under
+4. The task starts the same script in its internal `-SystemWorker` mode.
+5. The LocalSystem mode reads Assigned Access through the MDM Bridge,
+   verifies Exam Kiosk ownership, and clears and verifies the configuration.
+6. The LocalSystem mode writes a bounded result under
    `%ProgramData%\ExamKiosk\Recovery`.
-7. The PowerShell 7 orchestrator reads that result, resets `agent-state.json`
-   to `available`, appends `ManualRecovery` to the session journal, removes the
-   temporary task, and restarts the Device Agent if it was previously running.
-8. The administrator restarts Windows.
+7. The recovery orchestrator reads that result and removes the temporary task.
+8. The administrator restarts Windows, then uses the normal Reset,
+   installation, or uninstallation script as appropriate.
 
-## Why the scripts are separate
+## Why the script has two execution modes
 
-`Recover-ExamKioskDevice.ps1` is the administrator-facing orchestrator. It
-uses PowerShell 7 consistently with the other installation and administration
-scripts and owns elevation, service coordination, state persistence, and
-operator messages.
+The administrator-facing mode owns elevation, service coordination, the
+temporary scheduled task, and operator messages. The hidden `-SystemWorker`
+mode performs only the Assigned Access MDM Bridge operation. It rejects
+callers that are not `NT AUTHORITY\SYSTEM` and communicates its result through
+the path supplied by the administrator-facing mode.
 
-`Recover-ExamKioskDeviceAgent.ps1` is a minimal privileged worker. It runs only
-as `LocalSystem` and uses the inbox Windows PowerShell 5.1 runtime required by
-the Device Agent recovery path. This keeps MDM Bridge recovery available
-without depending on a PowerShell 7 installation in the `LocalSystem`
-environment.
+Both modes use inbox Windows PowerShell 5.1. Keeping them in one file avoids a
+second recovery artifact while retaining the `LocalSystem` boundary required
+by the device-scoped MDM Bridge.
 
-Do not run `Recover-ExamKioskDeviceAgent.ps1` directly. It rejects callers
-that are not `NT AUTHORITY\SYSTEM` and communicates its result through the
-path supplied by the orchestrator.
+## Recovery scope
+
+Recovery currently:
+
+- stops and leaves the Device Agent service stopped;
+- removes and verifies Assigned Access.
+
+Recovery does not modify `agent-state.json`, `session-journal.json`, generated
+shortcuts, or backend session state. After the device is accessible again,
+use `Reset-ExamKioskPoc.ps1`, `Install-ExamKioskPoc.ps1`, or
+`Uninstall-ExamKioskPoc.ps1` for application maintenance.
+
+Do not use Recovery as a substitute for those normal scripts when the
+administrator can already access the device.
+
+The current Device Agent does not apply temporary Edge policy, so there is no
+Edge policy backup to restore yet. When Step 6 introduces Agent-owned Edge
+policy values and their backup, this recovery path must restore only those
+recorded values and verify the result. It must never delete unrelated
+administrator or MDM policies.
