@@ -44,10 +44,20 @@ $webApplicationsJson = & az ad app list `
 if ($LASTEXITCODE -ne 0) {
     throw "Reading the Web app registration failed with exit code $LASTEXITCODE."
 }
-$webApplications = @($webApplicationsJson | ConvertFrom-Json) |
-    Where-Object displayName -CEQ $webDisplayName
+$returnedWebApplications = @($webApplicationsJson | ConvertFrom-Json)
+$webApplications = @(
+    $returnedWebApplications |
+        Where-Object displayName -CEQ $webDisplayName
+)
 if ($webApplications.Count -ne 1) {
-    throw "Expected exactly one app registration named '$webDisplayName'."
+    $returnedNames = @(
+        $returnedWebApplications |
+            ForEach-Object { "'$($_.displayName)'" }
+    ) -join ', '
+    throw (
+        "Expected exactly one app registration named '$webDisplayName', " +
+        "but found $($webApplications.Count) exact matches. " +
+        "Azure returned: $returnedNames.")
 }
 $webApplication = $webApplications[0]
 $apiIdentifier = "api://$($webApplication.appId)"
