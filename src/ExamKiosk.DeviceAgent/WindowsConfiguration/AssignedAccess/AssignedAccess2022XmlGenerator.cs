@@ -142,8 +142,6 @@ internal sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerat
                 AssignedAccessProfileConventions.RestrictedClientPath,
                 autoLaunch: true),
             DesktopApp(
-                @"%ProgramFiles(x86)%\Microsoft\EdgeWebView\Application\*\msedgewebview2.exe"),
-            DesktopApp(
                 @"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"),
             DesktopApp(
                 @"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge_proxy.exe"),
