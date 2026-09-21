@@ -1,3 +1,4 @@
+#Requires -Version 7.0
 #Requires -RunAsAdministrator
 [CmdletBinding()]
 param(
@@ -19,9 +20,6 @@ $stagingRoot = Join-Path $env:TEMP "ExamKiosk-$([guid]::NewGuid())"
 $configurationRoot = Join-Path $env:ProgramData 'ExamKiosk'
 $deploymentConfigurationPath = Join-Path $configurationRoot 'deployment.settings.json'
 $powerShellPath = Join-Path $PSHOME 'pwsh.exe'
-if (-not (Test-Path -LiteralPath $powerShellPath -PathType Leaf)) {
-    throw 'Install-ExamKioskPoc.ps1 must run in PowerShell 7.'
-}
 
 $deploymentConfiguration = $null
 if (Test-Path -LiteralPath $deploymentConfigurationPath -PathType Leaf) {
@@ -134,7 +132,13 @@ try {
     $recoveryDirectory = Join-Path $installRoot 'Recovery'
     New-Item -ItemType Directory -Path $recoveryDirectory -Force | Out-Null
     Copy-Item `
-        -LiteralPath (Join-Path $PSScriptRoot 'Recover-ExamKioskDevice.ps1') `
+        -LiteralPath (Join-Path $PSScriptRoot 'Recovery\Recover-ExamKioskDevice.ps1') `
+        -Destination $recoveryDirectory
+    Copy-Item `
+        -LiteralPath (Join-Path $PSScriptRoot 'Recovery\Recover-ExamKioskDeviceAgent.ps1') `
+        -Destination $recoveryDirectory
+    Copy-Item `
+        -LiteralPath (Join-Path $PSScriptRoot 'Recovery\README.md') `
         -Destination $recoveryDirectory
 
     [ordered]@{

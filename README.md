@@ -84,8 +84,12 @@ The agent invokes `Start-Exam.ps1` to apply Assigned Access and
 - A disposable, district-managed Windows 11 test device or virtual machine.
 - A Windows edition that supports the configured Assigned Access experience.
 - .NET 10 SDK to build and install the prototype.
-- PowerShell 7 (`pwsh`) to initialize the Device Agent identity and install
-  the PoC. The installed recovery and reset shortcuts also launch PowerShell 7.
+- PowerShell 7 (`pwsh`) for installation, uninstallation, reset, Entra
+  initialization, and Azure deployment. These scripts declare
+  `#Requires -Version 7.0` and stop immediately under Windows PowerShell 5.1.
+  The installed recovery and reset shortcuts launch PowerShell 7. Recovery
+  uses a separate Windows PowerShell 5.1 script for its temporary
+  `LocalSystem` worker.
 - Microsoft Edge installed in its standard machine-wide location.
 - Microsoft Edge WebView2 Runtime installed machine-wide.
 - A separate local administrator recovery account that is not the kiosk
@@ -299,6 +303,9 @@ after successful recovery, run:
 ```powershell
 shutdown.exe /r /t 0
 ```
+
+See [`scripts\Windows\Recovery\README.md`](scripts/Windows/Recovery/README.md)
+for the execution order, engine separation, and emergency override procedure.
 
 If the configured Assigned Access profile is not owned by Exam Kiosk, the
 script refuses to remove it. `-ForceForeignAssignedAccess` is an emergency
