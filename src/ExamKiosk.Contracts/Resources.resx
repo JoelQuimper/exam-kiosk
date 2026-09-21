@@ -37,10 +37,6 @@ Do you want to finish?</value></data>
   <data name="StartCancelled" xml:space="preserve"><value>Exam start was cancelled.</value></data>
   <data name="WebContentUnavailable" xml:space="preserve"><value>Your exams could not be loaded</value></data>
   <data name="WebNavigationFailed" xml:space="preserve"><value>The Exam Kiosk web application did not load.</value></data>
-  <data name="ExamSessionActionBusy" xml:space="preserve"><value>Another exam action is already in progress.</value></data>
-  <data name="ExamSessionActionFailed" xml:space="preserve"><value>The requested exam action could not be completed.</value></data>
-  <data name="FinishCancelled" xml:space="preserve"><value>Finishing the exam was cancelled.</value></data>
   <data name="NoActiveExamSession" xml:space="preserve"><value>No active restricted exam session was found.</value></data>
   <data name="OpenExam" xml:space="preserve"><value>Open exam</value></data>
-  <data name="RestrictedClientConfigurationInvalid" xml:space="preserve"><value>The Restricted Client web application address is missing or invalid. Contact the test administrator.</value></data>
 </root>

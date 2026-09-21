@@ -37,12 +37,8 @@ public static class Resources
     public static string StartCancelled => Get(nameof(StartCancelled));
     public static string WebContentUnavailable => Get(nameof(WebContentUnavailable));
     public static string WebNavigationFailed => Get(nameof(WebNavigationFailed));
-    public static string ExamSessionActionBusy => Get(nameof(ExamSessionActionBusy));
-    public static string ExamSessionActionFailed => Get(nameof(ExamSessionActionFailed));
-    public static string FinishCancelled => Get(nameof(FinishCancelled));
     public static string NoActiveExamSession => Get(nameof(NoActiveExamSession));
     public static string OpenExam => Get(nameof(OpenExam));
-    public static string RestrictedClientConfigurationInvalid => Get(nameof(RestrictedClientConfigurationInvalid));
     public static string RestartingWindows => Get(nameof(RestartingWindows));
 
     private static string Get(string name)
