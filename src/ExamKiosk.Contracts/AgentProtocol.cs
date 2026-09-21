@@ -61,7 +61,7 @@ public static class AgentProtocol
             || payload.Profile.Exam is null
             || string.IsNullOrWhiteSpace(payload.Profile.Exam.Title)
             || payload.Profile.Tools is null
-            || payload.Profile.EdgePolicy is null)
+            || payload.Profile.AllowedUrls is null)
         {
             error = "The StartExam payload is invalid.";
             return false;

@@ -15,13 +15,8 @@ internal static class EffectiveProfileTestData
                 "exam-1",
                 "Mathematics 101",
                 "calculator",
-                new Uri("https://example.com/exam"),
-                new WebLaunchTarget(
-                    new Uri("https://example.com/exam"),
-                    "Open exam",
-                    true,
-                    true)),
+                new Uri("https://example.com/exam")),
             tools ?? [],
-            new EffectiveEdgePolicy(["*"], ["https://example.com"]));
+            ["https://example.com"]);
     }
 }

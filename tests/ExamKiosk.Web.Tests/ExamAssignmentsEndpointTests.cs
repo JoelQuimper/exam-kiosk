@@ -162,6 +162,16 @@ public sealed class ExamAssignmentsEndpointTests
             "student1@jqdev.onmicrosoft.com",
             session.Profile.Student.UserPrincipalName);
         Assert.Equal(
+            new Uri(
+                "https://jqdev.sharepoint.com/sites/ExamSite/Shared%20Documents/Student1-Exam1"),
+            session.Profile.Exam.ExamTarget);
+        Assert.Equal(
+            [
+                "https://login.microsoftonline.com/",
+                "https://jqdev.sharepoint.com/sites/ExamSite/Shared%20Documents/Student1-Exam1",
+            ],
+            session.Profile.AllowedUrls);
+        Assert.Equal(
             TimeSpan.FromMinutes(15),
             session.ExpiresAtUtc - session.CreatedAtUtc);
     }

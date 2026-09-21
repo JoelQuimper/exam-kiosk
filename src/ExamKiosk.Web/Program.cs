@@ -1,8 +1,6 @@
 using System.Globalization;
 using ExamKiosk.Web.Authentication;
 using ExamKiosk.Web.Components;
-using ExamKiosk.Web.EdgePolicy;
-using ExamKiosk.Web.EdgePolicy.Validation;
 using ExamKiosk.Web.ExamAssignments;
 using ExamKiosk.Web.ExamSessions;
 using Microsoft.AspNetCore.Authentication;
@@ -59,10 +57,6 @@ builder.Services.AddRazorComponents();
 builder.Services.AddSingleton<
     IExamAssignmentService,
     BackendStubExamAssignmentService>();
-builder.Services.AddSingleton<
-    IEdgePolicyConfigurationValidator,
-    EdgePolicyConfigurationValidator>();
-builder.Services.AddSingleton<IEdgePolicyFactory, EdgePolicyFactory>();
 builder.Services.AddSingleton<
     IExamProfileOrchestrator,
     ExamProfileOrchestrator>();

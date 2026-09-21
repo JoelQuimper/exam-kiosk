@@ -4,5 +4,5 @@ internal sealed record StudentExamAssignment(
     string AssignmentId,
     string StudentId,
     string ExamId,
-    Uri SharePointFolderUrl,
+    Uri ExamTarget,
     IReadOnlyList<string> ToolIds);

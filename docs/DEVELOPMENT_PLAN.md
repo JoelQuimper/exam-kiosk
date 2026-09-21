@@ -293,7 +293,7 @@ Conceptual policy fields:
 - Policy, exam, assignment, student, and device identifiers.
 - Issued-at and expiry timestamps.
 - Unique nonce or replay identifier.
-- SharePoint exam entry URL or opaque workspace reference.
+- Exam target URL or opaque workspace reference.
 - Authorized capabilities.
 - Authorized browser destinations.
 - Session deadline and any additional-time allowance.
@@ -310,11 +310,11 @@ The prototype uses complete backend-owned definitions rather than fixed client
 capability enums. Its durable model separates:
 
 - student identity and exam assignments;
-- exam metadata and the authoritative SharePoint folder;
+- exam metadata and the authoritative exam target;
 - desktop, packaged, and Web tool definitions;
 - applications required for enforcement, including unpinned helper processes;
 - native and Web launch targets;
-- exact Edge blocklist and allowlist values;
+- browser-agnostic allowed URLs;
 - generated Assigned Access and shortcut artifacts;
 - the immutable effective profile stored with an exam session.
 
@@ -458,9 +458,10 @@ identity administrators.
 ### Edge policy ownership
 
 Assigned Access controls whether Edge may run; it does not restrict Edge
-destinations. The backend therefore composes the exact temporary Edge policy
-from the exam workspace, Microsoft authentication dependencies, and assigned
-Web tools. The effective policy blocks all other destinations.
+destinations. The backend therefore sends only the exam target and generic
+allowed URLs from Microsoft authentication dependencies and assigned Web
+tools. The Device Agent owns the Edge-specific deny-all baseline and translates
+the generic allowed URLs into temporary Edge policy.
 
 The Agent must independently validate this policy, preserve the values it will
 replace, apply and verify the temporary values, and restore the prior values on

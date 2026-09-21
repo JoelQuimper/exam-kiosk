@@ -7,14 +7,14 @@ be understood, tested, and demonstrated independently.
 
 - The Web application resolves the authenticated student's assignments.
 - The Web application composes and validates platform-neutral effective exam
-  intent, including tools and Edge policy.
+  intent, including tools and allowed URLs.
 - The Launcher page atomically creates a `Starting` session and transports its
   ID and immutable intent through bridge protocol version 4.
 - The Device Agent receives the session ID and immutable profile, persists
   their local receipt, validates the intent, detects the local Windows version,
   and generates and validates the Windows configuration locally.
 - The native Restricted Client asks the LocalSystem Device Agent to activate
-  the matching Web session and opens only the SharePoint destination persisted
+  the matching Web session and opens only the exam target persisted
   in the local receipt.
 
 ## Step 0 - Administrator recovery
@@ -94,7 +94,7 @@ Implemented on 2026-09-18:
 - command-specific payload validation;
 - Launcher forwarding of the bridge-validated session and profile;
 - a Launcher diagnostic snapshot containing the complete requested profile,
-  Edge policy, and deterministic digest, but no generated Windows artifact;
+  allowed URLs, and deterministic digest, but no generated Windows artifact;
 - local journal persistence of the Web session ID and deterministic profile
   SHA-256 before privileged application begins.
 
@@ -146,7 +146,8 @@ Deferred until after the Steps 7-8 vertical flow is validated on the managed
 test device.
 
 - Back up only the Edge policy values that Exam Kiosk will replace.
-- Apply the exact blocklist and allowlist from the effective profile.
+- Apply an Agent-owned deny-all baseline and allow the profile's generic
+  `AllowedUrls`.
 - Verify the written policy values.
 - Record ownership and backup information in the enforcement receipt.
 - Restore the previous values during finish, rollback, and administrator
@@ -173,9 +174,8 @@ Implemented on 2026-09-21, pending managed-device validation:
 
 - Agent protocol version 4 exposes the locally persisted exam metadata only to
   the installed Restricted Client after backend activation succeeds;
-- the fixed example URL was removed and the prepared SharePoint folder URL is
-  opened in a maximized InPrivate Edge window in the AppBar's remaining work
-  area;
+- the fixed example URL was removed and the prepared exam target is opened in
+  a maximized InPrivate Edge window in the AppBar's remaining work area;
 - **Open Exam** remains available for relaunch after Edge closes;
 - the Restricted Client remains open while the Agent reports `InExam` and
   fails closed when Agent status cannot be verified;

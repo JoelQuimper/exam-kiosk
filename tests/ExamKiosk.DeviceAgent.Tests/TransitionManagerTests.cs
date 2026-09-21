@@ -199,7 +199,7 @@ public sealed class TransitionManagerTests
             EffectiveProfileDigest.Compute(request.StartExam.Profile),
             journal.ProfileSha256);
         Assert.Equal(
-            request.StartExam.Profile.Exam.SharePointFolderUrl,
+            request.StartExam.Profile.Exam.ExamTarget,
             journal.ExamEntryUrl);
         Assert.Equal("ProfileReceived", journal.Steps[0].Name);
         Assert.Equal("completed", journal.Steps[0].Status);

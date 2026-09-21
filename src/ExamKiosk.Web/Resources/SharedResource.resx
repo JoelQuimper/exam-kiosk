@@ -39,7 +39,6 @@
   <data name="LaunchPhaseNote" xml:space="preserve"><value>Exam launching will be enabled in the desktop app.</value></data>
   <data name="Student" xml:space="preserve"><value>Student</value></data>
   <data name="AvailableNow" xml:space="preserve"><value>Available now</value></data>
-  <data name="MicrosoftEdge" xml:space="preserve"><value>Microsoft Edge</value></data>
   <data name="Calculator" xml:space="preserve"><value>Calculator</value></data>
   <data name="Ready" xml:space="preserve"><value>Ready</value></data>
   <data name="LauncherConnecting" xml:space="preserve"><value>Checking device readiness...</value></data>
@@ -49,7 +48,6 @@
   <data name="LauncherSessionConflict" xml:space="preserve"><value>An exam session is already active for this student.</value></data>
   <data name="LauncherUnavailable" xml:space="preserve"><value>Your device is not ready. Verify that the Exam Device Agent is running.</value></data>
   <data name="ExamInProgress" xml:space="preserve"><value>Exam in progress</value></data>
-  <data name="ExamSessionInstructions" xml:space="preserve"><value>Open your SharePoint exam in Edge. Return here when your work is complete.</value></data>
   <data name="OpenExam" xml:space="preserve"><value>Open exam</value></data>
   <data name="ExamDone" xml:space="preserve"><value>Exam done</value></data>
 </root>

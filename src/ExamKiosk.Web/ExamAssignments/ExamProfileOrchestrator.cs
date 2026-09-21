@@ -1,13 +1,15 @@
 using ExamKiosk.Contracts;
-using ExamKiosk.Web.EdgePolicy;
 using ExamKiosk.Web.ExamAssignments.Models;
 
 namespace ExamKiosk.Web.ExamAssignments;
 
-public sealed class ExamProfileOrchestrator(IEdgePolicyFactory edgePolicyFactory)
-    : IExamProfileOrchestrator
+public sealed class ExamProfileOrchestrator : IExamProfileOrchestrator
 {
     private const int SchemaVersion = 1;
+    private static readonly string[] BaselineAllowedUrls =
+    [
+        "https://login.microsoftonline.com/",
+    ];
 
     public EffectiveExamProfile Create(
         string userPrincipalName,
@@ -20,14 +22,16 @@ public sealed class ExamProfileOrchestrator(IEdgePolicyFactory edgePolicyFactory
             assignment.Exam.ExamId,
             assignment.Exam.Title,
             assignment.Exam.Icon,
-            assignment.SharePointFolderUrl,
-            new WebLaunchTarget(
-                assignment.SharePointFolderUrl,
-                "Open exam",
-                false,
-                false));
+            assignment.ExamTarget);
         var tools = assignment.Tools.ToArray();
-        var edgePolicy = edgePolicyFactory.Create(tools);
+        var allowedUrls = BaselineAllowedUrls
+            .Append(assignment.ExamTarget.AbsoluteUri)
+            .Concat(
+                tools
+                    .OfType<WebToolDefinition>()
+                    .SelectMany(tool => tool.Configuration.AllowedUrls))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
         var student = new EffectiveStudent(userPrincipalName.Trim());
 
         return new EffectiveExamProfile(
@@ -36,6 +40,6 @@ public sealed class ExamProfileOrchestrator(IEdgePolicyFactory edgePolicyFactory
             student,
             exam,
             tools,
-            edgePolicy);
+            allowedUrls);
     }
 }

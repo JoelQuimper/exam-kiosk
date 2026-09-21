@@ -78,14 +78,9 @@ public sealed class DeviceExamSessionsControllerTests
                 "exam-1",
                 "Exam",
                 "exam",
-                new Uri("https://example.com/exam"),
-                new WebLaunchTarget(
-                    new Uri("https://example.com/exam"),
-                    "Open exam",
-                    true,
-                    true)),
+                new Uri("https://example.com/exam")),
             [],
-            new EffectiveEdgePolicy(["*"], ["https://example.com"]));
+            ["https://example.com"]);
 
     private sealed class TestTimeProvider(DateTimeOffset utcNow) : TimeProvider
     {

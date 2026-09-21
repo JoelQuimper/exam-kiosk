@@ -66,7 +66,7 @@ public partial class MainWindow : Window
         }
         catch
         {
-            StatusMessage.Text = AppResources.EdgeOpenFailed;
+            StatusMessage.Text = AppResources.ExamOpenFailed;
         }
         finally
         {

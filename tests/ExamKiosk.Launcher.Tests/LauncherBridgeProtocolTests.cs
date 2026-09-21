@@ -134,14 +134,9 @@ public sealed class LauncherBridgeProtocolTests
                 "exam-1",
                 "Mathematics 101",
                 "calculator",
-                new Uri("https://example.com/exam"),
-                new WebLaunchTarget(
-                    new Uri("https://example.com/exam"),
-                    "Open exam",
-                    true,
-                    true)),
+                new Uri("https://example.com/exam")),
             [],
-            new EffectiveEdgePolicy(["*"], ["https://example.com"]));
+            ["https://example.com"]);
 
         return JsonSerializer.Serialize(profile, AgentProtocol.SerializerOptions);
     }

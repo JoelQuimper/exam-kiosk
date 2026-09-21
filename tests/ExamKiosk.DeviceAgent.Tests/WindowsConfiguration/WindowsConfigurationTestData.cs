@@ -16,14 +16,9 @@ internal static class WindowsConfigurationTestData
                 "exam-1",
                 "Mathematics",
                 "calculator",
-                new Uri("https://example.com/exam"),
-                new WebLaunchTarget(
-                    new Uri("https://example.com/exam"),
-                    "Open exam",
-                    true,
-                    true)),
+                new Uri("https://example.com/exam")),
             [],
-            new EffectiveEdgePolicy(["*"], ["https://example.com"]));
+            ["https://example.com"]);
 
     internal static WindowsClientVersion SupportedVersion() =>
         new(10, 0, 22621);

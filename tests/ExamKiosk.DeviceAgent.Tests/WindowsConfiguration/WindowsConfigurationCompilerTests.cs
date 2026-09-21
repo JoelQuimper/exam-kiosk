@@ -238,14 +238,9 @@ public sealed class WindowsConfigurationCompilerTests
                 "exam-1",
                 "Mathematics",
                 "calculator",
-                new Uri("https://example.com/exam"),
-                new WebLaunchTarget(
-                    new Uri("https://example.com/exam"),
-                    "Open exam",
-                    true,
-                    true)),
+                new Uri("https://example.com/exam")),
             tools,
-            new EffectiveEdgePolicy(["*"], ["https://example.com"]));
+            ["https://example.com"]);
     }
 
     private static WindowsClientVersion SupportedVersion() =>

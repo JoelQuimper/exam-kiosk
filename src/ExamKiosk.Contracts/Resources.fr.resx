@@ -9,7 +9,7 @@
   <data name="ExamDone" xml:space="preserve"><value>Examen terminé</value></data>
   <data name="ExamFinishFailed" xml:space="preserve"><value>L'examen n'a pas pu être terminé.</value></data>
   <data name="ExamInProgress" xml:space="preserve"><value>EXAMEN EN COURS</value></data>
-  <data name="ExamOpened" xml:space="preserve"><value>L'examen a été ouvert dans Edge.</value></data>
+  <data name="ExamOpened" xml:space="preserve"><value>L'examen a été ouvert.</value></data>
   <data name="ExamSessionReady" xml:space="preserve"><value>Votre session d'examen restreinte est prête.</value></data>
   <data name="FinishWarning" xml:space="preserve"><value>Terminer l'examen supprimera la session restreinte et redémarrera Windows. Assurez-vous d'avoir enregistré votre travail.
 
@@ -23,7 +23,7 @@ Voulez-vous terminer ?</value></data>
   <data name="StartExam" xml:space="preserve"><value>Passer à l'examen</value></data>
   <data name="StartWarning" xml:space="preserve"><value>Enregistrez votre travail avant de continuer. Cet ordinateur va redémarrer.</value></data>
   <data name="StartWarningTitle" xml:space="preserve"><value>Démarrage de l'examen : {0}</value></data>
-  <data name="EdgeOpenFailed" xml:space="preserve"><value>Microsoft Edge n'a pas pu être ouvert.
+  <data name="ExamOpenFailed" xml:space="preserve"><value>L'examen n'a pas pu être ouvert.
 
 </value></data>
   <data name="ExamSessionTitle" xml:space="preserve"><value>Kiosque d'examen</value></data>

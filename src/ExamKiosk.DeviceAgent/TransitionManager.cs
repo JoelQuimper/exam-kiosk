@@ -180,7 +180,7 @@ public sealed class TransitionManager
                 startExam.SessionId,
                 profileSha256,
                 startExam.Profile.Exam.Title,
-                startExam.Profile.Exam.SharePointFolderUrl,
+                startExam.Profile.Exam.ExamTarget,
                 cancellationToken);
             await sessionJournal.RecordStepAsync(
                 "ProfileReceived",

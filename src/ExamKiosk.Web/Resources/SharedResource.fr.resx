@@ -39,7 +39,6 @@
   <data name="LaunchPhaseNote" xml:space="preserve"><value>Le lancement des examens sera activé dans l'application de bureau.</value></data>
   <data name="Student" xml:space="preserve"><value>Étudiant</value></data>
   <data name="AvailableNow" xml:space="preserve"><value>Disponible maintenant</value></data>
-  <data name="MicrosoftEdge" xml:space="preserve"><value>Microsoft Edge</value></data>
   <data name="Calculator" xml:space="preserve"><value>Calculatrice</value></data>
   <data name="Ready" xml:space="preserve"><value>Prêt</value></data>
   <data name="LauncherConnecting" xml:space="preserve"><value>Vérification de l'état de l'appareil...</value></data>
@@ -49,7 +48,6 @@
   <data name="LauncherSessionConflict" xml:space="preserve"><value>Une session d'examen est déjà active pour cet étudiant.</value></data>
   <data name="LauncherUnavailable" xml:space="preserve"><value>Votre appareil n'est pas prêt. Vérifiez que l'agent de l'appareil d'examen est en cours d'exécution.</value></data>
   <data name="ExamInProgress" xml:space="preserve"><value>Examen en cours</value></data>
-  <data name="ExamSessionInstructions" xml:space="preserve"><value>Ouvrez votre examen SharePoint dans Edge. Revenez ici lorsque votre travail est terminé.</value></data>
   <data name="OpenExam" xml:space="preserve"><value>Ouvrir l'examen</value></data>
   <data name="ExamDone" xml:space="preserve"><value>Examen terminé</value></data>
 </root>

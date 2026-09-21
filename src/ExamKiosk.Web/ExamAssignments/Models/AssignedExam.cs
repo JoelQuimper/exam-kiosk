@@ -5,5 +5,5 @@ namespace ExamKiosk.Web.ExamAssignments.Models;
 public sealed record AssignedExam(
     string AssignmentId,
     ExamDefinition Exam,
-    Uri SharePointFolderUrl,
+    Uri ExamTarget,
     IReadOnlyList<ToolDefinition> Tools);

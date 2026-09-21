@@ -89,7 +89,7 @@ public sealed class BackendStubExamAssignmentService : IExamAssignmentService
                 "dictionary",
                 true,
                 new WebToolConfiguration(
-                    ["https://.usito.usherbrooke.ca"],
+                    ["https://usito.usherbrooke.ca/"],
                     new WebLaunchTarget(
                         new Uri("https://usito.usherbrooke.ca/"),
                         "Dictionnaire Usito",
@@ -183,7 +183,7 @@ public sealed class BackendStubExamAssignmentService : IExamAssignmentService
         return new AssignedExam(
             assignment.AssignmentId,
             exam,
-            assignment.SharePointFolderUrl,
+            assignment.ExamTarget,
             tools);
     }
 }

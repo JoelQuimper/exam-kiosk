@@ -6,4 +6,4 @@ public sealed record EffectiveExamProfile(
     EffectiveStudent Student,
     EffectiveExam Exam,
     IReadOnlyList<ToolDefinition> Tools,
-    EffectiveEdgePolicy EdgePolicy);
+    IReadOnlyList<string> AllowedUrls);

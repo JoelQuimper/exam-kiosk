@@ -25,7 +25,7 @@ public static class Resources
     public static string StartExam => Get(nameof(StartExam));
     public static string StartWarning => Get(nameof(StartWarning));
     public static string StartWarningTitle => Get(nameof(StartWarningTitle));
-    public static string EdgeOpenFailed => Get(nameof(EdgeOpenFailed));
+    public static string ExamOpenFailed => Get(nameof(ExamOpenFailed));
     public static string ExamSessionTitle => Get(nameof(ExamSessionTitle));
     public static string AgentStatusUnavailable => Get(nameof(AgentStatusUnavailable));
     public static string LoadingWebContent => Get(nameof(LoadingWebContent));

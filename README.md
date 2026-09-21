@@ -194,9 +194,9 @@ in place for recovery.
    account and starts the Restricted Exam Client.
 5. The native Restricted Client reserves a permanent 320-pixel panel on the
    right and asks the Device Agent to activate the exact prepared session.
-6. Select **Open exam**. Edge opens the session-bound SharePoint exam folder
-   maximized in the remaining workspace; the student signs in to SharePoint
-   there.
+6. Select **Open exam**. The configured browser opens the session-bound exam
+   target maximized in the remaining workspace; the student signs in there
+   when required.
 7. Return to the Restricted Exam Client, select **Exam done**, and confirm.
 8. The agent removes Assigned Access and restarts Windows.
 
@@ -239,7 +239,7 @@ The Launcher and Restricted Client write bounded JSON-lines diagnostics to:
 Navigation entries contain only the origin and path. Query strings, fragments,
 page content, cookies, and authentication tokens are not recorded. When an
 exam start is prepared, the Launcher log records the Web session ID,
-deterministic profile digest, complete effective exam intent, Edge policy, and
+deterministic profile digest, complete effective exam intent, allowed URLs, and
 Agent transition result. These configuration entries contain student identity,
 exam URLs, executable paths, and policy data and must be handled as sensitive
 operational diagnostics. Generated Assigned Access XML and shortcut artifacts
