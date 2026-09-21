@@ -13,7 +13,7 @@
   <data name="FinishWarning" xml:space="preserve"><value>Finishing the exam will remove the restricted session and restart Windows. Make sure your exam work has been saved.
 
 Do you want to finish?</value></data>
-  <data name="FinishWarningTitle" xml:space="preserve"><value>Finish bogus exam</value></data>
+  <data name="FinishWarningTitle" xml:space="preserve"><value>Finish exam</value></data>
   <data name="KioskTitle" xml:space="preserve"><value>Exam Kiosk</value></data>
   <data name="LeavingExam" xml:space="preserve"><value>Asking the Exam Device Agent to leave exam mode...</value></data>
   <data name="PreparingDevice" xml:space="preserve"><value>Asking the Exam Device Agent to prepare the device...</value></data>

@@ -13,7 +13,7 @@
   <data name="FinishWarning" xml:space="preserve"><value>Terminer l'examen supprimera la session restreinte et redémarrera Windows. Assurez-vous d'avoir enregistré votre travail.
 
 Voulez-vous terminer ?</value></data>
-  <data name="FinishWarningTitle" xml:space="preserve"><value>Terminer l'examen fictif</value></data>
+  <data name="FinishWarningTitle" xml:space="preserve"><value>Terminer l'examen</value></data>
   <data name="KioskTitle" xml:space="preserve"><value>Kiosque d'examen</value></data>
   <data name="LeavingExam" xml:space="preserve"><value>Demande à l'agent de l'appareil d'examen de quitter le mode examen...</value></data>
   <data name="PreparingDevice" xml:space="preserve"><value>Demande à l'agent de l'appareil d'examen de préparer l'appareil...</value></data>
