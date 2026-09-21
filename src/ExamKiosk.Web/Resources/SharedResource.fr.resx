@@ -45,7 +45,6 @@
   <data name="LauncherDeviceReady" xml:space="preserve"><value>Votre appareil est prêt à démarrer cet examen.</value></data>
   <data name="LauncherDirectBrowser" xml:space="preserve"><value>Ouvrez cette page dans le lanceur Exam Kiosk installé pour démarrer l'examen.</value></data>
   <data name="LauncherStarting" xml:space="preserve"><value>Préparation de votre appareil pour l'examen...</value></data>
-  <data name="LauncherSessionConflict" xml:space="preserve"><value>Une session d'examen est déjà active pour cet étudiant.</value></data>
   <data name="LauncherUnavailable" xml:space="preserve"><value>Votre appareil n'est pas prêt. Vérifiez que l'agent de l'appareil d'examen est en cours d'exécution.</value></data>
   <data name="ExamInProgress" xml:space="preserve"><value>Examen en cours</value></data>
   <data name="OpenExam" xml:space="preserve"><value>Ouvrir l'examen</value></data>

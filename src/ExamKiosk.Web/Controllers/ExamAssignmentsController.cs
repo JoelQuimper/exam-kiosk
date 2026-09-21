@@ -16,8 +16,7 @@ public sealed class ExamAssignmentsController(
     IExamAssignmentService examAssignmentService,
     IExamProfileOrchestrator examProfileOrchestrator,
     IExamSessionStore examSessionStore,
-    IAntiforgery antiforgery,
-    ILogger<ExamAssignmentsController> logger) : ControllerBase
+    IAntiforgery antiforgery) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType<IReadOnlyList<ExamAssignmentResponse>>(
@@ -43,7 +42,6 @@ public sealed class ExamAssignmentsController(
     [HttpPost("{assignmentId}/sessions")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     [ProducesResponseType<ExamSession>(StatusCodes.Status201Created)]
-    [ProducesResponseType<ExamSession>(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -77,19 +75,7 @@ public sealed class ExamAssignmentsController(
         var profile = examProfileOrchestrator.Create(
             userPrincipalName,
             assignment);
-        var result = examSessionStore.Start(userPrincipalName, profile);
-        if (result.Created)
-        {
-            return StatusCode(StatusCodes.Status201Created, result.Session);
-        }
-
-        logger.LogWarning(
-            "Exam session start rejected for assignment {AssignmentId}: "
-            + "session {SessionId} is already {SessionState} until {ExpiresAtUtc}",
-            assignmentId,
-            result.Session.SessionId,
-            result.Session.State,
-            result.Session.ExpiresAtUtc);
-        return Conflict(result.Session);
+        var session = examSessionStore.Start(userPrincipalName, profile);
+        return StatusCode(StatusCodes.Status201Created, session);
     }
 }

@@ -319,9 +319,9 @@ capability enums. Its durable model separates:
 - the immutable effective profile stored with an exam session.
 
 An `ExamSession` has a unique identifier, normalized student identity,
-assignment, immutable effective profile, issue and expiry timestamps, and a
-lifecycle state. The current lifecycle contract includes `Starting`, `Active`,
-`Completing`, `Completed`, `Cancelled`, and `Expired`.
+assignment, immutable effective profile, creation timestamp, and a lifecycle
+state. The PoC lifecycle contract includes `Starting`, `Active`, and
+`Completed`; starting again replaces the student's previous in-memory session.
 
 The API is authoritative for assignment ownership, session lifecycle, exam
 metadata, and URLs. The Device Agent persists only the enforcement receipt and
@@ -631,7 +631,7 @@ Every temporary local change must be transactional:
 3. Record each completed transition step.
 4. Make activation and rollback operations idempotent.
 5. Restore state on normal completion.
-6. Detect expired or incomplete sessions at service startup and boot.
+6. Detect stale or incomplete sessions at service startup and boot.
 7. Attempt automatic rollback without relying on the exam API.
 8. Preserve a district IT recovery method outside the restricted student
    experience.

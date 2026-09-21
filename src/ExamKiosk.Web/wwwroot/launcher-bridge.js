@@ -21,7 +21,6 @@
 
         let statusRequestId = crypto.randomUUID();
         let startRequestId = null;
-        let startingSessionId = null;
 
         function setStartButtonsDisabled(disabled) {
             startButtons.forEach(button => {
@@ -38,34 +37,13 @@
             });
         }
 
-        async function cancelSession(sessionId) {
-            try {
-                const response = await fetch(
-                    `/api/v1/exam-sessions/${encodeURIComponent(sessionId)}/cancel`,
-                    {
-                        method: "POST",
-                        credentials: "same-origin",
-                        headers: { "X-XSRF-TOKEN": antiforgeryToken }
-                    });
-                if (!response.ok) {
-                    throw new Error(
-                        `Session cancellation failed with status ${response.status}.`);
-                }
-
-                return true;
-            } catch (error) {
-                console.error("Unable to cancel the prepared exam session.", error);
-                return false;
-            }
-        }
-
         function requestAgentStatus(message) {
             statusRequestId = crypto.randomUUID();
             status.textContent = message || status.dataset.connecting;
             post("clientReady", statusRequestId);
         }
 
-        webview.addEventListener("message", async event => {
+        webview.addEventListener("message", event => {
             const message = event.data;
             if (!message || message.version !== protocolVersion) {
                 return;
@@ -89,14 +67,7 @@
             if (message.state === "cancelled"
                 || message.state === "failed"
                 || message.state === "busy") {
-                const sessionId = startingSessionId;
                 startRequestId = null;
-                startingSessionId = null;
-                if (!sessionId || !await cancelSession(sessionId)) {
-                    status.textContent = status.dataset.unavailable;
-                    return;
-                }
-
                 requestAgentStatus(message.message);
                 return;
             }
@@ -125,11 +96,6 @@
                                 "X-XSRF-TOKEN": antiforgeryToken
                             }
                         });
-                    if (response.status === 409) {
-                        startRequestId = null;
-                        status.textContent = status.dataset.sessionConflict;
-                        return;
-                    }
                     if (response.status !== 201) {
                         throw new Error(
                             `Session creation failed with status ${response.status}.`);
@@ -142,7 +108,6 @@
                         throw new Error("Session creation returned an invalid response.");
                     }
 
-                    startingSessionId = session.sessionId;
                     post("startExam", startRequestId, {
                         exam: {
                             title: session.profile.exam.title,
@@ -152,12 +117,7 @@
                     });
                 } catch (error) {
                     console.error("Unable to prepare the exam session.", error);
-                    const sessionId = startingSessionId;
                     startRequestId = null;
-                    startingSessionId = null;
-                    if (sessionId) {
-                        await cancelSession(sessionId);
-                    }
                     status.textContent = status.dataset.unavailable;
                     setStartButtonsDisabled(false);
                 }

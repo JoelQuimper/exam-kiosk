@@ -6,272 +6,104 @@ namespace ExamKiosk.Web.Tests;
 public sealed class InMemoryExamSessionStoreTests
 {
     [Fact]
-    public void Start_CreatesStartingSessionWithBoundedExpiry()
+    public void Start_CreatesStartingSession()
     {
-        var now = new DateTimeOffset(2026, 9, 18, 13, 0, 0, TimeSpan.Zero);
-        var timeProvider = new TestTimeProvider(now);
-        var store = new InMemoryExamSessionStore(timeProvider);
+        var store = new InMemoryExamSessionStore();
 
-        var result = store.Start("student@example.com", CreateProfile());
+        var session = store.Start("student@example.com", CreateProfile());
 
-        Assert.True(result.Created);
-        Assert.NotEqual(Guid.Empty, result.Session.SessionId);
-        Assert.Equal(ExamSessionState.Starting, result.Session.State);
-        Assert.Equal(now, result.Session.CreatedAtUtc);
-        Assert.Equal(
-            now.Add(InMemoryExamSessionStore.StartingLifetime),
-            result.Session.ExpiresAtUtc);
+        Assert.NotEqual(Guid.Empty, session.SessionId);
+        Assert.Equal(ExamSessionState.Starting, session.State);
+        Assert.Equal(session, store.Get(session.SessionId));
     }
 
     [Fact]
-    public void Start_WhenStudentHasNonterminalSession_ReturnsConflict()
+    public void Start_WhenStudentHasSession_ReplacesIt()
     {
-        var store = new InMemoryExamSessionStore(
-            new TestTimeProvider(DateTimeOffset.UtcNow));
+        var store = new InMemoryExamSessionStore();
         var first = store.Start("student@example.com", CreateProfile());
 
         var second = store.Start("STUDENT@example.com", CreateProfile());
 
-        Assert.False(second.Created);
-        Assert.Equal(first.Session, second.Session);
-    }
-
-    [Fact]
-    public void Start_AfterStartingSessionExpires_CreatesNewSession()
-    {
-        var timeProvider = new TestTimeProvider(DateTimeOffset.UtcNow);
-        var store = new InMemoryExamSessionStore(timeProvider);
-        var first = store.Start("student@example.com", CreateProfile());
-        timeProvider.Advance(InMemoryExamSessionStore.StartingLifetime);
-
-        var second = store.Start("student@example.com", CreateProfile());
-
-        Assert.True(second.Created);
-        Assert.NotEqual(first.Session.SessionId, second.Session.SessionId);
-        Assert.Equal(
-            ExamSessionState.Expired,
-            store.Get(first.Session.SessionId)?.State);
-    }
-
-    [Fact]
-    public async Task Start_WhenRequestsAreConcurrent_CreatesExactlyOneSession()
-    {
-        var store = new InMemoryExamSessionStore(
-            new TestTimeProvider(DateTimeOffset.UtcNow));
-        var starts = Enumerable.Range(0, 16)
-            .Select(
-                _ => Task.Run(
-                    () => store.Start(
-                        "student@example.com",
-                        CreateProfile())))
-            .ToArray();
-
-        var results = await Task.WhenAll(starts);
-
-        Assert.Single(results, result => result.Created);
-        Assert.Single(results.Select(result => result.Session.SessionId).Distinct());
-    }
-
-    [Fact]
-    public void Cancel_WhenSessionIsStarting_CancelsAndAllowsAnotherStart()
-    {
-        var store = new InMemoryExamSessionStore(
-            new TestTimeProvider(DateTimeOffset.UtcNow));
-        var first = store.Start("student@example.com", CreateProfile());
-
-        var cancellation = store.Cancel(
-            "student@example.com",
-            first.Session.SessionId);
-        var second = store.Start("student@example.com", CreateProfile());
-
-        Assert.Equal(
-            ExamSessionCancellationStatus.Cancelled,
-            cancellation.Status);
-        Assert.Equal(ExamSessionState.Cancelled, cancellation.Session?.State);
-        Assert.Null(cancellation.Session?.ExpiresAtUtc);
-        Assert.True(second.Created);
-    }
-
-    [Fact]
-    public void CompleteForDevice_CompletesSessionAndAllowsAnotherStart()
-    {
-        var store = new InMemoryExamSessionStore(
-            new TestTimeProvider(DateTimeOffset.UtcNow));
-        var profile = CreateProfile();
-        var profileSha256 = EffectiveProfileDigest.Compute(profile);
-        var first = store.Start("student@example.com", profile);
-        store.ActivateForDevice(first.Session.SessionId, profileSha256);
-
-        var completion = store.CompleteForDevice(
-            first.Session.SessionId,
-            profileSha256);
-        var second = store.Start("student@example.com", CreateProfile());
-
-        Assert.Equal(
-            ExamSessionCompletionStatus.Completed,
-            completion.Status);
-        Assert.Equal(first.Session.SessionId, completion.Session?.SessionId);
-        Assert.Equal(ExamSessionState.Completed, completion.Session?.State);
-        Assert.Null(completion.Session?.ExpiresAtUtc);
-        Assert.True(second.Created);
-    }
-
-    [Fact]
-    public void CompleteForDevice_CompletesActiveSessionIdempotently()
-    {
-        var store = new InMemoryExamSessionStore(
-            new TestTimeProvider(DateTimeOffset.UtcNow));
-        var profile = CreateProfile();
-        var profileSha256 = EffectiveProfileDigest.Compute(profile);
-        var started = store.Start("student@example.com", profile);
-        store.ActivateForDevice(started.Session.SessionId, profileSha256);
-        store.CompleteForDevice(started.Session.SessionId, profileSha256);
-
-        var repeated = store.CompleteForDevice(
-            started.Session.SessionId,
-            profileSha256);
-
-        Assert.Equal(
-            ExamSessionCompletionStatus.Completed,
-            repeated.Status);
-        Assert.Equal(ExamSessionState.Completed, repeated.Session?.State);
+        Assert.NotEqual(first.SessionId, second.SessionId);
+        Assert.Null(store.Get(first.SessionId));
+        Assert.Equal(second, store.Get(second.SessionId));
     }
 
     [Fact]
     public void ActivateForDevice_ActivatesStartingSessionIdempotently()
     {
-        var store = new InMemoryExamSessionStore(
-            new TestTimeProvider(DateTimeOffset.UtcNow));
+        var store = new InMemoryExamSessionStore();
         var profile = CreateProfile();
         var profileSha256 = EffectiveProfileDigest.Compute(profile);
         var started = store.Start("student@example.com", profile);
 
         var first = store.ActivateForDevice(
-            started.Session.SessionId,
+            started.SessionId,
             profileSha256);
         var second = store.ActivateForDevice(
-            started.Session.SessionId,
+            started.SessionId,
             profileSha256);
 
         Assert.Equal(ExamSessionActivationStatus.Activated, first.Status);
-        Assert.Equal(started.Session.SessionId, first.Session?.SessionId);
         Assert.Equal(ExamSessionState.Active, first.Session?.State);
-        Assert.Null(first.Session?.ExpiresAtUtc);
         Assert.Equal(first.Session, second.Session);
     }
 
     [Fact]
-    public void ActivateForDevice_WhenStartingSessionExpired_ReturnsNotFound()
+    public void CompleteForDevice_CompletesActiveSessionIdempotently()
     {
-        var timeProvider = new TestTimeProvider(DateTimeOffset.UtcNow);
-        var store = new InMemoryExamSessionStore(timeProvider);
+        var store = new InMemoryExamSessionStore();
         var profile = CreateProfile();
+        var profileSha256 = EffectiveProfileDigest.Compute(profile);
         var started = store.Start("student@example.com", profile);
-        timeProvider.Advance(InMemoryExamSessionStore.StartingLifetime);
+        store.ActivateForDevice(started.SessionId, profileSha256);
 
-        var result = store.ActivateForDevice(
-            started.Session.SessionId,
-            EffectiveProfileDigest.Compute(profile));
+        var first = store.CompleteForDevice(
+            started.SessionId,
+            profileSha256);
+        var second = store.CompleteForDevice(
+            started.SessionId,
+            profileSha256);
 
-        Assert.Equal(ExamSessionActivationStatus.NotFound, result.Status);
-        Assert.Equal(ExamSessionState.Expired, result.Session?.State);
-        Assert.Equal(
-            ExamSessionState.Expired,
-            store.Get(started.Session.SessionId)?.State);
+        Assert.Equal(ExamSessionCompletionStatus.Completed, first.Status);
+        Assert.Equal(ExamSessionState.Completed, first.Session?.State);
+        Assert.Equal(first.Session, second.Session);
     }
 
     [Fact]
-    public void CompleteForDevice_WhenSessionIsStillStarting_ReturnsConflict()
+    public void CompleteForDevice_WhenSessionIsStarting_ReturnsConflict()
     {
-        var store = new InMemoryExamSessionStore(
-            new TestTimeProvider(DateTimeOffset.UtcNow));
+        var store = new InMemoryExamSessionStore();
         var profile = CreateProfile();
         var started = store.Start("student@example.com", profile);
 
         var result = store.CompleteForDevice(
-            started.Session.SessionId,
+            started.SessionId,
             EffectiveProfileDigest.Compute(profile));
 
         Assert.Equal(ExamSessionCompletionStatus.Conflict, result.Status);
-        Assert.Equal(started.Session, result.Session);
+        Assert.Equal(started, result.Session);
     }
 
     [Fact]
     public void ActivateForDevice_WhenDigestDoesNotMatch_ReturnsNotFound()
     {
-        var store = new InMemoryExamSessionStore(
-            new TestTimeProvider(DateTimeOffset.UtcNow));
+        var store = new InMemoryExamSessionStore();
         var started = store.Start("student@example.com", CreateProfile());
 
         var result = store.ActivateForDevice(
-            started.Session.SessionId,
+            started.SessionId,
             new string('0', 64));
 
-        Assert.Equal(
-            ExamSessionActivationStatus.NotFound,
-            result.Status);
+        Assert.Equal(ExamSessionActivationStatus.NotFound, result.Status);
         Assert.Null(result.Session);
-    }
-
-    [Fact]
-    public void Cancel_WhenAlreadyCancelled_IsIdempotent()
-    {
-        var store = new InMemoryExamSessionStore(
-            new TestTimeProvider(DateTimeOffset.UtcNow));
-        var started = store.Start("student@example.com", CreateProfile());
-        var first = store.Cancel(
-            "student@example.com",
-            started.Session.SessionId);
-
-        var second = store.Cancel(
-            "STUDENT@example.com",
-            started.Session.SessionId);
-
-        Assert.Equal(
-            ExamSessionCancellationStatus.Cancelled,
-            second.Status);
-        Assert.Equal(first.Session, second.Session);
-    }
-
-    [Fact]
-    public void Cancel_WhenSessionBelongsToAnotherStudent_ReturnsNotFound()
-    {
-        var store = new InMemoryExamSessionStore(
-            new TestTimeProvider(DateTimeOffset.UtcNow));
-        var started = store.Start("student@example.com", CreateProfile());
-
-        var result = store.Cancel(
-            "other@example.com",
-            started.Session.SessionId);
-
-        Assert.Equal(ExamSessionCancellationStatus.NotFound, result.Status);
-        Assert.Null(result.Session);
-        Assert.Equal(
-            ExamSessionState.Starting,
-            store.Get(started.Session.SessionId)?.State);
-    }
-
-    [Fact]
-    public void Cancel_WhenStartingSessionExpired_ReturnsConflict()
-    {
-        var timeProvider = new TestTimeProvider(DateTimeOffset.UtcNow);
-        var store = new InMemoryExamSessionStore(timeProvider);
-        var started = store.Start("student@example.com", CreateProfile());
-        timeProvider.Advance(InMemoryExamSessionStore.StartingLifetime);
-
-        var result = store.Cancel(
-            "student@example.com",
-            started.Session.SessionId);
-
-        Assert.Equal(ExamSessionCancellationStatus.Conflict, result.Status);
-        Assert.Equal(ExamSessionState.Expired, result.Session?.State);
     }
 
     [Fact]
     public void Start_WhenProfileBelongsToAnotherStudent_Throws()
     {
-        var store = new InMemoryExamSessionStore(
-            new TestTimeProvider(DateTimeOffset.UtcNow));
+        var store = new InMemoryExamSessionStore();
 
         Assert.Throws<ArgumentException>(
             () => store.Start("other@example.com", CreateProfile()));
@@ -289,14 +121,4 @@ public sealed class InMemoryExamSessionStoreTests
                 new Uri("https://example.com/exam")),
             [],
             ["https://example.com"]);
-
-    private sealed class TestTimeProvider(DateTimeOffset utcNow) : TimeProvider
-    {
-        public override DateTimeOffset GetUtcNow() => utcNow;
-
-        public void Advance(TimeSpan duration)
-        {
-            utcNow = utcNow.Add(duration);
-        }
-    }
 }

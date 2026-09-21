@@ -58,13 +58,13 @@ shortcuts recorded in the enforcement receipt.
 
 Implemented on 2026-09-18:
 
-- an in-memory exam-session store and the `Starting`, `Active`, `Completing`,
-  `Completed`, `Cancelled`, and `Expired` states;
+- an in-memory exam-session store and the `Starting`, `Active`, and `Completed`
+  states;
 - an authenticated, antiforgery-protected atomic start operation;
 - assignment ownership verification before profile composition;
 - a unique session containing the immutable effective profile;
-- one nonterminal session per student, matched case-insensitively;
-- automatic expiration of abandoned `Starting` sessions after 15 minutes.
+- each new start atomically replaces that student's previous session,
+  matched case-insensitively.
 
 Step 2 replaced and removed the temporary profile retrieval endpoint.
 
@@ -76,10 +76,8 @@ Implemented on 2026-09-18:
   operation and sends its ID and immutable profile to the Launcher;
 - bridge protocol version 4 requires a nonempty session ID and carries no
   generated Windows artifacts;
-- student cancellation, Launcher busy state, and Agent failure cancel the
-  prepared Web session;
-- cancellation is authenticated, antiforgery-protected, owner-scoped, and
-  idempotent;
+- student cancellation, Launcher busy state, and Agent failure leave the
+  prepared session available for diagnostics; the next start replaces it;
 - successful Agent acceptance leaves the session `Starting`;
 - the temporary profile-only endpoint was removed.
 

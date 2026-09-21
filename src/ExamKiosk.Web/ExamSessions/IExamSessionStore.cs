@@ -4,15 +4,11 @@ namespace ExamKiosk.Web.ExamSessions;
 
 public interface IExamSessionStore
 {
-    ExamSessionStartResult Start(
+    ExamSession Start(
         string userPrincipalName,
         EffectiveExamProfile profile);
 
     ExamSession? Get(Guid sessionId);
-
-    ExamSessionCancellationResult Cancel(
-        string userPrincipalName,
-        Guid sessionId);
 
     ExamSessionActivationResult ActivateForDevice(
         Guid sessionId,
@@ -22,21 +18,6 @@ public interface IExamSessionStore
         Guid sessionId,
         string profileSha256);
 }
-
-public sealed record ExamSessionStartResult(
-    bool Created,
-    ExamSession Session);
-
-public enum ExamSessionCancellationStatus
-{
-    Cancelled,
-    NotFound,
-    Conflict,
-}
-
-public sealed record ExamSessionCancellationResult(
-    ExamSessionCancellationStatus Status,
-    ExamSession? Session);
 
 public enum ExamSessionActivationStatus
 {

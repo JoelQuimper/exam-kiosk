@@ -11,15 +11,6 @@ public enum ExamSessionState
     [JsonStringEnumMemberName("active")]
     Active,
 
-    [JsonStringEnumMemberName("completing")]
-    Completing,
-
     [JsonStringEnumMemberName("completed")]
     Completed,
-
-    [JsonStringEnumMemberName("cancelled")]
-    Cancelled,
-
-    [JsonStringEnumMemberName("expired")]
-    Expired,
 }

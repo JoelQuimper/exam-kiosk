@@ -2,17 +2,14 @@ using ExamKiosk.Contracts;
 
 namespace ExamKiosk.Web.ExamSessions;
 
-public sealed class InMemoryExamSessionStore(TimeProvider timeProvider)
-    : IExamSessionStore
+public sealed class InMemoryExamSessionStore : IExamSessionStore
 {
-    public static readonly TimeSpan StartingLifetime = TimeSpan.FromMinutes(15);
-
     private readonly Lock syncRoot = new();
     private readonly Dictionary<Guid, ExamSession> sessions = [];
-    private readonly Dictionary<string, Guid> nonterminalSessionIdsByStudent =
+    private readonly Dictionary<string, Guid> sessionIdsByStudent =
         new(StringComparer.OrdinalIgnoreCase);
 
-    public ExamSessionStartResult Start(
+    public ExamSession Start(
         string userPrincipalName,
         EffectiveExamProfile profile)
     {
@@ -32,28 +29,22 @@ public sealed class InMemoryExamSessionStore(TimeProvider timeProvider)
 
         lock (syncRoot)
         {
-            var now = timeProvider.GetUtcNow();
-            ExpireStartingSession(normalizedUpn, now);
-
-            if (nonterminalSessionIdsByStudent.TryGetValue(
+            if (sessionIdsByStudent.TryGetValue(
                     normalizedUpn,
-                    out var existingSessionId))
+                    out var previousSessionId))
             {
-                return new ExamSessionStartResult(
-                    false,
-                    sessions[existingSessionId]);
+                sessions.Remove(previousSessionId);
             }
 
             var session = new ExamSession(
                 Guid.NewGuid(),
                 ExamSessionState.Starting,
-                now,
-                now.Add(StartingLifetime),
+                DateTimeOffset.UtcNow,
                 profile);
             sessions.Add(session.SessionId, session);
-            nonterminalSessionIdsByStudent.Add(normalizedUpn, session.SessionId);
+            sessionIdsByStudent[normalizedUpn] = session.SessionId;
 
-            return new ExamSessionStartResult(true, session);
+            return session;
         }
     }
 
@@ -66,77 +57,7 @@ public sealed class InMemoryExamSessionStore(TimeProvider timeProvider)
 
         lock (syncRoot)
         {
-            if (!sessions.TryGetValue(sessionId, out var session))
-            {
-                return null;
-            }
-
-            if (session.State == ExamSessionState.Starting
-                && session.ExpiresAtUtc <= timeProvider.GetUtcNow())
-            {
-                session = Expire(session);
-            }
-
-            return session;
-        }
-    }
-
-    public ExamSessionCancellationResult Cancel(
-        string userPrincipalName,
-        Guid sessionId)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(userPrincipalName);
-        if (sessionId == Guid.Empty)
-        {
-            return new ExamSessionCancellationResult(
-                ExamSessionCancellationStatus.NotFound,
-                null);
-        }
-
-        var normalizedUpn = userPrincipalName.Trim();
-        lock (syncRoot)
-        {
-            if (!sessions.TryGetValue(sessionId, out var session)
-                || !string.Equals(
-                    session.Profile.Student.UserPrincipalName,
-                    normalizedUpn,
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                return new ExamSessionCancellationResult(
-                    ExamSessionCancellationStatus.NotFound,
-                    null);
-            }
-
-            if (session.State == ExamSessionState.Starting
-                && session.ExpiresAtUtc <= timeProvider.GetUtcNow())
-            {
-                session = Expire(session);
-            }
-
-            if (session.State == ExamSessionState.Cancelled)
-            {
-                return new ExamSessionCancellationResult(
-                    ExamSessionCancellationStatus.Cancelled,
-                    session);
-            }
-
-            if (session.State != ExamSessionState.Starting)
-            {
-                return new ExamSessionCancellationResult(
-                    ExamSessionCancellationStatus.Conflict,
-                    session);
-            }
-
-            var cancelled = session with
-            {
-                State = ExamSessionState.Cancelled,
-                ExpiresAtUtc = null,
-            };
-            sessions[session.SessionId] = cancelled;
-            nonterminalSessionIdsByStudent.Remove(normalizedUpn);
-            return new ExamSessionCancellationResult(
-                ExamSessionCancellationStatus.Cancelled,
-                cancelled);
+            return sessions.GetValueOrDefault(sessionId);
         }
     }
 
@@ -156,14 +77,6 @@ public sealed class InMemoryExamSessionStore(TimeProvider timeProvider)
                     null);
             }
 
-            if (session.State == ExamSessionState.Starting
-                && session.ExpiresAtUtc <= timeProvider.GetUtcNow())
-            {
-                return new ExamSessionActivationResult(
-                    ExamSessionActivationStatus.NotFound,
-                    Expire(session));
-            }
-
             if (session.State == ExamSessionState.Active)
             {
                 return new ExamSessionActivationResult(
@@ -178,11 +91,7 @@ public sealed class InMemoryExamSessionStore(TimeProvider timeProvider)
                     session);
             }
 
-            var active = session with
-            {
-                State = ExamSessionState.Active,
-                ExpiresAtUtc = null,
-            };
+            var active = session with { State = ExamSessionState.Active };
             sessions[sessionId] = active;
             return new ExamSessionActivationResult(
                 ExamSessionActivationStatus.Activated,
@@ -220,13 +129,9 @@ public sealed class InMemoryExamSessionStore(TimeProvider timeProvider)
                     session);
             }
 
-            var completed = session with
-            {
-                State = ExamSessionState.Completed,
-                ExpiresAtUtc = null,
-            };
+            var completed = session with { State = ExamSessionState.Completed };
             sessions[sessionId] = completed;
-            nonterminalSessionIdsByStudent.Remove(
+            sessionIdsByStudent.Remove(
                 session.Profile.Student.UserPrincipalName);
             return new ExamSessionCompletionResult(
                 ExamSessionCompletionStatus.Completed,
@@ -252,35 +157,4 @@ public sealed class InMemoryExamSessionStore(TimeProvider timeProvider)
         return false;
     }
 
-    private void ExpireStartingSession(
-        string userPrincipalName,
-        DateTimeOffset now)
-    {
-        if (!nonterminalSessionIdsByStudent.TryGetValue(
-                userPrincipalName,
-                out var sessionId))
-        {
-            return;
-        }
-
-        var session = sessions[sessionId];
-        if (session.State == ExamSessionState.Starting
-            && session.ExpiresAtUtc <= now)
-        {
-            Expire(session);
-        }
-    }
-
-    private ExamSession Expire(ExamSession session)
-    {
-        var expired = session with
-        {
-            State = ExamSessionState.Expired,
-            ExpiresAtUtc = null,
-        };
-        sessions[session.SessionId] = expired;
-        nonterminalSessionIdsByStudent.Remove(
-            session.Profile.Student.UserPrincipalName);
-        return expired;
-    }
 }

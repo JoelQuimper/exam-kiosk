@@ -60,7 +60,6 @@ builder.Services.AddSingleton<
 builder.Services.AddSingleton<
     IExamProfileOrchestrator,
     ExamProfileOrchestrator>();
-builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IExamSessionStore, InMemoryExamSessionStore>();
 builder.Services.AddSingleton<
     IAuthorizationMiddlewareResultHandler,
