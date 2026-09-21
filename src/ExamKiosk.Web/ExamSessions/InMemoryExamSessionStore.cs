@@ -166,6 +166,13 @@ public sealed class InMemoryExamSessionStore(TimeProvider timeProvider)
                     Expire(session));
             }
 
+            if (session.State != ExamSessionState.Active)
+            {
+                return new ExamSessionCompletionResult(
+                    ExamSessionCompletionStatus.Conflict,
+                    session);
+            }
+
             var completed = session with
             {
                 State = ExamSessionState.Completed,
@@ -176,6 +183,58 @@ public sealed class InMemoryExamSessionStore(TimeProvider timeProvider)
             return new ExamSessionCompletionResult(
                 ExamSessionCompletionStatus.Completed,
                 completed);
+        }
+    }
+
+    public ExamSessionActivationResult ActivateActive(
+        string userPrincipalName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(userPrincipalName);
+
+        var normalizedUpn = userPrincipalName.Trim();
+        lock (syncRoot)
+        {
+            if (!nonterminalSessionIdsByStudent.TryGetValue(
+                    normalizedUpn,
+                    out var sessionId))
+            {
+                return new ExamSessionActivationResult(
+                    ExamSessionActivationStatus.NotFound,
+                    null);
+            }
+
+            var session = sessions[sessionId];
+            if (session.State == ExamSessionState.Starting
+                && session.ExpiresAtUtc <= timeProvider.GetUtcNow())
+            {
+                return new ExamSessionActivationResult(
+                    ExamSessionActivationStatus.NotFound,
+                    Expire(session));
+            }
+
+            if (session.State == ExamSessionState.Active)
+            {
+                return new ExamSessionActivationResult(
+                    ExamSessionActivationStatus.Activated,
+                    session);
+            }
+
+            if (session.State != ExamSessionState.Starting)
+            {
+                return new ExamSessionActivationResult(
+                    ExamSessionActivationStatus.Conflict,
+                    session);
+            }
+
+            var active = session with
+            {
+                State = ExamSessionState.Active,
+                ExpiresAtUtc = null,
+            };
+            sessions[sessionId] = active;
+            return new ExamSessionActivationResult(
+                ExamSessionActivationStatus.Activated,
+                active);
         }
     }
 

@@ -13,8 +13,9 @@ be understood, tested, and demonstrated independently.
 - The Device Agent receives the session ID and immutable profile, persists
   their local receipt, validates the intent, detects the local Windows version,
   and generates and validates the Windows configuration locally.
-- The Restricted Client still relies on the local Agent state and opens a
-  placeholder URL.
+- The Restricted Client authenticates the student, activates the matching Web
+  session, and opens the locally persisted SharePoint exam destination only
+  when the Web and Agent session IDs match.
 
 ## Step 0 - Administrator recovery
 
@@ -84,7 +85,7 @@ Implemented on 2026-09-18:
 
 Implemented on 2026-09-18:
 
-- Agent protocol version 3 and pipe name `ExamKiosk.DeviceAgent.v3`;
+- Agent protocol version 4 and pipe name `ExamKiosk.DeviceAgent.v4`;
 - a typed `StartExam` payload containing the Web session ID and immutable
   effective exam intent;
 - a 256 KiB request limit enforced by both client and service;
@@ -139,6 +140,9 @@ remains gated on all pre-profile controls in that plan.
 
 ## Step 6 - Edge policy application and restoration
 
+Deferred until after the Steps 7-8 vertical flow is validated on the managed
+test device.
+
 - Back up only the Edge policy values that Exam Kiosk will replace.
 - Apply the exact blocklist and allowlist from the effective profile.
 - Verify the written policy values.
@@ -149,25 +153,32 @@ remains gated on all pre-profile controls in that plan.
 
 ## Step 7 - Restricted Client session activation
 
-- Add an authenticated atomic activation operation.
-- Find the current student's non-expired `Starting` session.
-- Transition it to `Active` only after restricted-session authentication.
-- Return the active exam metadata and SharePoint folder URL.
-- Render the active exam rather than a generic placeholder.
+Implemented on 2026-09-21:
+
+- an authenticated, antiforgery-protected atomic activation operation;
+- lookup of the current student's non-expired `Starting` session;
+- an idempotent transition to `Active` after restricted-session
+  authentication and local Agent readiness;
+- a bounded response containing the active session ID and exam metadata, but
+  not the exam URL;
+- display of the activated exam title in the Restricted Client page.
 
 ## Step 8 - Open the real exam destination
 
-- Increment the Restricted Client bridge protocol.
-- Retrieve the active session's authorized URL through the Device Agent and
-  send it to native code.
-- Remove the fixed example URL.
-- Validate that the URL belongs to the active session before opening Edge.
-- Keep **Open Exam** available for the full active session so the student can
-  relaunch Edge after closing it. Disable it only while a launch request is in
-  flight, then re-enable it whether that request succeeds or fails.
-- Keep the Restricted Client itself open while the Agent reports `InExam`, and
-  fail closed when Agent status cannot be verified.
-- Keep all arbitrary URLs unavailable to untrusted Web content.
+Implemented on 2026-09-21, pending managed-device validation:
+
+- Restricted Client bridge protocol version 2 carries the activated session
+  ID for `openExam` and rejects URL fields;
+- Agent protocol version 4 exposes the locally persisted exam destination only
+  to the installed Restricted Client;
+- native code requires the Web-activated session ID to match the Agent's local
+  enforcement receipt before opening Edge;
+- the fixed example URL was removed and the prepared SharePoint folder URL is
+  opened in an InPrivate Edge window;
+- **Open Exam** remains available for relaunch after Edge closes;
+- the Restricted Client remains open while the Agent reports `InExam` and
+  fails closed when Agent status cannot be verified;
+- arbitrary URLs remain unavailable to Web content.
 
 ## Step 9 - Coordinated completion
 
@@ -181,6 +192,9 @@ remains gated on all pre-profile controls in that plan.
 
 ## Recommended execution order
 
-Implement the steps in numerical order. In particular, create the Web session
-before extending the Agent protocol so the session identifier is part of the
-transport and local recovery record from the beginning.
+The Web session and local receipt were created before extending the Agent
+protocol so the session identifier is bound to the transport and recovery
+record. For the development PoC, Steps 7-8 were intentionally wired before
+Step 6 to validate the complete real-destination user flow before introducing
+temporary Edge policy mutation. Resume with Step 6 after managed-device
+validation of the Steps 7-8 flow.

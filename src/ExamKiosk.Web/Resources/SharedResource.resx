@@ -55,6 +55,7 @@
   <data name="SessionConnecting" xml:space="preserve"><value>Checking the active exam session...</value></data>
   <data name="SessionDirectBrowser" xml:space="preserve"><value>Open this page in the Restricted Exam Client to control the exam session.</value></data>
   <data name="SessionCompletionFailed" xml:space="preserve"><value>The restrictions were removed, but the Web session could not be completed.</value></data>
+  <data name="SessionActivationFailed" xml:space="preserve"><value>The prepared exam session could not be activated for this student.</value></data>
   <data name="SessionFinishing" xml:space="preserve"><value>Finishing the exam and restoring the device...</value></data>
   <data name="SessionOpening" xml:space="preserve"><value>Opening the exam in Microsoft Edge...</value></data>
   <data name="SessionReady" xml:space="preserve"><value>The restricted exam session is active.</value></data>

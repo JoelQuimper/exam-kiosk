@@ -14,6 +14,9 @@ public interface IExamSessionStore
         string userPrincipalName,
         Guid sessionId);
 
+    ExamSessionActivationResult ActivateActive(
+        string userPrincipalName);
+
     ExamSessionCompletionResult CompleteActive(
         string userPrincipalName);
 }
@@ -33,10 +36,22 @@ public sealed record ExamSessionCancellationResult(
     ExamSessionCancellationStatus Status,
     ExamSession? Session);
 
+public enum ExamSessionActivationStatus
+{
+    Activated,
+    NotFound,
+    Conflict,
+}
+
+public sealed record ExamSessionActivationResult(
+    ExamSessionActivationStatus Status,
+    ExamSession? Session);
+
 public enum ExamSessionCompletionStatus
 {
     Completed,
     NotFound,
+    Conflict,
 }
 
 public sealed record ExamSessionCompletionResult(

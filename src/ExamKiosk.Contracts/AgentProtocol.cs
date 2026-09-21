@@ -7,8 +7,8 @@ namespace ExamKiosk.Contracts;
 
 public static class AgentProtocol
 {
-    public const string PipeName = "ExamKiosk.DeviceAgent.v3";
-    public const int Version = 3;
+    public const string PipeName = "ExamKiosk.DeviceAgent.v4";
+    public const int Version = 4;
     public const int MaximumMessageLength = 262144;
 
     public static JsonSerializerOptions SerializerOptions { get; } = new()
@@ -74,6 +74,7 @@ public static class AgentProtocol
 public enum AgentCommand
 {
     GetStatus,
+    GetActiveExam,
     StartExam,
     FinishExam
 }
@@ -103,7 +104,12 @@ public sealed record AgentResponse(
     bool Success,
     AgentState State,
     string Message,
-    DateTimeOffset? RestartAtUtc = null);
+    DateTimeOffset? RestartAtUtc = null,
+    ActiveExamReference? ActiveExam = null);
+
+public sealed record ActiveExamReference(
+    Guid SessionId,
+    Uri EntryUrl);
 
 public static class AgentClient
 {

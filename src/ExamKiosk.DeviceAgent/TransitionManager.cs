@@ -138,6 +138,7 @@ public sealed class TransitionManager
         {
             return request.Command switch
             {
+                AgentCommand.GetActiveExam => GetActiveExam(request),
                 AgentCommand.StartExam => await StartExamAsync(request, cancellationToken),
                 AgentCommand.FinishExam => await FinishExamAsync(request, cancellationToken),
                 _ => Failure(request, "The requested command is not supported.")
@@ -171,6 +172,7 @@ public sealed class TransitionManager
             await sessionJournal.BeginAsync(
                 startExam.SessionId,
                 profileSha256,
+                startExam.Profile.Exam.SharePointFolderUrl,
                 cancellationToken);
             await sessionJournal.RecordStepAsync(
                 "ProfileReceived",
@@ -449,6 +451,25 @@ public sealed class TransitionManager
 
     internal static bool CanStartExam(AgentState state) =>
         state is AgentState.Available or AgentState.InExam;
+
+    private AgentResponse GetActiveExam(AgentRequest request)
+    {
+        var journal = sessionJournal.Current;
+        if (CurrentState != AgentState.InExam
+            || journal is null
+            || journal.SessionId == Guid.Empty
+            || journal.ExamEntryUrl is null)
+        {
+            return Failure(request, "No active exam destination is available.");
+        }
+
+        return Success(
+            request,
+            "The active exam destination is available.",
+            activeExam: new ActiveExamReference(
+                journal.SessionId,
+                journal.ExamEntryUrl));
+    }
 
     private async Task WriteGeneratedAssignedAccessPreviewAsync(
         AssignedAccessArtifact assignedAccess,
@@ -732,14 +753,16 @@ public sealed class TransitionManager
     private AgentResponse Success(
         AgentRequest request,
         string message,
-        DateTimeOffset? restartAtUtc = null) =>
+        DateTimeOffset? restartAtUtc = null,
+        ActiveExamReference? activeExam = null) =>
         new(
             AgentProtocol.Version,
             request.RequestId,
             true,
             CurrentState,
             message,
-            restartAtUtc);
+            restartAtUtc,
+            activeExam);
 
     private AgentResponse Failure(AgentRequest request, string message) =>
         new(AgentProtocol.Version, request.RequestId, false, CurrentState, message);

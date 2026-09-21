@@ -21,6 +21,7 @@
     <section class="exam-grid" aria-label="@Localizer["ExamInProgress"]">
         <article class="exam-card">
             <div class="exam-controls session-controls">
+                <h2 id="session-exam-title" hidden></h2>
                 <div class="session-actions">
                     <button class="button button-primary"
                             id="session-open-exam"
@@ -41,6 +42,7 @@
                    data-connecting="@(Localizer["SessionConnecting"])"
                    data-direct-browser="@(Localizer["SessionDirectBrowser"])"
                    data-completion-failed="@(Localizer["SessionCompletionFailed"])"
+                   data-activation-failed="@(Localizer["SessionActivationFailed"])"
                    data-finishing="@(Localizer["SessionFinishing"])"
                    data-opening="@(Localizer["SessionOpening"])"
                    data-ready="@(Localizer["SessionReady"])"

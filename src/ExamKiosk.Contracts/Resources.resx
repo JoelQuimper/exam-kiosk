@@ -9,7 +9,7 @@
   <data name="ExamDone" xml:space="preserve"><value>Exam done</value></data>
   <data name="ExamFinishFailed" xml:space="preserve"><value>The exam could not be finished.</value></data>
   <data name="ExamInProgress" xml:space="preserve"><value>EXAM IN PROGRESS</value></data>
-  <data name="ExamOpened" xml:space="preserve"><value>The placeholder exam was opened in Edge.</value></data>
+  <data name="ExamOpened" xml:space="preserve"><value>The exam was opened in Edge.</value></data>
   <data name="FinishWarning" xml:space="preserve"><value>Finishing the exam will remove the restricted session and restart Windows. Make sure your exam work has been saved.
 
 Do you want to finish?</value></data>

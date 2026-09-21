@@ -9,7 +9,7 @@
   <data name="ExamDone" xml:space="preserve"><value>Examen terminé</value></data>
   <data name="ExamFinishFailed" xml:space="preserve"><value>L'examen n'a pas pu être terminé.</value></data>
   <data name="ExamInProgress" xml:space="preserve"><value>EXAMEN EN COURS</value></data>
-  <data name="ExamOpened" xml:space="preserve"><value>L'examen fictif a été ouvert dans Edge.</value></data>
+  <data name="ExamOpened" xml:space="preserve"><value>L'examen a été ouvert dans Edge.</value></data>
   <data name="FinishWarning" xml:space="preserve"><value>Terminer l'examen supprimera la session restreinte et redémarrera Windows. Assurez-vous d'avoir enregistré votre travail.
 
 Voulez-vous terminer ?</value></data>

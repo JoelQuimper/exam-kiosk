@@ -176,7 +176,7 @@ in place for recovery.
 5. The Restricted Client loads `/exam-session` and asks the student to sign in
    again because its isolated profile cannot reuse the Launcher's cookie.
 6. After the assigned exam appears, select **Open exam** to open the
-   native-owned placeholder URL in Edge.
+   session-bound SharePoint exam folder in Edge.
 7. Return to the Restricted Exam Client, select **Exam done**, and confirm.
 8. The agent removes Assigned Access and restarts Windows.
 
@@ -318,12 +318,12 @@ The uninstaller refuses to continue unless the persisted agent state is
 	authorizes commands only from the expected installed client executable. The
 	PoC does not yet validate a signed, device-bound exam assignment or verify
 	application signatures.
-- The placeholder exam is `https://www.example.com/`; SharePoint and Microsoft
-	365 authentication are not implemented yet.
-- `/exam-session` requires a second Entra sign-in and can retrieve the
-  authenticated student's assigned exam metadata. It cannot provide an
-  arbitrary exam URL to native code. Dynamic SharePoint URLs require a signed,
-  device-bound effective policy resolved before restart.
+- `/exam-session` requires a second Entra sign-in, atomically activates the
+	authenticated student's prepared session, and displays its exam metadata.
+- The Device Agent persists the prepared SharePoint destination before restart.
+	The Restricted Client opens it only when the Web-activated session ID matches
+	the local enforcement receipt; Web content cannot provide an arbitrary URL
+	to native code.
 - The Assigned Access profile assumes standard machine-wide installation paths
 	for the Restricted Exam Client and Microsoft Edge.
 - Automatic cleanup of browser identity, documents, and cached student data is

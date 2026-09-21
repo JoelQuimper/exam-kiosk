@@ -15,6 +15,7 @@ public sealed class ClientCommandAuthorizerTests
     [InlineData(LauncherPath, AgentCommand.GetStatus)]
     [InlineData(RestrictedClientPath, AgentCommand.FinishExam)]
     [InlineData(RestrictedClientPath, AgentCommand.GetStatus)]
+    [InlineData(RestrictedClientPath, AgentCommand.GetActiveExam)]
     public void IsAuthorized_ForExpectedInteractiveClient_ReturnsTrue(
         string executablePath,
         AgentCommand command)
@@ -30,6 +31,7 @@ public sealed class ClientCommandAuthorizerTests
 
     [Theory]
     [InlineData(LauncherPath, AgentCommand.FinishExam)]
+    [InlineData(LauncherPath, AgentCommand.GetActiveExam)]
     [InlineData(RestrictedClientPath, AgentCommand.StartExam)]
     [InlineData(@"C:\Temp\ExamKiosk.Launcher.exe", AgentCommand.StartExam)]
     [InlineData(@"C:\Temp\ExamKiosk.RestrictedClient.exe", AgentCommand.FinishExam)]

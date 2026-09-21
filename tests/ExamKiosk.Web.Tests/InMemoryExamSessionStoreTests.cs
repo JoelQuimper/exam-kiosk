@@ -98,6 +98,7 @@ public sealed class InMemoryExamSessionStoreTests
         var store = new InMemoryExamSessionStore(
             new TestTimeProvider(DateTimeOffset.UtcNow));
         var first = store.Start("student@example.com", CreateProfile());
+        store.ActivateActive("student@example.com");
 
         var completion = store.CompleteActive("STUDENT@example.com");
         var second = store.Start("student@example.com", CreateProfile());
@@ -109,6 +110,53 @@ public sealed class InMemoryExamSessionStoreTests
         Assert.Equal(ExamSessionState.Completed, completion.Session?.State);
         Assert.Null(completion.Session?.ExpiresAtUtc);
         Assert.True(second.Created);
+    }
+
+    [Fact]
+    public void ActivateActive_ActivatesStartingSessionIdempotently()
+    {
+        var store = new InMemoryExamSessionStore(
+            new TestTimeProvider(DateTimeOffset.UtcNow));
+        var started = store.Start("student@example.com", CreateProfile());
+
+        var first = store.ActivateActive("STUDENT@example.com");
+        var second = store.ActivateActive("student@example.com");
+
+        Assert.Equal(ExamSessionActivationStatus.Activated, first.Status);
+        Assert.Equal(started.Session.SessionId, first.Session?.SessionId);
+        Assert.Equal(ExamSessionState.Active, first.Session?.State);
+        Assert.Null(first.Session?.ExpiresAtUtc);
+        Assert.Equal(first.Session, second.Session);
+    }
+
+    [Fact]
+    public void ActivateActive_WhenStartingSessionExpired_ReturnsNotFound()
+    {
+        var timeProvider = new TestTimeProvider(DateTimeOffset.UtcNow);
+        var store = new InMemoryExamSessionStore(timeProvider);
+        var started = store.Start("student@example.com", CreateProfile());
+        timeProvider.Advance(InMemoryExamSessionStore.StartingLifetime);
+
+        var result = store.ActivateActive("student@example.com");
+
+        Assert.Equal(ExamSessionActivationStatus.NotFound, result.Status);
+        Assert.Equal(ExamSessionState.Expired, result.Session?.State);
+        Assert.Equal(
+            ExamSessionState.Expired,
+            store.Get(started.Session.SessionId)?.State);
+    }
+
+    [Fact]
+    public void CompleteActive_WhenSessionIsStillStarting_ReturnsConflict()
+    {
+        var store = new InMemoryExamSessionStore(
+            new TestTimeProvider(DateTimeOffset.UtcNow));
+        var started = store.Start("student@example.com", CreateProfile());
+
+        var result = store.CompleteActive("student@example.com");
+
+        Assert.Equal(ExamSessionCompletionStatus.Conflict, result.Status);
+        Assert.Equal(started.Session, result.Session);
     }
 
     [Fact]

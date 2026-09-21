@@ -19,12 +19,13 @@ internal sealed class SessionJournal
 
     internal async Task BeginAsync(CancellationToken cancellationToken)
     {
-        await BeginAsync(Guid.NewGuid(), null, cancellationToken);
+        await BeginAsync(Guid.NewGuid(), null, null, cancellationToken);
     }
 
     internal async Task BeginAsync(
         Guid sessionId,
         string? profileSha256,
+        Uri? examEntryUrl,
         CancellationToken cancellationToken)
     {
         ArgumentOutOfRangeException.ThrowIfEqual(sessionId, Guid.Empty);
@@ -32,6 +33,7 @@ internal sealed class SessionJournal
             sessionId,
             profileSha256,
             null,
+            examEntryUrl,
             AgentState.EnteringExam,
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow,
@@ -89,6 +91,7 @@ internal sealed class SessionJournal
             Guid.NewGuid(),
             null,
             null,
+            null,
             AgentState.Available,
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow,
@@ -133,6 +136,7 @@ internal sealed record JournalDocument(
     Guid SessionId,
     string? ProfileSha256,
     string? AssignedAccessSha256,
+    Uri? ExamEntryUrl,
     AgentState State,
     DateTimeOffset StartedAtUtc,
     DateTimeOffset LastUpdatedAtUtc,

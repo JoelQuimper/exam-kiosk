@@ -61,12 +61,16 @@ public sealed class SessionJournalTests
         await journal.BeginAsync(
             sessionId,
             "abc123",
+            new Uri("https://example.com/exam"),
             CancellationToken.None);
 
         var reloaded = new SessionJournal(journalPath).Current;
         Assert.NotNull(reloaded);
         Assert.Equal(sessionId, reloaded.SessionId);
         Assert.Equal("abc123", reloaded.ProfileSha256);
+        Assert.Equal(
+            new Uri("https://example.com/exam"),
+            reloaded.ExamEntryUrl);
     }
 
     private sealed class TemporaryDirectory : IDisposable

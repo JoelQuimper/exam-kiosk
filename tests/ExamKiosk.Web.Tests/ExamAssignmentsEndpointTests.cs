@@ -5,6 +5,7 @@ using System.Text.Encodings.Web;
 using System.Text.RegularExpressions;
 using ExamKiosk.Contracts;
 using ExamKiosk.Web.Authentication;
+using ExamKiosk.Web.Controllers.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -284,6 +285,9 @@ public sealed class ExamAssignmentsEndpointTests
             client,
             "student1-exam1",
             antiforgeryToken);
+        using var activation = await PostActivateActiveSessionAsync(
+            client,
+            antiforgeryToken);
 
         using var completion = await PostCompleteActiveSessionAsync(
             client,
@@ -295,9 +299,70 @@ public sealed class ExamAssignmentsEndpointTests
             antiforgeryToken);
 
         Assert.Equal(HttpStatusCode.Created, firstStart.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, activation.StatusCode);
         Assert.Equal(HttpStatusCode.OK, completion.StatusCode);
         Assert.Equal(ExamSessionState.Completed, completed?.State);
         Assert.Equal(HttpStatusCode.Created, secondStart.StatusCode);
+    }
+
+    [Fact]
+    public async Task ActivateActiveSession_ReturnsPreparedExamIdentity()
+    {
+        await using var application = CreateApplication(
+            authenticated: true,
+            "student1@jqdev.onmicrosoft.com");
+        using var client = application.CreateClient();
+        var antiforgeryToken = await GetAntiforgeryTokenAsync(client);
+        using var start = await PostStartSessionAsync(
+            client,
+            "student1-exam1",
+            antiforgeryToken);
+
+        using var activation = await PostActivateActiveSessionAsync(
+            client,
+            antiforgeryToken);
+        var active = await activation.Content.ReadFromJsonAsync<
+            ActiveExamSessionResponse>();
+
+        Assert.Equal(HttpStatusCode.Created, start.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, activation.StatusCode);
+        Assert.NotEqual(Guid.Empty, active?.SessionId);
+        Assert.Equal(ExamSessionState.Active, active?.State);
+        Assert.Equal("exam-1", active?.ExamId);
+        Assert.Equal(
+            "Mathématiques secondaire 4 — Modélisation financière",
+            active?.ExamTitle);
+    }
+
+    [Fact]
+    public async Task ActivateActiveSession_WithoutPreparedSession_ReturnsNotFound()
+    {
+        await using var application = CreateApplication(
+            authenticated: true,
+            "student1@jqdev.onmicrosoft.com");
+        using var client = application.CreateClient();
+        var antiforgeryToken = await GetAntiforgeryTokenAsync(client);
+
+        using var activation = await PostActivateActiveSessionAsync(
+            client,
+            antiforgeryToken);
+
+        Assert.Equal(HttpStatusCode.NotFound, activation.StatusCode);
+    }
+
+    [Fact]
+    public async Task ActivateActiveSession_WithoutAntiforgeryToken_ReturnsBadRequest()
+    {
+        await using var application = CreateApplication(
+            authenticated: true,
+            "student1@jqdev.onmicrosoft.com");
+        using var client = application.CreateClient();
+
+        using var response = await client.PostAsync(
+            "/api/v1/exam-sessions/active/activate",
+            content: null);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
@@ -419,6 +484,17 @@ public sealed class ExamAssignmentsEndpointTests
         var request = new HttpRequestMessage(
             HttpMethod.Post,
             "/api/v1/exam-sessions/active/complete");
+        request.Headers.Add("X-XSRF-TOKEN", antiforgeryToken);
+        return client.SendAsync(request);
+    }
+
+    private static Task<HttpResponseMessage> PostActivateActiveSessionAsync(
+        HttpClient client,
+        string antiforgeryToken)
+    {
+        var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            "/api/v1/exam-sessions/active/activate");
         request.Headers.Add("X-XSRF-TOKEN", antiforgeryToken);
         return client.SendAsync(request);
     }

@@ -55,6 +55,7 @@
   <data name="SessionConnecting" xml:space="preserve"><value>Vérification de la session d'examen active...</value></data>
   <data name="SessionDirectBrowser" xml:space="preserve"><value>Ouvrez cette page dans le client d'examen restreint pour contrôler la session.</value></data>
   <data name="SessionCompletionFailed" xml:space="preserve"><value>Les restrictions ont été retirées, mais la session Web n'a pas pu être fermée.</value></data>
+  <data name="SessionActivationFailed" xml:space="preserve"><value>La session d'examen préparée n'a pas pu être activée pour cet élève.</value></data>
   <data name="SessionFinishing" xml:space="preserve"><value>Fermeture de l'examen et restauration de l'appareil...</value></data>
   <data name="SessionOpening" xml:space="preserve"><value>Ouverture de l'examen dans Microsoft Edge...</value></data>
   <data name="SessionReady" xml:space="preserve"><value>La session d'examen restreinte est active.</value></data>

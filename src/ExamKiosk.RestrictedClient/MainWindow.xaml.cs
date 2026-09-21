@@ -11,7 +11,6 @@ namespace ExamKiosk.RestrictedClient;
 
 public partial class MainWindow : Window
 {
-    private static readonly Uri FixedExamUri = new("https://www.example.com/");
     private static readonly JsonSerializerOptions BridgeSerializerOptions =
         new(JsonSerializerDefaults.Web);
 
@@ -247,7 +246,9 @@ public partial class MainWindow : Window
                     await SendSessionStatusAsync(request.RequestId);
                     break;
                 case RestrictedBridgeRequestType.OpenExam:
-                    await OpenExamAsync(request.RequestId);
+                    await OpenExamAsync(
+                        request.RequestId,
+                        request.SessionId!.Value);
                     break;
                 case RestrictedBridgeRequestType.FinishExam:
                     await FinishExamAsync(request.RequestId);
@@ -287,7 +288,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private async Task OpenExamAsync(Guid requestId)
+    private async Task OpenExamAsync(Guid requestId, Guid sessionId)
     {
         if (actionInProgress)
         {
@@ -303,9 +304,12 @@ public partial class MainWindow : Window
         try
         {
             var status = await AgentClient.SendAsync(
-                AgentCommand.GetStatus,
+                AgentCommand.GetActiveExam,
                 TimeSpan.FromSeconds(5));
-            if (!status.Success || status.State != AgentState.InExam)
+            if (!status.Success
+                || status.State != AgentState.InExam
+                || status.ActiveExam is not { } activeExam
+                || activeExam.SessionId != sessionId)
             {
                 PostBridgeResponse(
                     "openExamResult",
@@ -315,7 +319,7 @@ public partial class MainWindow : Window
                 return;
             }
 
-            Process.Start(CreateEdgeStartInfo());
+            Process.Start(CreateEdgeStartInfo(activeExam.EntryUrl));
             PostBridgeResponse(
                 "openExamResult",
                 requestId,
@@ -403,8 +407,19 @@ public partial class MainWindow : Window
         }
     }
 
-    internal static ProcessStartInfo CreateEdgeStartInfo()
+    internal static ProcessStartInfo CreateEdgeStartInfo(Uri examUri)
     {
+        ArgumentNullException.ThrowIfNull(examUri);
+        if (!examUri.IsAbsoluteUri
+            || examUri.Scheme != Uri.UriSchemeHttps
+            || string.IsNullOrWhiteSpace(examUri.Host)
+            || !string.IsNullOrEmpty(examUri.UserInfo))
+        {
+            throw new ArgumentException(
+                "The active exam destination must be an absolute HTTPS URL.",
+                nameof(examUri));
+        }
+
         var edgePath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
             "Microsoft",
@@ -419,7 +434,7 @@ public partial class MainWindow : Window
         startInfo.ArgumentList.Add("--new-window");
         startInfo.ArgumentList.Add("--no-first-run");
         startInfo.ArgumentList.Add("--inprivate");
-        startInfo.ArgumentList.Add(FixedExamUri.AbsoluteUri);
+        startInfo.ArgumentList.Add(examUri.AbsoluteUri);
         return startInfo;
     }
 

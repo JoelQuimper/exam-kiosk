@@ -31,6 +31,8 @@ internal static class ClientCommandAuthorizer
             AgentCommand.GetStatus =>
                 PathsEqual(executablePath, launcherPath) ||
                 PathsEqual(executablePath, restrictedClientPath),
+            AgentCommand.GetActiveExam =>
+                PathsEqual(executablePath, restrictedClientPath),
             AgentCommand.StartExam => PathsEqual(executablePath, launcherPath),
             AgentCommand.FinishExam => PathsEqual(executablePath, restrictedClientPath),
             _ => false

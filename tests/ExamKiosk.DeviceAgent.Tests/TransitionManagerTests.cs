@@ -198,6 +198,9 @@ public sealed class TransitionManagerTests
         Assert.Equal(
             EffectiveProfileDigest.Compute(request.StartExam.Profile),
             journal.ProfileSha256);
+        Assert.Equal(
+            request.StartExam.Profile.Exam.SharePointFolderUrl,
+            journal.ExamEntryUrl);
         Assert.Equal("ProfileReceived", journal.Steps[0].Name);
         Assert.Equal("completed", journal.Steps[0].Status);
         Assert.Equal("WindowsConfigurationGenerated", journal.Steps[1].Name);
@@ -214,6 +217,45 @@ public sealed class TransitionManagerTests
         Assert.False(
             File.Exists(
                 previewPath + ".tmp"));
+    }
+
+    [Fact]
+    public async Task GetActiveExam_WhenSessionIsInExam_ReturnsPersistedDestination()
+    {
+        using var directory = new TemporaryDirectory();
+        var sessionId = Guid.NewGuid();
+        var entryUrl = new Uri("https://example.com/exams/student-1");
+        var journal = new SessionJournal(
+            Path.Combine(directory.Path, "session-journal.json"));
+        await journal.BeginAsync(
+            sessionId,
+            "profile-sha256",
+            entryUrl,
+            CancellationToken.None);
+        await journal.SetStateAsync(AgentState.InExam, CancellationToken.None);
+        await File.WriteAllTextAsync(
+            Path.Combine(directory.Path, "agent-state.json"),
+            JsonSerializer.Serialize(
+                new
+                {
+                    state = AgentState.InExam,
+                    updatedAt = DateTimeOffset.UtcNow,
+                },
+                AgentProtocol.SerializerOptions));
+        var scripts = new ScriptSequence();
+        var manager = CreateManager(directory.Path, scripts);
+
+        var response = await manager.HandleAsync(
+            new AgentRequest(
+                AgentProtocol.Version,
+                Guid.NewGuid(),
+                AgentCommand.GetActiveExam),
+            CancellationToken.None);
+
+        Assert.True(response.Success);
+        Assert.Equal(AgentState.InExam, response.State);
+        Assert.Equal(sessionId, response.ActiveExam?.SessionId);
+        Assert.Equal(entryUrl, response.ActiveExam?.EntryUrl);
     }
 
     [Fact]
