@@ -277,9 +277,9 @@ Recovery intentionally removes only Assigned Access.
 For this PoC, the Web is a controlled stub and its hard-coded exam intent is
 treated as valid. The Device Agent's self-contained Windows configuration
 component selects the supported generator and validates its generated artifact
-metadata, SHA-256 integrity, bounded secure XML parsing, Exam Kiosk profile
-identity and naming, Restricted Client auto-launch, and the absence of an exam
-shortcut before writing the preview.
+SHA-256 integrity, bounded secure XML parsing, Exam Kiosk profile identity and
+naming, Restricted Client auto-launch, and the absence of an exam shortcut
+before writing the preview.
 
 ### Administrator recovery
 

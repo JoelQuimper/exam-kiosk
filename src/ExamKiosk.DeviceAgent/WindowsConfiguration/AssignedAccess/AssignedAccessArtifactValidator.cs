@@ -40,39 +40,11 @@ public static class AssignedAccessArtifactValidator
         EffectiveExamProfile profile,
         AssignedAccessArtifact artifact)
     {
-        if (artifact.Format is null
-            || artifact.SchemaVersion is null
-            || artifact.ContentEncoding is null
-            || artifact.Source is null
-            || artifact.Source.Type is null
-            || artifact.Sha256 is null
+        if (artifact.Sha256 is null
             || artifact.Xml is null)
         {
             throw new WindowsConfigurationException(
                 "The Assigned Access artifact is incomplete.");
-        }
-
-        if (!string.Equals(
-                artifact.Format,
-                AssignedAccessProfileConventions.ArtifactFormat,
-                StringComparison.Ordinal)
-            || !string.Equals(
-                artifact.SchemaVersion,
-                AssignedAccessProfileConventions.ArtifactSchemaVersion,
-                StringComparison.Ordinal)
-            || !string.Equals(
-                artifact.ContentEncoding,
-                AssignedAccessProfileConventions.ContentEncoding,
-                StringComparison.OrdinalIgnoreCase)
-            || !string.Equals(
-                artifact.Source.Type,
-                AssignedAccessProfileConventions.ArtifactSourceType,
-                StringComparison.Ordinal)
-            || artifact.Source.GeneratorVersion
-                != AssignedAccessProfileConventions.ArtifactGeneratorVersion)
-        {
-            throw new WindowsConfigurationException(
-                "The Assigned Access artifact metadata is not supported.");
         }
 
         var xmlBytes = Encoding.UTF8.GetBytes(artifact.Xml);

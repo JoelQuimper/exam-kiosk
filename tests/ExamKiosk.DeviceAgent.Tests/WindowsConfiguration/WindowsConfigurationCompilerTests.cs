@@ -31,10 +31,6 @@ public sealed class WindowsConfigurationCompilerTests
         var second = compiler.Compile(SupportedVersion(), profile);
         var artifact = first.AssignedAccess;
 
-        Assert.Equal(AssignedAccessProfileConventions.ArtifactFormat, artifact.Format);
-        Assert.Equal(
-            AssignedAccessProfileConventions.ArtifactSchemaVersion,
-            artifact.SchemaVersion);
         Assert.Equal(
             Convert.ToHexStringLower(
                 SHA256.HashData(Encoding.UTF8.GetBytes(artifact.Xml))),

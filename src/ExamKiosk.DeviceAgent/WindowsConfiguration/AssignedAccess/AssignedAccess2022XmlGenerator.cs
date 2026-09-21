@@ -122,12 +122,6 @@ internal sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerat
         return new EffectiveWindowsConfiguration(
             clientVersion,
             new AssignedAccessArtifact(
-                AssignedAccessProfileConventions.ArtifactFormat,
-                AssignedAccessProfileConventions.ArtifactSchemaVersion,
-                new AssignedAccessSource(
-                    AssignedAccessProfileConventions.ArtifactSourceType,
-                    AssignedAccessProfileConventions.ArtifactGeneratorVersion),
-                AssignedAccessProfileConventions.ContentEncoding,
                 sha256,
                 xml),
             shortcuts);

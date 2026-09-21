@@ -114,12 +114,11 @@ remains gated on all pre-profile controls in that plan.
 - The Agent detects the actual Windows version and
   uses its self-contained Windows configuration component to generate Assigned
   Access XML and shortcut artifacts locally. The Windows-specific validator
-  verifies artifact metadata, Windows/schema versions, SHA-256, bounded secure
-  XML parsing, profile/default IDs, profile naming, Restricted Client
-  auto-launch, and absence of an exam shortcut before the preview is written.
+  verifies Windows/schema versions, SHA-256, bounded secure XML parsing,
+  profile/default IDs, profile naming, Restricted Client auto-launch, and
+  absence of an exam shortcut before the preview is written.
 - Persist a local enforcement receipt containing session, assignment, profile
   digest, Assigned Access digest, and completed steps.
-- Keep signature and replay-protection fields ready for production hardening.
 
 ## Step 5 - Apply dynamic Assigned Access and shortcuts
 
