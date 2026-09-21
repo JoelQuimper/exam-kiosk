@@ -162,7 +162,7 @@ public sealed class WindowsConfigurationCompilerTests
                 .EnumerateArray(),
             pin => pin.TryGetProperty("desktopAppLink", out var value)
                 && value.GetString()!.EndsWith(
-                    @"\tool-word.lnk",
+                    @"\Microsoft Word.lnk",
                     StringComparison.Ordinal));
 
         var taskbarDocument = XDocument.Parse(
@@ -170,8 +170,8 @@ public sealed class WindowsConfigurationCompilerTests
         Assert.Contains(
             taskbarDocument.Descendants(TaskbarNamespace + "DesktopApp"),
             element => ((string?)element.Attribute("DesktopApplicationLinkPath"))
-                    ?.EndsWith(@"\tool-word.lnk", StringComparison.Ordinal)
-                == true);
+                    ?.EndsWith(@"\Microsoft Word.lnk", StringComparison.Ordinal)
+                    == true);
 
         var word = Assert.IsType<DesktopWindowsShortcutArtifact>(
             configuration.Shortcuts.Single(

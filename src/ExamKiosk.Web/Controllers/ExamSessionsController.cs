@@ -12,6 +12,40 @@ public sealed class ExamSessionsController(
     IExamSessionStore examSessionStore,
     IAntiforgery antiforgery) : ControllerBase
 {
+    [HttpPost("active/complete")]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    [ProducesResponseType<ExamSession>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ExamSession>> CompleteActive()
+    {
+        try
+        {
+            await antiforgery.ValidateRequestAsync(HttpContext);
+        }
+        catch (AntiforgeryValidationException)
+        {
+            return BadRequest();
+        }
+
+        var userPrincipalName = AuthenticatedUpnResolver.Resolve(User);
+        if (userPrincipalName is null)
+        {
+            return Forbid();
+        }
+
+        var result = examSessionStore.CompleteActive(userPrincipalName);
+        return result.Status switch
+        {
+            ExamSessionCompletionStatus.Completed => Ok(result.Session),
+            ExamSessionCompletionStatus.NotFound => NotFound(),
+            _ => throw new InvalidOperationException(
+                $"Unknown completion status '{result.Status}'."),
+        };
+    }
+
     [HttpPost("{sessionId:guid}/cancel")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     [ProducesResponseType<ExamSession>(StatusCodes.Status200OK)]

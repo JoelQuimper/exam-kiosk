@@ -140,6 +140,45 @@ public sealed class InMemoryExamSessionStore(TimeProvider timeProvider)
         }
     }
 
+    public ExamSessionCompletionResult CompleteActive(
+        string userPrincipalName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(userPrincipalName);
+
+        var normalizedUpn = userPrincipalName.Trim();
+        lock (syncRoot)
+        {
+            if (!nonterminalSessionIdsByStudent.TryGetValue(
+                    normalizedUpn,
+                    out var sessionId))
+            {
+                return new ExamSessionCompletionResult(
+                    ExamSessionCompletionStatus.NotFound,
+                    null);
+            }
+
+            var session = sessions[sessionId];
+            if (session.State == ExamSessionState.Starting
+                && session.ExpiresAtUtc <= timeProvider.GetUtcNow())
+            {
+                return new ExamSessionCompletionResult(
+                    ExamSessionCompletionStatus.NotFound,
+                    Expire(session));
+            }
+
+            var completed = session with
+            {
+                State = ExamSessionState.Completed,
+                ExpiresAtUtc = null,
+            };
+            sessions[sessionId] = completed;
+            nonterminalSessionIdsByStudent.Remove(normalizedUpn);
+            return new ExamSessionCompletionResult(
+                ExamSessionCompletionStatus.Completed,
+                completed);
+        }
+    }
+
     private void ExpireStartingSession(
         string userPrincipalName,
         DateTimeOffset now)

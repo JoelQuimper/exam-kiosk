@@ -17,7 +17,7 @@ if ([Security.Principal.WindowsIdentity]::GetCurrent().Name -ne 'NT AUTHORITY\SY
 
 $shortcutRoot = Join-Path `
     $env:ProgramData `
-    'Microsoft\Windows\Start Menu\Programs\Exam Kiosk'
+    'Microsoft\Windows\Start Menu\Programs\Exam Kiosk\Tools'
 $webShortcuts = @(
     Get-Content -LiteralPath $WebShortcutsPath -Raw |
         ConvertFrom-Json
@@ -62,7 +62,10 @@ try {
                 [IO.Path]::GetDirectoryName($resolvedLinkPath),
                 $resolvedRoot,
                 [StringComparison]::OrdinalIgnoreCase) -or
-            $fileName -notmatch '^tool-[A-Za-z0-9][A-Za-z0-9._-]*\.lnk$') {
+            [string]::IsNullOrWhiteSpace($fileName) -or
+            -not $fileName.EndsWith(
+                '.lnk',
+                [StringComparison]::OrdinalIgnoreCase)) {
             throw "The shortcut path '$resolvedLinkPath' is not an Exam Kiosk tool shortcut."
         }
 
@@ -76,10 +79,16 @@ try {
             $shell = New-Object -ComObject WScript.Shell
             $shortcut = $shell.CreateShortcut($temporaryPath)
             $shortcut.TargetPath = $edgePath
-            $shortcut.Arguments = '--new-window "{0}"' -f $entryUrl.AbsoluteUri
+            $shortcut.Arguments = '--no-first-run --new-window "{0}"' -f $entryUrl.AbsoluteUri
             $shortcut.WorkingDirectory = Split-Path -Parent $edgePath
             $shortcut.Description = $webShortcut.label
-            $shortcut.IconLocation = "$edgePath,0"
+            $shortcut.IconLocation = if ($webShortcut.iconLocation) {
+                [Environment]::ExpandEnvironmentVariables(
+                    $webShortcut.iconLocation)
+            }
+            else {
+                "$edgePath,0"
+            }
             $shortcut.Save()
 
             if (-not (Test-Path -LiteralPath $temporaryPath -PathType Leaf)) {

@@ -15,7 +15,7 @@ internal sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerat
     private const int WindowsNtMajorVersion = 10;
     private const int Windows11Version22H2Build = 22621;
     private const string ShortcutRoot =
-        @"%ALLUSERSPROFILE%\Microsoft\Windows\Start Menu\Programs\Exam Kiosk";
+        @"%ALLUSERSPROFILE%\Microsoft\Windows\Start Menu\Programs\Exam Kiosk\Tools";
 
     private static readonly XNamespace AssignedAccessNamespace =
         "http://schemas.microsoft.com/AssignedAccess/2017/config";
@@ -193,7 +193,7 @@ internal sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerat
                             } =>
                     new DesktopWindowsShortcutArtifact(
                         $"tool-{tool.ToolId}",
-                        LinkPath($"tool-{tool.ToolId}"),
+                        LinkPath(desktop.Configuration.LaunchTarget.Label),
                         desktop.Configuration.LaunchTarget.Label,
                         desktop.Configuration.LaunchTarget.ApplicationId),
                 WebToolDefinition web
@@ -201,9 +201,10 @@ internal sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerat
                         || web.Configuration.LaunchTarget.PinToTaskbar =>
                     new WebWindowsShortcutArtifact(
                         $"tool-{tool.ToolId}",
-                        LinkPath($"tool-{tool.ToolId}"),
+                        LinkPath(web.Configuration.LaunchTarget.Label),
                         web.Configuration.LaunchTarget.Label,
-                        web.Configuration.LaunchTarget.EntryUrl),
+                        web.Configuration.LaunchTarget.EntryUrl,
+                        web.Configuration.ShortcutIconLocation),
                 _ => null,
             };
 

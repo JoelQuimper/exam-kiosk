@@ -94,7 +94,8 @@ public sealed class BackendStubExamAssignmentService : IExamAssignmentService
                         new Uri("https://usito.usherbrooke.ca/"),
                         "Dictionnaire Usito",
                         true,
-                        true))),
+                        true),
+                    "%SystemRoot%\\System32\\url.dll,0")),
         }.ToFrozenDictionary(tool => tool.ToolId, StringComparer.Ordinal);
 
     private static readonly IReadOnlyList<StudentExamAssignment> Assignments =

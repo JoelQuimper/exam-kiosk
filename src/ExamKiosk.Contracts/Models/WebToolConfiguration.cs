@@ -2,4 +2,5 @@ namespace ExamKiosk.Contracts;
 
 public sealed record WebToolConfiguration(
     IReadOnlyList<string> EdgeAllowlist,
-    WebLaunchTarget LaunchTarget);
+    WebLaunchTarget LaunchTarget,
+    string? ShortcutIconLocation = null);

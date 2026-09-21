@@ -273,6 +273,49 @@ public sealed class ExamAssignmentsEndpointTests
     }
 
     [Fact]
+    public async Task CompleteActiveSession_AllowsAnotherStart()
+    {
+        await using var application = CreateApplication(
+            authenticated: true,
+            "student1@jqdev.onmicrosoft.com");
+        using var client = application.CreateClient();
+        var antiforgeryToken = await GetAntiforgeryTokenAsync(client);
+        using var firstStart = await PostStartSessionAsync(
+            client,
+            "student1-exam1",
+            antiforgeryToken);
+
+        using var completion = await PostCompleteActiveSessionAsync(
+            client,
+            antiforgeryToken);
+        var completed = await completion.Content.ReadFromJsonAsync<ExamSession>();
+        using var secondStart = await PostStartSessionAsync(
+            client,
+            "student1-exam2",
+            antiforgeryToken);
+
+        Assert.Equal(HttpStatusCode.Created, firstStart.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, completion.StatusCode);
+        Assert.Equal(ExamSessionState.Completed, completed?.State);
+        Assert.Equal(HttpStatusCode.Created, secondStart.StatusCode);
+    }
+
+    [Fact]
+    public async Task CompleteActiveSession_WithoutAntiforgeryToken_ReturnsBadRequest()
+    {
+        await using var application = CreateApplication(
+            authenticated: true,
+            "student1@jqdev.onmicrosoft.com");
+        using var client = application.CreateClient();
+
+        using var response = await client.PostAsync(
+            "/api/v1/exam-sessions/active/complete",
+            content: null);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task CancelSession_WhenSessionDoesNotExist_ReturnsNotFound()
     {
         await using var application = CreateApplication(
@@ -365,6 +408,17 @@ public sealed class ExamAssignmentsEndpointTests
         var request = new HttpRequestMessage(
             HttpMethod.Post,
             $"/api/v1/exam-sessions/{sessionId}/cancel");
+        request.Headers.Add("X-XSRF-TOKEN", antiforgeryToken);
+        return client.SendAsync(request);
+    }
+
+    private static Task<HttpResponseMessage> PostCompleteActiveSessionAsync(
+        HttpClient client,
+        string antiforgeryToken)
+    {
+        var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            "/api/v1/exam-sessions/active/complete");
         request.Headers.Add("X-XSRF-TOKEN", antiforgeryToken);
         return client.SendAsync(request);
     }

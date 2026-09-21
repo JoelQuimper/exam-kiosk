@@ -36,7 +36,7 @@ function Write-WorkerResult {
 function Remove-ExamKioskToolShortcuts {
     $shortcutRoot = Join-Path `
         $env:ProgramData `
-        'Microsoft\Windows\Start Menu\Programs\Exam Kiosk'
+        'Microsoft\Windows\Start Menu\Programs\Exam Kiosk\Tools'
     if (-not (Test-Path -LiteralPath $shortcutRoot -PathType Container)) {
         Write-Verbose 'No Exam Kiosk tool shortcut directory was found.'
         return
@@ -45,7 +45,7 @@ function Remove-ExamKioskToolShortcuts {
     Write-Verbose "Removing Exam Kiosk tool shortcuts from '$shortcutRoot'."
     Get-ChildItem `
         -LiteralPath $shortcutRoot `
-        -Filter 'tool-*.lnk' `
+        -Filter '*.lnk' `
         -File |
         ForEach-Object {
             Remove-Item -LiteralPath $_.FullName -Force
@@ -54,7 +54,7 @@ function Remove-ExamKioskToolShortcuts {
     $remaining = @(
         Get-ChildItem `
             -LiteralPath $shortcutRoot `
-            -Filter 'tool-*.lnk' `
+            -Filter '*.lnk' `
             -File
     )
     if ($remaining.Count -ne 0) {

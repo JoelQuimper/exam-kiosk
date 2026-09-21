@@ -125,6 +125,11 @@
                                 "X-XSRF-TOKEN": antiforgeryToken
                             }
                         });
+                    if (response.status === 409) {
+                        startRequestId = null;
+                        status.textContent = status.dataset.sessionConflict;
+                        return;
+                    }
                     if (response.status !== 201) {
                         throw new Error(
                             `Session creation failed with status ${response.status}.`);

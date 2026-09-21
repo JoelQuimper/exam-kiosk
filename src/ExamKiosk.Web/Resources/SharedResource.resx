@@ -46,6 +46,7 @@
   <data name="LauncherDeviceReady" xml:space="preserve"><value>Your device is ready to start this exam.</value></data>
   <data name="LauncherDirectBrowser" xml:space="preserve"><value>Open this page in the installed Exam Kiosk Launcher to start the exam.</value></data>
   <data name="LauncherStarting" xml:space="preserve"><value>Preparing your device for the exam...</value></data>
+  <data name="LauncherSessionConflict" xml:space="preserve"><value>An exam session is already active for this student.</value></data>
   <data name="LauncherUnavailable" xml:space="preserve"><value>Your device is not ready. Verify that the Exam Device Agent is running.</value></data>
   <data name="ExamInProgress" xml:space="preserve"><value>Exam in progress</value></data>
   <data name="ExamSessionInstructions" xml:space="preserve"><value>Open your SharePoint exam in Edge. Return here when your work is complete.</value></data>
@@ -53,6 +54,7 @@
   <data name="ExamDone" xml:space="preserve"><value>Exam done</value></data>
   <data name="SessionConnecting" xml:space="preserve"><value>Checking the active exam session...</value></data>
   <data name="SessionDirectBrowser" xml:space="preserve"><value>Open this page in the Restricted Exam Client to control the exam session.</value></data>
+  <data name="SessionCompletionFailed" xml:space="preserve"><value>The restrictions were removed, but the Web session could not be completed.</value></data>
   <data name="SessionFinishing" xml:space="preserve"><value>Finishing the exam and restoring the device...</value></data>
   <data name="SessionOpening" xml:space="preserve"><value>Opening the exam in Microsoft Edge...</value></data>
   <data name="SessionReady" xml:space="preserve"><value>The restricted exam session is active.</value></data>

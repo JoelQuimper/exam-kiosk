@@ -13,6 +13,9 @@ public interface IExamSessionStore
     ExamSessionCancellationResult Cancel(
         string userPrincipalName,
         Guid sessionId);
+
+    ExamSessionCompletionResult CompleteActive(
+        string userPrincipalName);
 }
 
 public sealed record ExamSessionStartResult(
@@ -28,4 +31,14 @@ public enum ExamSessionCancellationStatus
 
 public sealed record ExamSessionCancellationResult(
     ExamSessionCancellationStatus Status,
+    ExamSession? Session);
+
+public enum ExamSessionCompletionStatus
+{
+    Completed,
+    NotFound,
+}
+
+public sealed record ExamSessionCompletionResult(
+    ExamSessionCompletionStatus Status,
     ExamSession? Session);

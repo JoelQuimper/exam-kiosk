@@ -40,6 +40,7 @@
                    aria-live="polite"
                    data-connecting="@(Localizer["SessionConnecting"])"
                    data-direct-browser="@(Localizer["SessionDirectBrowser"])"
+                   data-completion-failed="@(Localizer["SessionCompletionFailed"])"
                    data-finishing="@(Localizer["SessionFinishing"])"
                    data-opening="@(Localizer["SessionOpening"])"
                    data-ready="@(Localizer["SessionReady"])"
@@ -49,4 +50,7 @@
             </div>
         </article>
     </section>
+    <form id="session-antiforgery" hidden>
+        <AntiforgeryToken />
+    </form>
 </main>

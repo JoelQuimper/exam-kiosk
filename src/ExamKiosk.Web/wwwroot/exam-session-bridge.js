@@ -7,7 +7,9 @@
         const openButton = document.getElementById("session-open-exam");
         const finishButton = document.getElementById("session-finish-exam");
         const status = document.getElementById("session-status");
-        if (!openButton || !finishButton || !status) {
+        const antiforgeryToken = document.querySelector(
+            "#session-antiforgery input[name='__RequestVerificationToken']")?.value;
+        if (!openButton || !finishButton || !status || !antiforgeryToken) {
             return;
         }
 
@@ -37,7 +39,21 @@
             post("clientReady", statusRequestId);
         }
 
-        webview.addEventListener("message", event => {
+        async function completeActiveSession() {
+            const response = await fetch(
+                "/api/v1/exam-sessions/active/complete",
+                {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: { "X-XSRF-TOKEN": antiforgeryToken }
+                });
+            if (!response.ok) {
+                throw new Error(
+                    `Session completion failed with status ${response.status}.`);
+            }
+        }
+
+        webview.addEventListener("message", async event => {
             const message = event.data;
             if (!message || message.version !== protocolVersion) {
                 return;
@@ -68,7 +84,13 @@
             }
 
             if (message.state === "accepted") {
-                status.textContent = message.message || status.dataset.finishing;
+                try {
+                    await completeActiveSession();
+                    status.textContent = message.message || status.dataset.finishing;
+                } catch (error) {
+                    console.error("Unable to complete the exam session.", error);
+                    status.textContent = status.dataset.completionFailed;
+                }
                 return;
             }
 

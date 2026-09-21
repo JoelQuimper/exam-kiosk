@@ -4,5 +4,6 @@ public sealed record WebWindowsShortcutArtifact(
     string ShortcutId,
     string LinkPath,
     string Label,
-    Uri EntryUrl)
+    Uri EntryUrl,
+    string? IconLocation)
     : WindowsShortcutArtifact(ShortcutId, LinkPath, Label);

@@ -131,7 +131,11 @@ public sealed class TransitionManagerTests
         var manager = CreateManager(directory.Path, scripts);
         ToolDefinition[] tools =
         [
-            WebTool("dictionary", "Dictionary", "https://dictionary.example/"),
+            WebTool(
+                "dictionary",
+                "Dictionary",
+                "https://dictionary.example/",
+                @"%SystemRoot%\System32\url.dll,0"),
             WebTool("reference", "Reference", "https://reference.example/"),
         ];
 
@@ -152,11 +156,14 @@ public sealed class TransitionManagerTests
         var entries = manifest.RootElement.EnumerateArray().ToArray();
         Assert.Equal(2, entries.Length);
         Assert.Equal(
-            @"%ALLUSERSPROFILE%\Microsoft\Windows\Start Menu\Programs\Exam Kiosk\tool-dictionary.lnk",
+            @"%ALLUSERSPROFILE%\Microsoft\Windows\Start Menu\Programs\Exam Kiosk\Tools\Dictionary.lnk",
             entries[0].GetProperty("linkPath").GetString());
         Assert.Equal(
             "https://dictionary.example/",
             entries[0].GetProperty("entryUrl").GetString());
+        Assert.Equal(
+            @"%SystemRoot%\System32\url.dll,0",
+            entries[0].GetProperty("iconLocation").GetString());
         Assert.Equal(
             manifestPath,
             scripts.Invocations[0].Arguments[3]);
@@ -345,7 +352,8 @@ public sealed class TransitionManagerTests
     private static WebToolDefinition WebTool(
         string toolId,
         string label,
-        string entryUrl) =>
+        string entryUrl,
+        string? shortcutIconLocation = null) =>
         new(
             toolId,
             label,
@@ -357,7 +365,8 @@ public sealed class TransitionManagerTests
                     new Uri(entryUrl),
                     label,
                     true,
-                    true)));
+                    true),
+                shortcutIconLocation));
 
     private static void AssertRecoveryJournal(
         string dataDirectory,

@@ -93,6 +93,39 @@ public sealed class InMemoryExamSessionStoreTests
     }
 
     [Fact]
+    public void CompleteActive_CompletesSessionAndAllowsAnotherStart()
+    {
+        var store = new InMemoryExamSessionStore(
+            new TestTimeProvider(DateTimeOffset.UtcNow));
+        var first = store.Start("student@example.com", CreateProfile());
+
+        var completion = store.CompleteActive("STUDENT@example.com");
+        var second = store.Start("student@example.com", CreateProfile());
+
+        Assert.Equal(
+            ExamSessionCompletionStatus.Completed,
+            completion.Status);
+        Assert.Equal(first.Session.SessionId, completion.Session?.SessionId);
+        Assert.Equal(ExamSessionState.Completed, completion.Session?.State);
+        Assert.Null(completion.Session?.ExpiresAtUtc);
+        Assert.True(second.Created);
+    }
+
+    [Fact]
+    public void CompleteActive_WhenStudentHasNoSession_ReturnsNotFound()
+    {
+        var store = new InMemoryExamSessionStore(
+            new TestTimeProvider(DateTimeOffset.UtcNow));
+
+        var completion = store.CompleteActive("student@example.com");
+
+        Assert.Equal(
+            ExamSessionCompletionStatus.NotFound,
+            completion.Status);
+        Assert.Null(completion.Session);
+    }
+
+    [Fact]
     public void Cancel_WhenAlreadyCancelled_IsIdempotent()
     {
         var store = new InMemoryExamSessionStore(

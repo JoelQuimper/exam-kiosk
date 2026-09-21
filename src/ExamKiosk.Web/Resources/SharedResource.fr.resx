@@ -46,6 +46,7 @@
   <data name="LauncherDeviceReady" xml:space="preserve"><value>Votre appareil est prêt à démarrer cet examen.</value></data>
   <data name="LauncherDirectBrowser" xml:space="preserve"><value>Ouvrez cette page dans le lanceur Exam Kiosk installé pour démarrer l'examen.</value></data>
   <data name="LauncherStarting" xml:space="preserve"><value>Préparation de votre appareil pour l'examen...</value></data>
+  <data name="LauncherSessionConflict" xml:space="preserve"><value>Une session d'examen est déjà active pour cet étudiant.</value></data>
   <data name="LauncherUnavailable" xml:space="preserve"><value>Votre appareil n'est pas prêt. Vérifiez que l'agent de l'appareil d'examen est en cours d'exécution.</value></data>
   <data name="ExamInProgress" xml:space="preserve"><value>Examen en cours</value></data>
   <data name="ExamSessionInstructions" xml:space="preserve"><value>Ouvrez votre examen SharePoint dans Edge. Revenez ici lorsque votre travail est terminé.</value></data>
@@ -53,6 +54,7 @@
   <data name="ExamDone" xml:space="preserve"><value>Examen terminé</value></data>
   <data name="SessionConnecting" xml:space="preserve"><value>Vérification de la session d'examen active...</value></data>
   <data name="SessionDirectBrowser" xml:space="preserve"><value>Ouvrez cette page dans le client d'examen restreint pour contrôler la session.</value></data>
+  <data name="SessionCompletionFailed" xml:space="preserve"><value>Les restrictions ont été retirées, mais la session Web n'a pas pu être fermée.</value></data>
   <data name="SessionFinishing" xml:space="preserve"><value>Fermeture de l'examen et restauration de l'appareil...</value></data>
   <data name="SessionOpening" xml:space="preserve"><value>Ouverture de l'examen dans Microsoft Edge...</value></data>
   <data name="SessionReady" xml:space="preserve"><value>La session d'examen restreinte est active.</value></data>

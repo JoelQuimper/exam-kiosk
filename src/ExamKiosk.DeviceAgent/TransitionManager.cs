@@ -486,7 +486,8 @@ public sealed class TransitionManager
                         new WebShortcutManifestEntry(
                             web.LinkPath,
                             web.Label,
-                            web.EntryUrl));
+                            web.EntryUrl,
+                            web.IconLocation));
                     break;
                 case DesktopWindowsShortcutArtifact:
                     throw new NotSupportedException(
@@ -692,7 +693,8 @@ public sealed class TransitionManager
     private sealed record WebShortcutManifestEntry(
         string LinkPath,
         string Label,
-        Uri EntryUrl);
+        Uri EntryUrl,
+        string? IconLocation);
 
     private async Task SetStateAsync(AgentState state, CancellationToken cancellationToken)
     {

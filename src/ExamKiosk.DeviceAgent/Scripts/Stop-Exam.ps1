@@ -15,13 +15,13 @@ Set-CimInstance -CimInstance $assignedAccess | Out-Null
 
 $shortcutRoot = Join-Path `
     $env:ProgramData `
-    'Microsoft\Windows\Start Menu\Programs\Exam Kiosk'
+    'Microsoft\Windows\Start Menu\Programs\Exam Kiosk\Tools'
 $removedShortcutCount = 0
 if (Test-Path -LiteralPath $shortcutRoot -PathType Container) {
     $shortcuts = @(
         Get-ChildItem `
             -LiteralPath $shortcutRoot `
-            -Filter 'tool-*.lnk' `
+            -Filter '*.lnk' `
             -File
     )
     foreach ($shortcut in $shortcuts) {
@@ -32,7 +32,7 @@ if (Test-Path -LiteralPath $shortcutRoot -PathType Container) {
     $remaining = @(
         Get-ChildItem `
             -LiteralPath $shortcutRoot `
-            -Filter 'tool-*.lnk' `
+            -Filter '*.lnk' `
             -File
     )
     if ($remaining.Count -ne 0) {
