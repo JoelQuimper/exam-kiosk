@@ -1,3 +1,4 @@
+#Requires -Version 7.0
 #Requires -RunAsAdministrator
 [CmdletBinding()]
 param(
@@ -89,14 +90,26 @@ $webPatch = [ordered]@{
     identifierUris = $identifierUris
     appRoles = $appRoles
 } | ConvertTo-Json -Depth 20 -Compress
-& az rest `
-    --method PATCH `
-    --uri "https://graph.microsoft.com/v1.0/applications/$($webApplication.id)" `
-    --headers 'Content-Type=application/json' `
-    --body $webPatch `
-    --output none
-if ($LASTEXITCODE -ne 0) {
-    throw "Updating the Web API registration failed with exit code $LASTEXITCODE."
+$webPatchPath = Join-Path $env:TEMP "ExamKiosk-WebPatch-$([guid]::NewGuid()).json"
+try {
+    Set-Content `
+        -LiteralPath $webPatchPath `
+        -Value $webPatch `
+        -Encoding utf8NoBOM
+    & az rest `
+        --method PATCH `
+        --uri "https://graph.microsoft.com/v1.0/applications/$($webApplication.id)" `
+        --headers 'Content-Type=application/json' `
+        --body "@$webPatchPath" `
+        --output none
+    if ($LASTEXITCODE -ne 0) {
+        throw "Updating the Web API registration failed with exit code $LASTEXITCODE."
+    }
+}
+finally {
+    if (Test-Path -LiteralPath $webPatchPath -PathType Leaf) {
+        Remove-Item -LiteralPath $webPatchPath -Force
+    }
 }
 
 Write-Verbose "Ensuring Device Agent app registration '$agentDisplayName' exists."
@@ -160,7 +173,7 @@ try {
     & az ad app credential reset `
         --id $agentApplication.ClientId `
         --append `
-        --cert $temporaryCertificatePath `
+        --cert "@$temporaryCertificatePath" `
         --display-name $certificateDisplayName `
         --years 1 `
         --output none
@@ -210,14 +223,28 @@ if (-not $hasAssignment) {
         resourceId = $webServicePrincipalId
         appRoleId = $agentRoleId
     } | ConvertTo-Json -Compress
-    & az rest `
-        --method POST `
-        --uri "https://graph.microsoft.com/v1.0/servicePrincipals/$agentServicePrincipalId/appRoleAssignments" `
-        --headers 'Content-Type=application/json' `
-        --body $assignment `
-        --output none
-    if ($LASTEXITCODE -ne 0) {
-        throw "Assigning the Agent app role failed with exit code $LASTEXITCODE."
+    $assignmentPath = Join-Path `
+        $env:TEMP `
+        "ExamKiosk-AppRoleAssignment-$([guid]::NewGuid()).json"
+    try {
+        Set-Content `
+            -LiteralPath $assignmentPath `
+            -Value $assignment `
+            -Encoding utf8NoBOM
+        & az rest `
+            --method POST `
+            --uri "https://graph.microsoft.com/v1.0/servicePrincipals/$agentServicePrincipalId/appRoleAssignments" `
+            --headers 'Content-Type=application/json' `
+            --body "@$assignmentPath" `
+            --output none
+        if ($LASTEXITCODE -ne 0) {
+            throw "Assigning the Agent app role failed with exit code $LASTEXITCODE."
+        }
+    }
+    finally {
+        if (Test-Path -LiteralPath $assignmentPath -PathType Leaf) {
+            Remove-Item -LiteralPath $assignmentPath -Force
+        }
     }
 }
 
