@@ -1,64 +1,89 @@
 ﻿<Window x:Class="ExamKiosk.RestrictedClient.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         Title="Exam Kiosk"
-        Width="1180"
-        Height="760"
-        MinWidth="760"
-        MinHeight="560"
-        WindowStartupLocation="CenterScreen"
+        Width="320"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True"
         Background="#F5F7FB"
         Loaded="Window_Loaded"
         Closing="Window_Closing">
-    <Grid>
-        <wv2:WebView2 x:Name="Browser"
-                      Visibility="Collapsed" />
+    <Border BorderBrush="#D8DEEA"
+            BorderThickness="1,0,0,0"
+            Padding="24">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-        <Grid x:Name="StatusPanel"
-              Background="#F5F7FB">
-            <StackPanel Width="520"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center">
+            <StackPanel>
+                <Border Width="52"
+                        Height="52"
+                        HorizontalAlignment="Left"
+                        Background="#2457E6"
+                        CornerRadius="12">
+                    <TextBlock HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Foreground="White"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Text="EK" />
+                </Border>
                 <TextBlock x:Name="StatusHeading"
+                           Margin="0,20,0,0"
                            Foreground="#14213D"
-                           FontSize="30"
+                           FontSize="26"
                            FontWeight="SemiBold"
-                           TextAlignment="Center"
                            TextWrapping="Wrap" />
-                <TextBlock x:Name="StatusMessage"
+                <TextBlock x:Name="ExamTitle"
                            Margin="0,16,0,0"
+                           Foreground="#14213D"
+                           FontSize="19"
+                           FontWeight="SemiBold"
+                           TextWrapping="Wrap"
+                           Visibility="Collapsed" />
+                <TextBlock x:Name="StatusMessage"
+                           Margin="0,12,0,0"
                            Foreground="#62708A"
                            FontSize="15"
-                           TextAlignment="Center"
                            TextWrapping="Wrap" />
+            </StackPanel>
+
+            <StackPanel Grid.Row="2">
+                <Button x:Name="OpenExamButton"
+                        Margin="0,0,0,12"
+                        Padding="18,12"
+                        Background="#2457E6"
+                        BorderThickness="0"
+                        Foreground="White"
+                        FontSize="15"
+                        FontWeight="SemiBold"
+                        Click="OpenExamButton_Click"
+                        Visibility="Collapsed" />
                 <Button x:Name="RetryButton"
-                        Width="140"
-                        Margin="0,24,0,0"
-                        Padding="18,11"
-                        HorizontalAlignment="Center"
+                        Margin="0,0,0,12"
+                        Padding="18,12"
                         Background="#2457E6"
                         BorderThickness="0"
                         Foreground="White"
                         FontSize="15"
                         FontWeight="SemiBold"
                         Click="RetryButton_Click"
-                        Content="Retry"
                         Visibility="Collapsed" />
-                <Button x:Name="NativeFinishButton"
-                        Width="160"
-                        Margin="0,12,0,0"
-                        Padding="18,11"
-                        HorizontalAlignment="Center"
+                <Button x:Name="FinishButton"
+                        Padding="18,12"
                         Background="#B42318"
                         BorderThickness="0"
                         Foreground="White"
                         FontSize="15"
                         FontWeight="SemiBold"
-                        Click="NativeFinishButton_Click"
-                        Content="Exam done"
+                        Click="FinishButton_Click"
                         Visibility="Collapsed" />
             </StackPanel>
         </Grid>
-    </Grid>
+    </Border>
 </Window>

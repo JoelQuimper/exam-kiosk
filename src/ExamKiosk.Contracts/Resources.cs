@@ -15,6 +15,7 @@ public static class Resources
     public static string ExamFinishFailed => Get(nameof(ExamFinishFailed));
     public static string ExamInProgress => Get(nameof(ExamInProgress));
     public static string ExamOpened => Get(nameof(ExamOpened));
+    public static string ExamSessionReady => Get(nameof(ExamSessionReady));
     public static string FinishWarning => Get(nameof(FinishWarning));
     public static string FinishWarningTitle => Get(nameof(FinishWarningTitle));
     public static string KioskTitle => Get(nameof(KioskTitle));
@@ -40,6 +41,7 @@ public static class Resources
     public static string ExamSessionActionFailed => Get(nameof(ExamSessionActionFailed));
     public static string FinishCancelled => Get(nameof(FinishCancelled));
     public static string NoActiveExamSession => Get(nameof(NoActiveExamSession));
+    public static string OpenExam => Get(nameof(OpenExam));
     public static string RestrictedClientConfigurationInvalid => Get(nameof(RestrictedClientConfigurationInvalid));
     public static string RestartingWindows => Get(nameof(RestartingWindows));
 

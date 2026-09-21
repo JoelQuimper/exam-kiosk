@@ -10,6 +10,7 @@
   <data name="ExamFinishFailed" xml:space="preserve"><value>The exam could not be finished.</value></data>
   <data name="ExamInProgress" xml:space="preserve"><value>EXAM IN PROGRESS</value></data>
   <data name="ExamOpened" xml:space="preserve"><value>The exam was opened in Edge.</value></data>
+  <data name="ExamSessionReady" xml:space="preserve"><value>Your restricted exam session is ready.</value></data>
   <data name="FinishWarning" xml:space="preserve"><value>Finishing the exam will remove the restricted session and restart Windows. Make sure your exam work has been saved.
 
 Do you want to finish?</value></data>
@@ -40,5 +41,6 @@ Do you want to finish?</value></data>
   <data name="ExamSessionActionFailed" xml:space="preserve"><value>The requested exam action could not be completed.</value></data>
   <data name="FinishCancelled" xml:space="preserve"><value>Finishing the exam was cancelled.</value></data>
   <data name="NoActiveExamSession" xml:space="preserve"><value>No active restricted exam session was found.</value></data>
+  <data name="OpenExam" xml:space="preserve"><value>Open exam</value></data>
   <data name="RestrictedClientConfigurationInvalid" xml:space="preserve"><value>The Restricted Client web application address is missing or invalid. Contact the test administrator.</value></data>
 </root>

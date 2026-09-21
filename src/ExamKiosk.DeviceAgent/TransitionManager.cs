@@ -15,6 +15,7 @@ public sealed class TransitionManager
     private readonly string configurationDirectory;
     private readonly string statePath;
     private readonly SessionJournal sessionJournal;
+    private readonly IDeviceExamSessionClient deviceExamSessionClient;
     private readonly Func<
         string,
         IReadOnlyList<string>,
@@ -27,14 +28,16 @@ public sealed class TransitionManager
 
     public TransitionManager(
         ILogger<TransitionManager> logger,
-        WindowsConfigurationCompiler windowsConfigurationCompiler)
+        WindowsConfigurationCompiler windowsConfigurationCompiler,
+        IDeviceExamSessionClient deviceExamSessionClient)
         : this(
             logger,
             GetDataDirectory(),
             null,
             null,
             Path.Combine(AppContext.BaseDirectory, "Configuration"),
-            windowsConfigurationCompiler)
+            windowsConfigurationCompiler,
+            deviceExamSessionClient)
     {
     }
 
@@ -49,6 +52,7 @@ public sealed class TransitionManager
         Func<DateTimeOffset>? restartScheduler,
         string? configurationDirectory = null,
         WindowsConfigurationCompiler? windowsConfigurationCompiler = null,
+        IDeviceExamSessionClient? deviceExamSessionClient = null,
         Func<WindowsClientVersion>? windowsClientVersionProvider = null)
     {
         this.logger = logger;
@@ -56,6 +60,8 @@ public sealed class TransitionManager
         this.restartScheduler = restartScheduler ?? ScheduleRestart;
         this.windowsConfigurationCompiler =
             windowsConfigurationCompiler ?? new WindowsConfigurationCompiler();
+        this.deviceExamSessionClient = deviceExamSessionClient
+            ?? throw new ArgumentNullException(nameof(deviceExamSessionClient));
         this.windowsClientVersionProvider =
             windowsClientVersionProvider ?? GetCurrentWindowsClientVersion;
         this.configurationDirectory = configurationDirectory
@@ -138,7 +144,8 @@ public sealed class TransitionManager
         {
             return request.Command switch
             {
-                AgentCommand.GetActiveExam => GetActiveExam(request),
+                AgentCommand.GetActiveExam =>
+                    await GetActiveExamAsync(request, cancellationToken),
                 AgentCommand.StartExam => await StartExamAsync(request, cancellationToken),
                 AgentCommand.FinishExam => await FinishExamAsync(request, cancellationToken),
                 _ => Failure(request, "The requested command is not supported.")
@@ -172,6 +179,7 @@ public sealed class TransitionManager
             await sessionJournal.BeginAsync(
                 startExam.SessionId,
                 profileSha256,
+                startExam.Profile.Exam.Title,
                 startExam.Profile.Exam.SharePointFolderUrl,
                 cancellationToken);
             await sessionJournal.RecordStepAsync(
@@ -421,6 +429,23 @@ public sealed class TransitionManager
                 "completed",
                 null,
                 cancellationToken);
+            var journal = sessionJournal.Current
+                ?? throw new InvalidOperationException(
+                    "The local exam session receipt is unavailable.");
+            if (string.IsNullOrWhiteSpace(journal.ProfileSha256))
+            {
+                throw new InvalidOperationException(
+                    "The local exam profile digest is unavailable.");
+            }
+            await deviceExamSessionClient.CompleteAsync(
+                journal.SessionId,
+                journal.ProfileSha256,
+                cancellationToken);
+            await sessionJournal.RecordStepAsync(
+                "BackendSessionComplete",
+                "completed",
+                null,
+                cancellationToken);
             await sessionJournal.SetStateAsync(AgentState.Available, cancellationToken);
             var restartAtUtc = restartScheduler();
             await sessionJournal.RecordStepAsync(
@@ -452,22 +477,37 @@ public sealed class TransitionManager
     internal static bool CanStartExam(AgentState state) =>
         state is AgentState.Available or AgentState.InExam;
 
-    private AgentResponse GetActiveExam(AgentRequest request)
+    private async Task<AgentResponse> GetActiveExamAsync(
+        AgentRequest request,
+        CancellationToken cancellationToken)
     {
         var journal = sessionJournal.Current;
         if (CurrentState != AgentState.InExam
             || journal is null
             || journal.SessionId == Guid.Empty
+            || string.IsNullOrWhiteSpace(journal.ProfileSha256)
+            || string.IsNullOrWhiteSpace(journal.ExamTitle)
             || journal.ExamEntryUrl is null)
         {
             return Failure(request, "No active exam destination is available.");
         }
+
+        await deviceExamSessionClient.ActivateAsync(
+            journal.SessionId,
+            journal.ProfileSha256,
+            cancellationToken);
+        await sessionJournal.RecordStepAsync(
+            "BackendSessionActivated",
+            "completed",
+            null,
+            cancellationToken);
 
         return Success(
             request,
             "The active exam destination is available.",
             activeExam: new ActiveExamReference(
                 journal.SessionId,
+                journal.ExamTitle,
                 journal.ExamEntryUrl));
     }
 

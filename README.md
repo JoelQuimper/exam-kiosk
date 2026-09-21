@@ -48,7 +48,7 @@ The current vertical slice contains three applications:
 | --- | --- |
 | Exam Kiosk Launcher | Runs as the normal student and securely hosts the authenticated exam list. |
 | Exam Kiosk Device Agent | Runs as a `LocalSystem` Windows Service and owns privileged transitions. |
-| Restricted Exam Client | Hosts the authenticated `/exam-session` page in the exam account and owns the native **Open exam** and **Exam done** actions. |
+| Restricted Exam Client | Runs as a native, permanent right-side panel in the exam account and owns **Open exam** and **Exam done**. |
 
 The two WPF applications communicate with the agent over a local named pipe.
 They never elevate and do not receive administrator credentials.
@@ -66,7 +66,8 @@ Normal student launcher
 	-> restart into normal Windows
 ```
 
-The agent accepts only `GetStatus`, `StartExam`, and `FinishExam`. Assigned
+The agent accepts only `GetStatus`, `StartExam`, `GetActiveExam`, and
+`FinishExam`. Assigned
 Access XML and PowerShell script paths are agent-owned resources; clients
 cannot substitute scripts, commands, account names, or XML. `StartExam`
 transports backend-owned executable metadata as part of the immutable exam
@@ -83,6 +84,7 @@ The agent invokes `Start-Exam.ps1` to apply Assigned Access and
 - A disposable, district-managed Windows 11 test device or virtual machine.
 - A Windows edition that supports the configured Assigned Access experience.
 - .NET 10 SDK to build and install the prototype.
+- PowerShell 7 (`pwsh`) to initialize the Device Agent identity.
 - Microsoft Edge installed in its standard machine-wide location.
 - Microsoft Edge WebView2 Runtime installed machine-wide.
 - A separate local administrator recovery account that is not the kiosk
@@ -93,28 +95,42 @@ administrator recovery path.
 
 ### Install
 
-Open PowerShell as an administrator from the repository root and run:
+The installer owns the Web application origin, while the identity bootstrap
+owns the Device Agent authentication settings. Both scripts create
+`%ProgramData%\ExamKiosk\deployment.settings.json` when needed and preserve
+properties owned by the other script.
+
+On a new device, sign in to Azure CLI with permission to update the
+environment's app registrations and grant admin consent, then initialize the
+Device Agent identity:
 
 ```powershell
-& .\scripts\Windows\Install-ExamKioskPoc.ps1
+az login
+pwsh -File .\scripts\Windows\Initialize-ExamKioskDeviceAgentIdentity.ps1 `
+    -Environment dev
 ```
 
-On the first installation, the installer prompts for the Exam Kiosk web
-application HTTPS origin and saves it in:
+Run the identity bootstrap elevated on the disposable test device. It adds the
+`ExamDevice.Agent` application role to the Web API, creates the environment's
+Device Agent app registration, assigns that role, and creates a non-exportable
+certificate in `LocalMachine\My`. It adds only the Device Agent authentication
+settings to:
 
 ```text
 %ProgramData%\ExamKiosk\deployment.settings.json
 ```
 
-Later installations and resets reuse that machine configuration without
-prompting. The uninstaller preserves the complete `%ProgramData%\ExamKiosk`
-directory, including configuration, agent state, and session history. For unattended deployment,
-administrators can provide or replace the saved value with:
+After Entra changes have propagated, install the applications and add the Web
+origin:
 
 ```powershell
 & .\scripts\Windows\Install-ExamKioskPoc.ps1 `
     -WebAppUrl 'https://exam-kiosk.example.org'
 ```
+
+Later installations reuse the saved identity and Web origin. The uninstaller
+preserves the complete `%ProgramData%\ExamKiosk` directory, including
+configuration, agent state, certificate reference, and session history.
 
 The installer publishes self-contained Windows applications under:
 
@@ -122,9 +138,9 @@ The installer publishes self-contained Windows applications under:
 %ProgramFiles%\ExamKiosk
 ```
 
-It validates the WebView2 Runtime, copies the administrator-owned web
-application origin into the installed Launcher and Restricted Client
-directories, registers
+It validates the WebView2 Runtime used by the Launcher, copies the
+administrator-owned Web origin into the installed Launcher, writes the Device
+Agent's API and certificate settings, registers
 `ExamKioskDeviceAgent` as an automatic `LocalSystem` service, and adds
 **Exam Kiosk Launcher** and **Recover Exam Kiosk Device** to the all-users
 Start menu. In a managed rollout, Intune would perform this
@@ -173,10 +189,11 @@ in place for recovery.
 3. Select **Switch to exam** and confirm the restart.
 4. After Windows restarts, Assigned Access signs in its managed **Exam Kiosk**
    account and starts the Restricted Exam Client.
-5. The Restricted Client loads `/exam-session` and asks the student to sign in
-   again because its isolated profile cannot reuse the Launcher's cookie.
-6. After the assigned exam appears, select **Open exam** to open the
-   session-bound SharePoint exam folder in Edge.
+5. The native Restricted Client reserves a permanent 320-pixel panel on the
+   right and asks the Device Agent to activate the exact prepared session.
+6. Select **Open exam**. Edge opens the session-bound SharePoint exam folder
+   maximized in the remaining workspace; the student signs in to SharePoint
+   there.
 7. Return to the Restricted Exam Client, select **Exam done**, and confirm.
 8. The agent removes Assigned Access and restarts Windows.
 
@@ -318,12 +335,16 @@ The uninstaller refuses to continue unless the persisted agent state is
 	authorizes commands only from the expected installed client executable. The
 	PoC does not yet validate a signed, device-bound exam assignment or verify
 	application signatures.
-- `/exam-session` requires a second Entra sign-in, atomically activates the
-	authenticated student's prepared session, and displays its exam metadata.
-- The Device Agent persists the prepared SharePoint destination before restart.
-	The Restricted Client opens it only when the Web-activated session ID matches
-	the local enforcement receipt; Web content cannot provide an arbitrary URL
-	to native code.
+- The Device Agent uses an app-only certificate credential to activate and
+  complete only the session whose ID and effective-profile digest match its
+  local receipt. It has no Microsoft Graph or SharePoint permission.
+- The Restricted Client receives no certificate, token, secret, or arbitrary
+  URL. The Agent returns only the exam metadata persisted before restart.
+- The PoC shares one application certificate on a device. Production requires
+  a per-device identity or equivalent device-bound proof, certificate
+  lifecycle management, and protected backend audit records.
+- The backend session store is in memory; restarting the Web application loses
+  active sessions.
 - The Assigned Access profile assumes standard machine-wide installation paths
 	for the Restricted Exam Client and Microsoft Edge.
 - Automatic cleanup of browser identity, documents, and cached student data is

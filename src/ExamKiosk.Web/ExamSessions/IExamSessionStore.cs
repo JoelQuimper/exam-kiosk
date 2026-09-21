@@ -14,11 +14,13 @@ public interface IExamSessionStore
         string userPrincipalName,
         Guid sessionId);
 
-    ExamSessionActivationResult ActivateActive(
-        string userPrincipalName);
+    ExamSessionActivationResult ActivateForDevice(
+        Guid sessionId,
+        string profileSha256);
 
-    ExamSessionCompletionResult CompleteActive(
-        string userPrincipalName);
+    ExamSessionCompletionResult CompleteForDevice(
+        Guid sessionId,
+        string profileSha256);
 }
 
 public sealed record ExamSessionStartResult(

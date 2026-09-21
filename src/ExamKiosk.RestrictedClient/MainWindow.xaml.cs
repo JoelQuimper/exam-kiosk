@@ -1,354 +1,92 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Text.Json;
 using System.Windows;
 using ExamKiosk.Contracts;
-using Microsoft.Web.WebView2.Core;
 using AppResources = ExamKiosk.Contracts.Resources;
 
 namespace ExamKiosk.RestrictedClient;
 
 public partial class MainWindow : Window
 {
-    private static readonly JsonSerializerOptions BridgeSerializerOptions =
-        new(JsonSerializerDefaults.Web);
-
-    private readonly string profilePath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "ExamKiosk",
-        "RestrictedClientWebView2");
-    private readonly WebViewDiagnosticLog diagnosticLog = new("restricted-client");
-    private WebViewHostConfiguration? configuration;
-    private WebViewNavigationPolicy? navigationPolicy;
-    private bool initializationInProgress;
+    private readonly AppBarDock appBarDock = new();
+    private ActiveExamReference? activeExam;
     private bool actionInProgress;
-    private bool cleanupInProgress;
-    private bool closeAfterCleanup;
-    private bool closeCheckInProgress;
-    private bool navigationWasBlocked;
+    private bool allowClose;
 
     public MainWindow()
     {
         InitializeComponent();
         Title = AppResources.ExamSessionTitle;
-        ShowLoading();
+        StatusHeading.Text = AppResources.ExamInProgress;
+        StatusMessage.Text = AppResources.LoadingWebContent;
+        OpenExamButton.Content = AppResources.OpenExam;
+        RetryButton.Content = AppResources.Retry;
+        FinishButton.Content = AppResources.ExamDone;
+        Application.Current.SessionEnding += (_, _) => allowClose = true;
     }
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
-        await InitializeBrowserAsync();
+        appBarDock.Register(this, 320);
+        await RefreshActiveExamAsync();
     }
 
     private async void RetryButton_Click(object sender, RoutedEventArgs e)
     {
-        await InitializeBrowserAsync();
+        await RefreshActiveExamAsync();
     }
 
-    private async void NativeFinishButton_Click(object sender, RoutedEventArgs e)
+    private async void OpenExamButton_Click(object sender, RoutedEventArgs e)
     {
-        await FinishExamAsync(requestId: null);
-    }
-
-    private async Task InitializeBrowserAsync()
-    {
-        if (initializationInProgress)
+        if (actionInProgress || activeExam is null)
         {
-            return;
-        }
-
-        initializationInProgress = true;
-        ShowLoading();
-        diagnosticLog.Write("initialization-started");
-
-        try
-        {
-            configuration ??= WebViewHostConfiguration.Load(
-                "restricted-client.settings.json",
-                "/exam-session");
-            diagnosticLog.Write(
-                "configuration-loaded",
-                new { page = WebViewDiagnosticLog.DescribeUri(configuration.PageUri.AbsoluteUri) });
-            navigationPolicy ??= new WebViewNavigationPolicy(
-                configuration,
-                [new Uri("https://login.microsoftonline.com")]);
-
-            if (Browser.CoreWebView2 is null)
-            {
-                await DeleteProfileDirectoryWithRetryAsync();
-                var environmentOptions = new CoreWebView2EnvironmentOptions
-                {
-                    AreBrowserExtensionsEnabled = false,
-                };
-                var environment = await CoreWebView2Environment.CreateAsync(
-                    browserExecutableFolder: null,
-                    userDataFolder: profilePath,
-                    options: environmentOptions);
-                await Browser.EnsureCoreWebView2Async(environment);
-                if (cleanupInProgress || closeAfterCleanup)
-                {
-                    return;
-                }
-
-                ConfigureBrowser();
-                diagnosticLog.Write("webview-configured");
-            }
-
-            var core = Browser.CoreWebView2
-                ?? throw new InvalidOperationException("WebView2 initialization did not complete.");
-            if (cleanupInProgress || closeAfterCleanup)
-            {
-                return;
-            }
-
-            core.Navigate(configuration.PageUri.AbsoluteUri);
-        }
-        catch (Exception exception)
-        {
-            diagnosticLog.Write(
-                "initialization-failed",
-                new { exceptionType = exception.GetType().FullName, exception.Message });
-            var details = exception is InvalidDataException
-                ? AppResources.RestrictedClientConfigurationInvalid
-                : AppResources.WebNavigationFailed;
-            ShowFailure(AppResources.WebContentUnavailable, details);
-        }
-        finally
-        {
-            initializationInProgress = false;
-        }
-    }
-
-    private void ConfigureBrowser()
-    {
-        var core = Browser.CoreWebView2
-            ?? throw new InvalidOperationException("WebView2 initialization did not complete.");
-        core.Settings.AreDefaultContextMenusEnabled = false;
-        core.Settings.AreDevToolsEnabled = false;
-        core.Settings.AreBrowserAcceleratorKeysEnabled = false;
-        core.Settings.IsPasswordAutosaveEnabled = false;
-        core.Settings.IsGeneralAutofillEnabled = false;
-
-        core.NavigationStarting += Browser_NavigationStarting;
-        core.FrameNavigationStarting += Browser_FrameNavigationStarting;
-        core.NavigationCompleted += Browser_NavigationCompleted;
-        core.ProcessFailed += Browser_ProcessFailed;
-        core.PermissionRequested += (_, args) =>
-        {
-            args.State = CoreWebView2PermissionState.Deny;
-            args.Handled = true;
-        };
-        core.NewWindowRequested += (_, args) => args.Handled = true;
-        core.DownloadStarting += (_, args) =>
-        {
-            args.Cancel = true;
-            args.Handled = true;
-        };
-        core.WebMessageReceived += Browser_WebMessageReceived;
-    }
-
-    private void Browser_NavigationStarting(
-        object? sender,
-        CoreWebView2NavigationStartingEventArgs e)
-    {
-        var allowed = navigationPolicy?.IsAllowed(e.Uri) == true;
-        diagnosticLog.Write(
-            "navigation-starting",
-            new { target = WebViewDiagnosticLog.DescribeUri(e.Uri), allowed });
-        if (allowed)
-        {
-            return;
-        }
-
-        e.Cancel = true;
-        navigationWasBlocked = true;
-        ShowFailure(AppResources.NavigationBlocked, AppResources.NavigationBlockedDetails);
-    }
-
-    private void Browser_FrameNavigationStarting(
-        object? sender,
-        CoreWebView2NavigationStartingEventArgs e)
-    {
-        if (navigationPolicy?.IsAllowed(e.Uri) != true)
-        {
-            diagnosticLog.Write(
-                "frame-navigation-blocked",
-                new { target = WebViewDiagnosticLog.DescribeUri(e.Uri) });
-            e.Cancel = true;
-        }
-    }
-
-    private void Browser_NavigationCompleted(
-        object? sender,
-        CoreWebView2NavigationCompletedEventArgs e)
-    {
-        diagnosticLog.Write(
-            "navigation-completed",
-            new
-            {
-                e.IsSuccess,
-                webErrorStatus = e.WebErrorStatus.ToString(),
-                source = WebViewDiagnosticLog.DescribeUri(Browser.Source?.AbsoluteUri),
-                navigationWasBlocked,
-            });
-        if (navigationWasBlocked)
-        {
-            navigationWasBlocked = false;
-            return;
-        }
-
-        if (e.IsSuccess)
-        {
-            Browser.Visibility = Visibility.Visible;
-            StatusPanel.Visibility = Visibility.Collapsed;
-            return;
-        }
-
-        ShowFailure(
-            AppResources.WebContentUnavailable,
-            $"{AppResources.WebNavigationFailed} ({e.WebErrorStatus})");
-    }
-
-    private void Browser_ProcessFailed(
-        object? sender,
-        CoreWebView2ProcessFailedEventArgs e)
-    {
-        diagnosticLog.Write(
-            "webview-process-failed",
-            new { processFailedKind = e.ProcessFailedKind.ToString() });
-        ShowFailure(
-            AppResources.WebContentUnavailable,
-            $"{AppResources.WebNavigationFailed} ({e.ProcessFailedKind})");
-    }
-
-    private async void Browser_WebMessageReceived(
-        object? sender,
-        CoreWebView2WebMessageReceivedEventArgs e)
-    {
-        if (navigationPolicy?.IsTrustedMessageSource(e.Source) != true
-            || !RestrictedBridgeProtocol.TryParseRequest(e.WebMessageAsJson, out var request)
-            || request is null)
-        {
-            diagnosticLog.Write(
-                "bridge-message-rejected",
-                new { source = WebViewDiagnosticLog.DescribeUri(e.Source) });
-            return;
-        }
-
-        diagnosticLog.Write(
-            "bridge-message-accepted",
-            new { requestType = request.Type.ToString(), request.RequestId });
-        try
-        {
-            switch (request.Type)
-            {
-                case RestrictedBridgeRequestType.ClientReady:
-                    await SendSessionStatusAsync(request.RequestId);
-                    break;
-                case RestrictedBridgeRequestType.OpenExam:
-                    await OpenExamAsync(
-                        request.RequestId,
-                        request.SessionId!.Value);
-                    break;
-                case RestrictedBridgeRequestType.FinishExam:
-                    await FinishExamAsync(request.RequestId);
-                    break;
-            }
-        }
-        catch (Exception)
-        {
-            PostBridgeResponse(
-                ResponseTypeFor(request.Type),
-                request.RequestId,
-                "failed",
-                AppResources.ExamSessionActionFailed);
-        }
-    }
-
-    private async Task SendSessionStatusAsync(Guid requestId)
-    {
-        try
-        {
-            var response = await AgentClient.SendAsync(
-                AgentCommand.GetStatus,
-                TimeSpan.FromSeconds(5));
-            PostBridgeResponse(
-                "sessionStatus",
-                requestId,
-                response.Success ? ToProtocolState(response.State) : "unavailable",
-                response.Success ? null : AppResources.AgentStatusUnavailable);
-        }
-        catch (Exception)
-        {
-            PostBridgeResponse(
-                "sessionStatus",
-                requestId,
-                "unavailable",
-                AppResources.AgentStatusUnavailable);
-        }
-    }
-
-    private async Task OpenExamAsync(Guid requestId, Guid sessionId)
-    {
-        if (actionInProgress)
-        {
-            PostBridgeResponse(
-                "openExamResult",
-                requestId,
-                "busy",
-                AppResources.ExamSessionActionBusy);
             return;
         }
 
         actionInProgress = true;
+        SetButtonsEnabled(false);
         try
         {
-            var status = await AgentClient.SendAsync(
+            var response = await AgentClient.SendAsync(
                 AgentCommand.GetActiveExam,
-                TimeSpan.FromSeconds(5));
-            if (!status.Success
-                || status.State != AgentState.InExam
-                || status.ActiveExam is not { } activeExam
-                || activeExam.SessionId != sessionId)
+                TimeSpan.FromSeconds(15));
+            if (!response.Success
+                || response.State != AgentState.InExam
+                || response.ActiveExam is not { } confirmed
+                || confirmed.SessionId != activeExam.SessionId)
             {
-                PostBridgeResponse(
-                    "openExamResult",
-                    requestId,
-                    "failed",
-                    AppResources.NoActiveExamSession);
+                ShowUnavailable(AppResources.NoActiveExamSession);
                 return;
             }
 
-            Process.Start(CreateEdgeStartInfo(activeExam.EntryUrl));
-            PostBridgeResponse(
-                "openExamResult",
-                requestId,
-                "opened",
-                AppResources.ExamOpened);
+            activeExam = confirmed;
+            Process.Start(CreateEdgeStartInfo(confirmed.EntryUrl));
+            StatusMessage.Text = AppResources.ExamOpened;
         }
-        catch (Exception)
+        catch
         {
-            PostBridgeResponse(
-                "openExamResult",
-                requestId,
-                "failed",
-                AppResources.EdgeOpenFailed);
+            StatusMessage.Text = AppResources.EdgeOpenFailed;
         }
         finally
         {
             actionInProgress = false;
+            if (activeExam is not null)
+            {
+                SetButtonsEnabled(true);
+            }
         }
     }
 
-    private async Task FinishExamAsync(Guid? requestId)
+    private async void FinishButton_Click(object sender, RoutedEventArgs e)
     {
         if (actionInProgress)
         {
-            PostFinishResponse(requestId, "busy", AppResources.ExamSessionActionBusy);
             return;
         }
 
         actionInProgress = true;
+        SetButtonsEnabled(false);
         try
         {
             var dialog = new TransitionDialog(
@@ -364,34 +102,27 @@ public partial class MainWindow : Window
             dialog.ShowDialog();
             if (dialog.WasCancelled)
             {
-                PostFinishResponse(requestId, "cancelled", AppResources.FinishCancelled);
+                SetButtonsEnabled(true);
                 return;
             }
 
-            var response = dialog.Response;
-            var message = response?.Success == true
-                ? AppResources.LeavingExam
-                : AppResources.ExamFinishFailed;
-            PostFinishResponse(
-                requestId,
-                response?.Success == true ? "accepted" : "failed",
-                message);
-            if (requestId is null)
+            if (dialog.Response?.Success == true)
             {
-                ShowFailure(
-                    response?.Success == true ? AppResources.ExamInProgress : AppResources.WebContentUnavailable,
-                    message);
+                activeExam = null;
+                ExamTitle.Visibility = Visibility.Collapsed;
+                OpenExamButton.Visibility = Visibility.Collapsed;
+                FinishButton.Visibility = Visibility.Collapsed;
+                StatusMessage.Text = AppResources.LeavingExam;
+                return;
             }
+
+            StatusMessage.Text = AppResources.ExamFinishFailed;
+            SetButtonsEnabled(true);
         }
-        catch (Exception)
+        catch
         {
-            PostFinishResponse(requestId, "failed", AppResources.ExamFinishFailed);
-            if (requestId is null)
-            {
-                ShowFailure(
-                    AppResources.WebContentUnavailable,
-                    AppResources.ExamFinishFailed);
-            }
+            StatusMessage.Text = AppResources.ExamFinishFailed;
+            SetButtonsEnabled(true);
         }
         finally
         {
@@ -399,12 +130,66 @@ public partial class MainWindow : Window
         }
     }
 
-    private void PostFinishResponse(Guid? requestId, string state, string message)
+    private async Task RefreshActiveExamAsync()
     {
-        if (requestId is { } id)
+        if (actionInProgress)
         {
-            PostBridgeResponse("finishExamResult", id, state, message);
+            return;
         }
+
+        actionInProgress = true;
+        RetryButton.Visibility = Visibility.Collapsed;
+        SetButtonsEnabled(false);
+        StatusMessage.Text = AppResources.LoadingWebContent;
+        try
+        {
+            var response = await AgentClient.SendAsync(
+                AgentCommand.GetActiveExam,
+                TimeSpan.FromSeconds(15));
+            if (!response.Success
+                || response.State != AgentState.InExam
+                || response.ActiveExam is not { } exam)
+            {
+                ShowUnavailable(
+                    response.Success
+                        ? AppResources.NoActiveExamSession
+                        : response.Message);
+                return;
+            }
+
+            activeExam = exam;
+            ExamTitle.Text = exam.Title;
+            ExamTitle.Visibility = Visibility.Visible;
+            StatusMessage.Text = AppResources.ExamSessionReady;
+            OpenExamButton.Visibility = Visibility.Visible;
+            FinishButton.Visibility = Visibility.Visible;
+            SetButtonsEnabled(true);
+        }
+        catch
+        {
+            ShowUnavailable(AppResources.AgentStatusUnavailable);
+        }
+        finally
+        {
+            actionInProgress = false;
+        }
+    }
+
+    private void ShowUnavailable(string message)
+    {
+        activeExam = null;
+        ExamTitle.Visibility = Visibility.Collapsed;
+        OpenExamButton.Visibility = Visibility.Collapsed;
+        FinishButton.Visibility = Visibility.Collapsed;
+        RetryButton.Visibility = Visibility.Visible;
+        RetryButton.IsEnabled = true;
+        StatusMessage.Text = message;
+    }
+
+    private void SetButtonsEnabled(bool enabled)
+    {
+        OpenExamButton.IsEnabled = enabled;
+        FinishButton.IsEnabled = enabled;
     }
 
     internal static ProcessStartInfo CreateEdgeStartInfo(Uri examUri)
@@ -432,188 +217,21 @@ public partial class MainWindow : Window
             UseShellExecute = false,
         };
         startInfo.ArgumentList.Add("--new-window");
+        startInfo.ArgumentList.Add("--start-maximized");
         startInfo.ArgumentList.Add("--no-first-run");
         startInfo.ArgumentList.Add("--inprivate");
         startInfo.ArgumentList.Add(examUri.AbsoluteUri);
         return startInfo;
     }
 
-    private void PostBridgeResponse(
-        string type,
-        Guid requestId,
-        string state,
-        string? message)
+    private void Window_Closing(object? sender, CancelEventArgs e)
     {
-        if (cleanupInProgress || closeAfterCleanup || Browser.CoreWebView2 is not { } core)
+        if (!allowClose)
         {
+            e.Cancel = true;
             return;
         }
 
-        var response = new BridgeResponse(
-            RestrictedBridgeProtocol.Version,
-            type,
-            requestId,
-            state,
-            message);
-        core.PostWebMessageAsJson(
-            JsonSerializer.Serialize(response, BridgeSerializerOptions));
+        appBarDock.Dispose();
     }
-
-    private static string ResponseTypeFor(RestrictedBridgeRequestType requestType)
-    {
-        return requestType switch
-        {
-            RestrictedBridgeRequestType.ClientReady => "sessionStatus",
-            RestrictedBridgeRequestType.OpenExam => "openExamResult",
-            RestrictedBridgeRequestType.FinishExam => "finishExamResult",
-            _ => throw new ArgumentOutOfRangeException(nameof(requestType)),
-        };
-    }
-
-    private static string ToProtocolState(AgentState state)
-    {
-        return JsonNamingPolicy.CamelCase.ConvertName(state.ToString());
-    }
-
-    private void ShowLoading()
-    {
-        Browser.Visibility = Visibility.Collapsed;
-        StatusPanel.Visibility = Visibility.Visible;
-        StatusHeading.Text = AppResources.ExamSessionTitle;
-        StatusMessage.Text = AppResources.LoadingWebContent;
-        RetryButton.Visibility = Visibility.Collapsed;
-        NativeFinishButton.Visibility = Visibility.Collapsed;
-    }
-
-    private void ShowFailure(string heading, string details)
-    {
-        Browser.Visibility = Visibility.Collapsed;
-        StatusPanel.Visibility = Visibility.Visible;
-        StatusHeading.Text = heading;
-        StatusMessage.Text = details;
-        RetryButton.Content = AppResources.Retry;
-        RetryButton.Visibility = Visibility.Visible;
-        NativeFinishButton.Content = AppResources.ExamDone;
-        _ = RefreshNativeFinishButtonAsync();
-    }
-
-    private async Task RefreshNativeFinishButtonAsync()
-    {
-        try
-        {
-            var response = await AgentClient.SendAsync(
-                AgentCommand.GetStatus,
-                TimeSpan.FromSeconds(5));
-            NativeFinishButton.Visibility =
-                StatusPanel.Visibility == Visibility.Visible
-                && response.Success
-                && response.State == AgentState.InExam
-                    ? Visibility.Visible
-                    : Visibility.Collapsed;
-        }
-        catch (Exception)
-        {
-            NativeFinishButton.Visibility = Visibility.Collapsed;
-        }
-    }
-
-    private async void Window_Closing(object? sender, CancelEventArgs e)
-    {
-        if (closeAfterCleanup)
-        {
-            return;
-        }
-
-        e.Cancel = true;
-        if (cleanupInProgress)
-        {
-            return;
-        }
-
-        if (closeCheckInProgress)
-        {
-            return;
-        }
-
-        closeCheckInProgress = true;
-        if (await IsExamActiveAsync())
-        {
-            NativeFinishButton.Content = AppResources.ExamDone;
-            NativeFinishButton.Visibility = Visibility.Visible;
-            closeCheckInProgress = false;
-            return;
-        }
-
-        cleanupInProgress = true;
-        closeCheckInProgress = false;
-
-        try
-        {
-            Browser.Dispose();
-            await DeleteProfileDirectoryWithRetryAsync();
-        }
-        catch (Exception exception)
-        {
-            MessageBox.Show(
-                this,
-                $"{AppResources.ProfileCleanupFailed}{Environment.NewLine}{Environment.NewLine}{exception.Message}",
-                AppResources.ExamSessionTitle,
-                MessageBoxButton.OK,
-                MessageBoxImage.Warning);
-        }
-
-        closeAfterCleanup = true;
-        Close();
-    }
-
-    private static async Task<bool> IsExamActiveAsync()
-    {
-        try
-        {
-            var response = await AgentClient.SendAsync(
-                AgentCommand.GetStatus,
-                TimeSpan.FromSeconds(5));
-            return !response.Success || response.State == AgentState.InExam;
-        }
-        catch (Exception)
-        {
-            return true;
-        }
-    }
-
-    private async Task DeleteProfileDirectoryWithRetryAsync()
-    {
-        const int maximumAttempts = 5;
-        for (var attempt = 1; attempt <= maximumAttempts; attempt++)
-        {
-            try
-            {
-                DeleteProfileDirectory();
-                return;
-            }
-            catch (IOException) when (attempt < maximumAttempts)
-            {
-                await Task.Delay(TimeSpan.FromMilliseconds(200 * attempt));
-            }
-            catch (UnauthorizedAccessException) when (attempt < maximumAttempts)
-            {
-                await Task.Delay(TimeSpan.FromMilliseconds(200 * attempt));
-            }
-        }
-    }
-
-    private void DeleteProfileDirectory()
-    {
-        if (Directory.Exists(profilePath))
-        {
-            Directory.Delete(profilePath, recursive: true);
-        }
-    }
-
-    private sealed record BridgeResponse(
-        int Version,
-        string Type,
-        Guid RequestId,
-        string State,
-        string? Message);
 }

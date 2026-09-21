@@ -13,9 +13,9 @@ be understood, tested, and demonstrated independently.
 - The Device Agent receives the session ID and immutable profile, persists
   their local receipt, validates the intent, detects the local Windows version,
   and generates and validates the Windows configuration locally.
-- The Restricted Client authenticates the student, activates the matching Web
-  session, and opens the locally persisted SharePoint exam destination only
-  when the Web and Agent session IDs match.
+- The native Restricted Client asks the LocalSystem Device Agent to activate
+  the matching Web session and opens only the SharePoint destination persisted
+  in the local receipt.
 
 ## Step 0 - Administrator recovery
 
@@ -153,42 +153,47 @@ test device.
 
 ## Step 7 - Restricted Client session activation
 
-Implemented on 2026-09-21:
+Implemented on 2026-09-21 and redesigned as a native flow:
 
-- an authenticated, antiforgery-protected atomic activation operation;
-- lookup of the current student's non-expired `Starting` session;
-- an idempotent transition to `Active` after restricted-session
-  authentication and local Agent readiness;
-- a bounded response containing the active session ID and exam metadata, but
-  not the exam URL;
-- display of the activated exam title in the Restricted Client page.
+- app-only activate and complete endpoints protected by the dedicated
+  `AgentBearer` scheme and `ExamDevice.Agent` application role;
+- exact session-ID and effective-profile-digest binding;
+- certificate authentication performed only by the LocalSystem Device Agent;
+- no Graph or SharePoint application permission;
+- idempotent transition from `Starting` to `Active`;
+- a native Restricted Client with no WebView or second Web-app sign-in;
+- a 320-pixel Windows AppBar reserved on the right, with normal close blocked
+  while the exam is active.
 
 ## Step 8 - Open the real exam destination
 
 Implemented on 2026-09-21, pending managed-device validation:
 
-- Restricted Client bridge protocol version 2 carries the activated session
-  ID for `openExam` and rejects URL fields;
-- Agent protocol version 4 exposes the locally persisted exam destination only
-  to the installed Restricted Client;
-- native code requires the Web-activated session ID to match the Agent's local
-  enforcement receipt before opening Edge;
+- Agent protocol version 4 exposes the locally persisted exam metadata only to
+  the installed Restricted Client after backend activation succeeds;
 - the fixed example URL was removed and the prepared SharePoint folder URL is
-  opened in an InPrivate Edge window;
+  opened in a maximized InPrivate Edge window in the AppBar's remaining work
+  area;
 - **Open Exam** remains available for relaunch after Edge closes;
 - the Restricted Client remains open while the Agent reports `InExam` and
   fails closed when Agent status cannot be verified;
-- arbitrary URLs remain unavailable to Web content.
+- the student signs in to SharePoint only in Edge; the Agent application
+  identity never impersonates the student;
+- arbitrary URLs remain unavailable to Web content or the native panel.
 
 ## Step 9 - Coordinated completion
 
-- Transition the Web session to `Completing`.
 - Ask the Agent to remove Assigned Access, restore Edge policy, and remove
   recorded shortcuts.
 - Persist local cleanup results.
-- Transition the Web session to `Completed` only after successful cleanup.
+- Ask the Agent to transition the exact backend session to `Completed` only
+  after successful local cleanup.
 - Preserve a recoverable non-success state if cleanup fails.
 - Restart Windows after the application-owned countdown.
+
+The current implementation fails closed if backend completion fails after
+local cleanup: the Agent enters `Failed` and does not schedule the restart.
+Retry/reconciliation across reboot remains a production design item.
 
 ## Recommended execution order
 
@@ -198,3 +203,15 @@ record. For the development PoC, Steps 7-8 were intentionally wired before
 Step 6 to validate the complete real-destination user flow before introducing
 temporary Edge policy mutation. Resume with Step 6 after managed-device
 validation of the Steps 7-8 flow.
+
+For the PoC, the installer owns and persists the Web application origin, while
+`Initialize-ExamKioskDeviceAgentIdentity.ps1` owns the Agent tenant,
+application, API, and certificate identifiers. Each script creates the shared
+configuration when absent and merges only its own properties when present, so
+configuration initialization is order-independent. The installer remains the
+final validation boundary and refuses to deploy an Agent whose combined
+configuration is incomplete. Identity initialization requires PowerShell 7
+and must be invoked with `pwsh`, not Windows PowerShell 5.1. The bootstrap
+certificate is non-exportable in `LocalMachine\My`, but the shared application
+identity is not sufficient for production; replace it with per-device
+identity or equivalent device-bound proof.

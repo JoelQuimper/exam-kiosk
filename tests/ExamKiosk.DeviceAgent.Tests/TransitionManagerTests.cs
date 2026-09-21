@@ -230,6 +230,7 @@ public sealed class TransitionManagerTests
         await journal.BeginAsync(
             sessionId,
             "profile-sha256",
+            "Exam title",
             entryUrl,
             CancellationToken.None);
         await journal.SetStateAsync(AgentState.InExam, CancellationToken.None);
@@ -243,7 +244,11 @@ public sealed class TransitionManagerTests
                 },
                 AgentProtocol.SerializerOptions));
         var scripts = new ScriptSequence();
-        var manager = CreateManager(directory.Path, scripts);
+        var deviceSessions = new StubDeviceExamSessionClient();
+        var manager = CreateManager(
+            directory.Path,
+            scripts,
+            deviceExamSessionClient: deviceSessions);
 
         var response = await manager.HandleAsync(
             new AgentRequest(
@@ -255,7 +260,18 @@ public sealed class TransitionManagerTests
         Assert.True(response.Success);
         Assert.Equal(AgentState.InExam, response.State);
         Assert.Equal(sessionId, response.ActiveExam?.SessionId);
+        Assert.Equal("Exam title", response.ActiveExam?.Title);
         Assert.Equal(entryUrl, response.ActiveExam?.EntryUrl);
+        Assert.Equal(
+            [(sessionId, "profile-sha256")],
+            deviceSessions.Activations);
+        var persistedJournal = new SessionJournal(
+            Path.Combine(directory.Path, "session-journal.json"));
+        Assert.Contains(
+            persistedJournal.Current!.Steps,
+            step =>
+                step.Name == "BackendSessionActivated"
+                && step.Status == "completed");
     }
 
     [Fact]
@@ -373,12 +389,15 @@ public sealed class TransitionManagerTests
     private static TransitionManager CreateManager(
         string dataDirectory,
         ScriptSequence scripts,
-        Func<DateTimeOffset>? restartScheduler = null) =>
+        Func<DateTimeOffset>? restartScheduler = null,
+        IDeviceExamSessionClient? deviceExamSessionClient = null) =>
         new(
             NullLogger<TransitionManager>.Instance,
             dataDirectory,
             scripts.RunAsync,
             restartScheduler ?? (() => DateTimeOffset.UtcNow.AddSeconds(5)),
+            deviceExamSessionClient:
+                deviceExamSessionClient ?? new StubDeviceExamSessionClient(),
             windowsClientVersionProvider: () => new WindowsClientVersion(10, 0, 22621));
 
     private static AgentRequest StartRequest(
@@ -457,6 +476,31 @@ public sealed class TransitionManagerTests
     private sealed record ScriptInvocation(
         string Name,
         IReadOnlyList<string> Arguments);
+
+    private sealed class StubDeviceExamSessionClient
+        : IDeviceExamSessionClient
+    {
+        internal List<(Guid SessionId, string ProfileSha256)> Activations { get; } = [];
+        internal List<(Guid SessionId, string ProfileSha256)> Completions { get; } = [];
+
+        public Task ActivateAsync(
+            Guid sessionId,
+            string profileSha256,
+            CancellationToken cancellationToken)
+        {
+            Activations.Add((sessionId, profileSha256));
+            return Task.CompletedTask;
+        }
+
+        public Task CompleteAsync(
+            Guid sessionId,
+            string profileSha256,
+            CancellationToken cancellationToken)
+        {
+            Completions.Add((sessionId, profileSha256));
+            return Task.CompletedTask;
+        }
+    }
 
     private sealed class TemporaryDirectory : IDisposable
     {

@@ -7,6 +7,9 @@ builder.Services.AddWindowsService(options =>
 	options.ServiceName = "Exam Kiosk Device Agent";
 });
 builder.Services.AddSingleton<WindowsConfigurationCompiler>();
+builder.Services.Configure<DeviceExamApiOptions>(
+    builder.Configuration.GetSection(DeviceExamApiOptions.SectionName));
+builder.Services.AddHttpClient<IDeviceExamSessionClient, DeviceExamSessionClient>();
 builder.Services.AddSingleton<TransitionManager>();
 builder.Services.AddHostedService<AgentWorker>();
 

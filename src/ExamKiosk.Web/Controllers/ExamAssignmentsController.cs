@@ -4,11 +4,13 @@ using ExamKiosk.Web.Controllers.Models;
 using ExamKiosk.Web.ExamAssignments;
 using ExamKiosk.Web.ExamSessions;
 using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExamKiosk.Web.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/v1/exam-assignments")]
 public sealed class ExamAssignmentsController(
     IExamAssignmentService examAssignmentService,

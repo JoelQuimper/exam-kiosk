@@ -52,12 +52,4 @@
   <data name="ExamSessionInstructions" xml:space="preserve"><value>Open your SharePoint exam in Edge. Return here when your work is complete.</value></data>
   <data name="OpenExam" xml:space="preserve"><value>Open exam</value></data>
   <data name="ExamDone" xml:space="preserve"><value>Exam done</value></data>
-  <data name="SessionConnecting" xml:space="preserve"><value>Checking the active exam session...</value></data>
-  <data name="SessionDirectBrowser" xml:space="preserve"><value>Open this page in the Restricted Exam Client to control the exam session.</value></data>
-  <data name="SessionCompletionFailed" xml:space="preserve"><value>The restrictions were removed, but the Web session could not be completed.</value></data>
-  <data name="SessionActivationFailed" xml:space="preserve"><value>The prepared exam session could not be activated for this student.</value></data>
-  <data name="SessionFinishing" xml:space="preserve"><value>Finishing the exam and restoring the device...</value></data>
-  <data name="SessionOpening" xml:space="preserve"><value>Opening the exam in Microsoft Edge...</value></data>
-  <data name="SessionReady" xml:space="preserve"><value>The restricted exam session is active.</value></data>
-  <data name="SessionUnavailable" xml:space="preserve"><value>No active restricted exam session was found.</value></data>
 </root>

@@ -140,70 +140,22 @@ public sealed class InMemoryExamSessionStore(TimeProvider timeProvider)
         }
     }
 
-    public ExamSessionCompletionResult CompleteActive(
-        string userPrincipalName)
+    public ExamSessionActivationResult ActivateForDevice(
+        Guid sessionId,
+        string profileSha256)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(userPrincipalName);
+        ArgumentOutOfRangeException.ThrowIfEqual(sessionId, Guid.Empty);
+        ArgumentException.ThrowIfNullOrWhiteSpace(profileSha256);
 
-        var normalizedUpn = userPrincipalName.Trim();
         lock (syncRoot)
         {
-            if (!nonterminalSessionIdsByStudent.TryGetValue(
-                    normalizedUpn,
-                    out var sessionId))
-            {
-                return new ExamSessionCompletionResult(
-                    ExamSessionCompletionStatus.NotFound,
-                    null);
-            }
-
-            var session = sessions[sessionId];
-            if (session.State == ExamSessionState.Starting
-                && session.ExpiresAtUtc <= timeProvider.GetUtcNow())
-            {
-                return new ExamSessionCompletionResult(
-                    ExamSessionCompletionStatus.NotFound,
-                    Expire(session));
-            }
-
-            if (session.State != ExamSessionState.Active)
-            {
-                return new ExamSessionCompletionResult(
-                    ExamSessionCompletionStatus.Conflict,
-                    session);
-            }
-
-            var completed = session with
-            {
-                State = ExamSessionState.Completed,
-                ExpiresAtUtc = null,
-            };
-            sessions[sessionId] = completed;
-            nonterminalSessionIdsByStudent.Remove(normalizedUpn);
-            return new ExamSessionCompletionResult(
-                ExamSessionCompletionStatus.Completed,
-                completed);
-        }
-    }
-
-    public ExamSessionActivationResult ActivateActive(
-        string userPrincipalName)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(userPrincipalName);
-
-        var normalizedUpn = userPrincipalName.Trim();
-        lock (syncRoot)
-        {
-            if (!nonterminalSessionIdsByStudent.TryGetValue(
-                    normalizedUpn,
-                    out var sessionId))
+            if (!TryGetMatchingSession(sessionId, profileSha256, out var session))
             {
                 return new ExamSessionActivationResult(
                     ExamSessionActivationStatus.NotFound,
                     null);
             }
 
-            var session = sessions[sessionId];
             if (session.State == ExamSessionState.Starting
                 && session.ExpiresAtUtc <= timeProvider.GetUtcNow())
             {
@@ -236,6 +188,68 @@ public sealed class InMemoryExamSessionStore(TimeProvider timeProvider)
                 ExamSessionActivationStatus.Activated,
                 active);
         }
+    }
+
+    public ExamSessionCompletionResult CompleteForDevice(
+        Guid sessionId,
+        string profileSha256)
+    {
+        ArgumentOutOfRangeException.ThrowIfEqual(sessionId, Guid.Empty);
+        ArgumentException.ThrowIfNullOrWhiteSpace(profileSha256);
+
+        lock (syncRoot)
+        {
+            if (!TryGetMatchingSession(sessionId, profileSha256, out var session))
+            {
+                return new ExamSessionCompletionResult(
+                    ExamSessionCompletionStatus.NotFound,
+                    null);
+            }
+
+            if (session.State == ExamSessionState.Completed)
+            {
+                return new ExamSessionCompletionResult(
+                    ExamSessionCompletionStatus.Completed,
+                    session);
+            }
+
+            if (session.State != ExamSessionState.Active)
+            {
+                return new ExamSessionCompletionResult(
+                    ExamSessionCompletionStatus.Conflict,
+                    session);
+            }
+
+            var completed = session with
+            {
+                State = ExamSessionState.Completed,
+                ExpiresAtUtc = null,
+            };
+            sessions[sessionId] = completed;
+            nonterminalSessionIdsByStudent.Remove(
+                session.Profile.Student.UserPrincipalName);
+            return new ExamSessionCompletionResult(
+                ExamSessionCompletionStatus.Completed,
+                completed);
+        }
+    }
+
+    private bool TryGetMatchingSession(
+        Guid sessionId,
+        string profileSha256,
+        out ExamSession session)
+    {
+        if (sessions.TryGetValue(sessionId, out session!)
+            && string.Equals(
+                EffectiveProfileDigest.Compute(session.Profile),
+                profileSha256,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        session = null!;
+        return false;
     }
 
     private void ExpireStartingSession(

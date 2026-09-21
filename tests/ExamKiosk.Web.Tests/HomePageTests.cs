@@ -146,57 +146,6 @@ public sealed class HomePageTests
     }
 
     [Fact]
-    public async Task ExamSession_WhenAnonymous_RedirectsToSignIn()
-    {
-        await using var application = CreateApplication(authenticated: false);
-        using var client = application.CreateClient(
-            new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-
-        var response = await client.GetAsync("/exam-session");
-
-        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
-        Assert.Equal(
-            "/authentication/login?returnUrl=%2Fexam-session",
-            response.Headers.Location?.OriginalString);
-    }
-
-    [Fact]
-    public async Task ExamSession_WhenAuthenticated_DoesNotRenderPrototypeExam()
-    {
-        await using var application = CreateApplication(authenticated: true);
-        using var client = application.CreateClient();
-
-        var response = await client.GetAsync("/exam-session");
-        var content = await response.Content.ReadAsStringAsync();
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("<h1>Exam in progress</h1>", content);
-        Assert.Contains("id=\"session-open-exam\"", content);
-        Assert.Contains("id=\"session-finish-exam\"", content);
-        Assert.Contains("id=\"session-status\"", content);
-        Assert.Contains("exam-session-bridge.js", content);
-        Assert.DoesNotContain("Bogus exam", content);
-        Assert.DoesNotContain("<dt>Tools</dt>", content);
-        Assert.DoesNotContain("/authentication/login", content);
-    }
-
-    [Fact]
-    public async Task ExamSession_WhenBrowserPrefersFrench_RendersFrench()
-    {
-        await using var application = CreateApplication(authenticated: true);
-        using var client = application.CreateClient();
-        client.DefaultRequestHeaders.AcceptLanguage.ParseAdd("fr");
-
-        var response = await client.GetAsync("/exam-session");
-        var content = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("Examen en cours", content);
-        Assert.Contains("Ouvrir l'examen", content);
-        Assert.Contains("Examen terminé", content);
-    }
-
-    [Fact]
     public async Task ExamList_WhenBrowserPrefersFrench_RendersFrench()
     {
         await using var application = CreateApplication(authenticated: true);
