@@ -322,11 +322,10 @@ restart countdown, so the opposite command is rejected. On service startup it
 queries the Assigned Access CSP and reconciles every persisted state to
 `inExam` when this PoC's profile is configured or `available` when Assigned
 Access is absent. It enters `failed` rather than replacing an unrelated
-Assigned Access configuration. Starting from `inExam` is idempotent: the agent
-reapplies its profile and schedules the restart. A transition failure that does
-not restart the device moves the agent to `failed`. Use the administrator
-recovery command for the known Exam Kiosk profile; restore the test device from
-a trusted snapshot if recovery cannot verify that restrictions were removed.
+Assigned Access configuration. A transition failure that does not restart the
+device moves the agent to `failed`. Use the administrator recovery command for
+the known Exam Kiosk profile; restore the test device from a trusted snapshot
+if recovery cannot verify that restrictions were removed.
 
 ### Uninstall
 

@@ -348,7 +348,7 @@ public sealed class TransitionManagerTests
     [Theory]
     [InlineData(AgentState.Available, true)]
     [InlineData(AgentState.EnteringExam, false)]
-    [InlineData(AgentState.InExam, true)]
+    [InlineData(AgentState.InExam, false)]
     [InlineData(AgentState.ExitingExam, false)]
     [InlineData(AgentState.Failed, false)]
     public void CanStartExam_ReturnsExpectedResult(AgentState state, bool expected)

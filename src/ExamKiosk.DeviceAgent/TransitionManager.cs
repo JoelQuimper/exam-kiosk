@@ -475,7 +475,7 @@ public sealed class TransitionManager
     }
 
     internal static bool CanStartExam(AgentState state) =>
-        state is AgentState.Available or AgentState.InExam;
+        state == AgentState.Available;
 
     private async Task<AgentResponse> GetActiveExamAsync(
         AgentRequest request,
