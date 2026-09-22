@@ -31,6 +31,11 @@ public sealed class ExamProfileOrchestrator
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
         var student = new EffectiveStudent(userPrincipalName.Trim());
+        var externalProtocolLaunchRules = tools
+            .OfType<DesktopToolDefinition>()
+            .SelectMany(
+                tool => tool.Configuration.ExternalProtocolLaunchRules)
+            .ToArray();
 
         return new EffectiveExamProfile(
             SchemaVersion,
@@ -38,7 +43,8 @@ public sealed class ExamProfileOrchestrator
             student,
             exam,
             tools,
-            allowedUrls);
+            allowedUrls,
+            externalProtocolLaunchRules);
     }
 
     private static IReadOnlyList<string> GetToolAllowedUrls(

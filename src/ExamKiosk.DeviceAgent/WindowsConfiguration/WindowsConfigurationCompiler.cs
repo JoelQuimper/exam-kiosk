@@ -39,7 +39,9 @@ public sealed class WindowsConfigurationCompiler
         var configuration = new EffectiveWindowsConfiguration(
             assignedAccessConfiguration.AssignedAccess,
             assignedAccessConfiguration.Shortcuts,
-            EdgePolicyCompiler.Compile(profile.AllowedUrls));
+            EdgePolicyCompiler.Compile(
+                profile.AllowedUrls,
+                profile.ExternalProtocolLaunchRules));
         AssignedAccessArtifactValidator.Validate(profile, configuration);
         return configuration;
     }

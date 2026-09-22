@@ -136,7 +136,8 @@ public sealed class LauncherBridgeProtocolTests
                 "calculator",
                 new Uri("https://example.com/exam")),
             [],
-            ["https://example.com"]);
+            ["https://example.com"],
+            []);
 
         return JsonSerializer.Serialize(profile, AgentProtocol.SerializerOptions);
     }

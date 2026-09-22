@@ -46,7 +46,8 @@ verified the configuration. Only then use:
 5. The LocalSystem mode reads Assigned Access through the MDM Bridge,
    verifies Exam Kiosk ownership, and clears and verifies the configuration.
 6. If `%ProgramData%\ExamKiosk\edge-policy-backup.json` exists, it restores
-   and verifies the saved `URLBlocklist` and `URLAllowlist`.
+   and verifies the saved `URLBlocklist`, `URLAllowlist`, and
+   `AutoLaunchProtocolsFromOrigins`.
 7. The LocalSystem mode writes a bounded result under
    `%ProgramData%\ExamKiosk\Recovery`.
 8. The recovery orchestrator reads that result and removes the temporary task.
@@ -81,5 +82,6 @@ use `Reset-ExamKioskPoc.ps1`, `Install-ExamKioskPoc.ps1`, or
 Do not use Recovery as a substitute for those normal scripts when the
 administrator can already access the device.
 
-Recovery changes only `URLBlocklist` and `URLAllowlist` when the Agent-owned
-backup exists. It does not delete other administrator or MDM Edge policies.
+Recovery changes only `URLBlocklist`, `URLAllowlist`, and
+`AutoLaunchProtocolsFromOrigins` when the Agent-owned backup exists. It does
+not delete other administrator or MDM Edge policies.

@@ -43,6 +43,15 @@ public sealed class WindowsConfigurationCompilerTests
         Assert.Equal(
             first.EdgePolicy.UrlAllowlist,
             second.EdgePolicy.UrlAllowlist);
+        Assert.Equal(
+            first.EdgePolicy.AutoLaunchProtocolsFromOrigins
+                .Select(rule => (
+                    rule.Protocol,
+                    string.Join('\n', rule.AllowedOrigins))),
+            second.EdgePolicy.AutoLaunchProtocolsFromOrigins
+                .Select(rule => (
+                    rule.Protocol,
+                    string.Join('\n', rule.AllowedOrigins))));
     }
 
     [Fact]
@@ -54,7 +63,6 @@ public sealed class WindowsConfigurationCompilerTests
             [
                 "https://example.com/exam",
                 "https://cdn.example.com/",
-                "ms-word:*",
                 "https://EXAMPLE.com/exam",
             ],
         };
@@ -71,12 +79,19 @@ public sealed class WindowsConfigurationCompilerTests
                 "ms-word:*",
             ],
             policy.UrlAllowlist);
+        var autoLaunchRule = Assert.Single(
+            policy.AutoLaunchProtocolsFromOrigins);
+        Assert.Equal("ms-word", autoLaunchRule.Protocol);
+        Assert.Equal(
+            ["https://example.com"],
+            autoLaunchRule.AllowedOrigins);
     }
 
     [Theory]
     [InlineData("")]
     [InlineData("example.com")]
     [InlineData("file:///C:/exam.txt")]
+    [InlineData("ms-word:*")]
     public void Compile_WhenAllowedUrlIsInvalid_Throws(string allowedUrl)
     {
         var profile = CreateProfile() with
@@ -245,7 +260,12 @@ public sealed class WindowsConfigurationCompilerTests
                             wordDesktopApplicationId),
                     ],
                     new DesktopLaunchTarget("word", "Microsoft Word", true, true),
-                    ["ms-word:*"])),
+                    [],
+                    [
+                        new ExternalProtocolLaunchRule(
+                            "ms-word",
+                            ["https://example.com"]),
+                    ])),
             new DesktopToolDefinition(
                 "calculator",
                 "Calculator",
@@ -261,6 +281,7 @@ public sealed class WindowsConfigurationCompilerTests
                         "Calculator",
                         true,
                         true),
+                    [],
                     [])),
         ];
 
@@ -274,7 +295,12 @@ public sealed class WindowsConfigurationCompilerTests
                 "calculator",
                 new Uri("https://example.com/exam")),
             tools,
-            ["https://example.com"]);
+            ["https://example.com"],
+            [
+                new ExternalProtocolLaunchRule(
+                    "ms-word",
+                    ["https://example.com"]),
+            ]);
     }
 
     private static WindowsClientVersion SupportedVersion() =>

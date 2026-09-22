@@ -34,18 +34,30 @@ public sealed class EdgePolicyScriptTests
             New-ItemProperty -LiteralPath (Join-Path $policyRoot 'URLBlocklist') -Name '1' -Value 'https://blocked.example/' -PropertyType String | Out-Null
             New-Item -ItemType Directory -Path (Join-Path $policyRoot 'URLAllowlist') -Force | Out-Null
             New-ItemProperty -LiteralPath (Join-Path $policyRoot 'URLAllowlist') -Name '1' -Value 'https://allowed.example/' -PropertyType String | Out-Null
+            $originalAutoLaunchPolicy = '[{"allowed_origins":["https://original.example"],"protocol":"original"}]'
+            New-ItemProperty -LiteralPath $policyRoot -Name 'AutoLaunchProtocolsFromOrigins' -Value $originalAutoLaunchPolicy -PropertyType String | Out-Null
             New-ItemProperty -LiteralPath $policyRoot -Name 'UnrelatedPolicy' -Value 'preserve-me' -PropertyType String | Out-Null
             $allowedUrls = @(1..12 | ForEach-Object { "https://allowed$_.example/" })
             $allowedUrls += 'ms-word:*'
             [pscustomobject]@{
                 urlBlocklist = @('*')
                 urlAllowlist = $allowedUrls
+                autoLaunchProtocolsFromOrigins = @(
+                    [pscustomobject]@{
+                        protocol = 'ms-word'
+                        allowedOrigins = @('https://sharepoint.example')
+                    }
+                )
             } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $policyPath -Encoding UTF8
 
             Save-ExamEdgePolicyBackup -BackupPath $backupPath -PolicyRoot $policyRoot
             Set-ExamEdgePolicy -PolicyPath $policyPath -PolicyRoot $policyRoot
             if ((Get-ItemPropertyValue -LiteralPath $policyRoot -Name 'UnrelatedPolicy') -cne 'preserve-me') {
                 throw 'An unrelated Edge policy was changed.'
+            }
+            $appliedAutoLaunchPolicy = Get-ItemPropertyValue -LiteralPath $policyRoot -Name 'AutoLaunchProtocolsFromOrigins'
+            if ($appliedAutoLaunchPolicy -cne '[{"allowed_origins":["https://sharepoint.example"],"protocol":"ms-word"}]') {
+                throw 'The external protocol auto-launch policy was not applied.'
             }
 
             Restore-ExamEdgePolicyBackup -BackupPath $backupPath -PolicyRoot $policyRoot
@@ -54,6 +66,9 @@ public sealed class EdgePolicyScriptTests
             }
             if ((Get-ItemPropertyValue -LiteralPath (Join-Path $policyRoot 'URLAllowlist') -Name '1') -cne 'https://allowed.example/') {
                 throw 'The original URL allowlist was not restored.'
+            }
+            if ((Get-ItemPropertyValue -LiteralPath $policyRoot -Name 'AutoLaunchProtocolsFromOrigins') -cne $originalAutoLaunchPolicy) {
+                throw 'The original external protocol auto-launch policy was not restored.'
             }
             if (Test-Path -LiteralPath $backupPath) {
                 throw 'The verified backup was not removed.'

@@ -149,12 +149,16 @@ to `/sites/ExamSite/`; it does not allow the tenant root, other SharePoint
 sites, or the student's OneDrive host. Browser and Office telemetry hosts
 observed during the same captures are intentionally excluded.
 
-- **Implemented:** compile the profile's generic
-  `AllowedUrls` into deterministic `URLBlocklist = ["*"]` and `URLAllowlist`
-  values, then atomically write `EdgePolicy.generated.temp.json`.
-- **Implemented:** `Start-Exam.ps1` backs up only `URLBlocklist` and
-  `URLAllowlist`, applies the deny-all baseline and profile allowlist, and
-  verifies the written values.
+- **Implemented:** compile the profile's HTTP/HTTPS-only `AllowedUrls` and
+  self-contained, tool-owned external protocol launch rules into deterministic
+  `URLBlocklist = ["*"]`, `URLAllowlist`, and
+  `AutoLaunchProtocolsFromOrigins` values. Protocol URL filters such as
+  `ms-word:*` are derived from those rules rather than duplicated in
+  `AllowedUrls`, then the Agent atomically writes
+  `EdgePolicy.generated.temp.json`.
+- **Implemented:** `Start-Exam.ps1` backs up `URLBlocklist`, `URLAllowlist`,
+  and `AutoLaunchProtocolsFromOrigins`, applies and verifies the deny-all
+  baseline, profile allowlist, and origin-scoped protocol launch rules.
 - **Implemented:** `Stop-Exam.ps1` restores and verifies the backup during
   normal completion. Administrator Recovery does the same when a failed
   transition leaves the backup behind.

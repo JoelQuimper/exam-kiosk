@@ -201,7 +201,13 @@ public sealed class ExamAssignmentsEndpointTests
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.NotNull(session);
-        Assert.Contains("ms-word:*", session.Profile.AllowedUrls);
+        Assert.DoesNotContain("ms-word:*", session.Profile.AllowedUrls);
+        var rule = Assert.Single(
+            session.Profile.ExternalProtocolLaunchRules);
+        Assert.Equal("ms-word", rule.Protocol);
+        Assert.Equal(
+            ["https://jqdev.sharepoint.com"],
+            rule.AllowedOrigins);
     }
 
     [Fact]

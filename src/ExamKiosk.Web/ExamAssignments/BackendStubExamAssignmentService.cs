@@ -47,7 +47,12 @@ public sealed class BackendStubExamAssignmentService : IExamAssignmentService
                         "Microsoft Word",
                         true,
                         true),
-                    ["ms-word:*"])),
+                    [],
+                    [
+                        new ExternalProtocolLaunchRule(
+                            "ms-word",
+                            ["https://jqdev.sharepoint.com"]),
+                    ])),
             new DesktopToolDefinition(
                 "windows-calculator",
                 "Calculator",
@@ -63,6 +68,7 @@ public sealed class BackendStubExamAssignmentService : IExamAssignmentService
                         "Calculator",
                         true,
                         true),
+                    [],
                     [])),
             new WebToolDefinition(
                 "usito-dictionary",

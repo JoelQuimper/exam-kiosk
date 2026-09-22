@@ -17,6 +17,7 @@ internal static class EffectiveProfileTestData
                 "calculator",
                 new Uri("https://example.com/exam")),
             tools ?? [],
-            ["https://example.com"]);
+            ["https://example.com"],
+            []);
     }
 }

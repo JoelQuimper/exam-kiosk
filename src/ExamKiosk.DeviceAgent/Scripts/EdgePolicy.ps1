@@ -4,6 +4,9 @@ $script:ExamEdgePolicyNames = @(
     'URLBlocklist'
     'URLAllowlist'
 )
+$script:ExamEdgePolicyValueNames = @(
+    'AutoLaunchProtocolsFromOrigins'
+)
 
 function Get-ExamEdgePolicyState {
     [CmdletBinding()]
@@ -42,9 +45,52 @@ function Get-ExamEdgePolicyState {
         }
     }
 
+    $registryValues = @()
+    if (Test-Path -LiteralPath $PolicyRoot -PathType Container) {
+        $policyRootKey = Get-Item -LiteralPath $PolicyRoot
+        $rootValueNames = @($policyRootKey.GetValueNames())
+        $registryValues = foreach (
+            $valueName in $script:ExamEdgePolicyValueNames
+        ) {
+            $exists = $rootValueNames -contains $valueName
+            [pscustomobject]@{
+                name = $valueName
+                existed = $exists
+                kind = if ($exists) {
+                    $policyRootKey.GetValueKind($valueName).ToString()
+                }
+                else {
+                    $null
+                }
+                data = if ($exists) {
+                    $policyRootKey.GetValue(
+                        $valueName,
+                        $null,
+                        [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
+                }
+                else {
+                    $null
+                }
+            }
+        }
+    }
+    else {
+        $registryValues = foreach (
+            $valueName in $script:ExamEdgePolicyValueNames
+        ) {
+            [pscustomobject]@{
+                name = $valueName
+                existed = $false
+                kind = $null
+                data = $null
+            }
+        }
+    }
+
     [pscustomobject]@{
-        schemaVersion = 1
+        schemaVersion = 2
         policies = @($policies)
+        registryValues = @($registryValues)
     }
 }
 
@@ -179,6 +225,7 @@ function Set-ExamEdgePolicy {
         ConvertFrom-Json
     $urlBlocklist = @($policy.urlBlocklist)
     $urlAllowlist = @($policy.urlAllowlist)
+    $autoLaunchRules = @($policy.autoLaunchProtocolsFromOrigins)
     if ($urlBlocklist.Count -ne 1 -or
         [string]$urlBlocklist[0] -cne '*') {
         throw 'The Edge policy preview must contain only "*" in urlBlocklist.'
@@ -203,6 +250,43 @@ function Set-ExamEdgePolicy {
             throw 'The Edge policy preview contains an invalid allowed URL.'
         }
     }
+    $normalizedAutoLaunchRules = foreach ($rule in $autoLaunchRules) {
+        if ($null -eq $rule -or
+            $rule.protocol -isnot [string] -or
+            [string]$rule.protocol -notmatch '^[a-z][a-z0-9+.-]*$') {
+            throw 'The Edge policy preview contains an invalid external protocol.'
+        }
+
+        $allowedOrigins = @($rule.allowedOrigins)
+        if ($allowedOrigins.Count -eq 0) {
+            throw 'An external protocol must allow at least one origin.'
+        }
+        foreach ($origin in $allowedOrigins) {
+            $originUri = $null
+            if ($origin -isnot [string] -or
+                -not [Uri]::TryCreate(
+                    [string]$origin,
+                    [UriKind]::Absolute,
+                    [ref]$originUri) -or
+                ($originUri.Scheme -cne 'https' -and
+                    $originUri.Scheme -cne 'http') -or
+                $originUri.AbsolutePath -cne '/' -or
+                -not [string]::IsNullOrEmpty($originUri.Query) -or
+                -not [string]::IsNullOrEmpty($originUri.Fragment) -or
+                -not [string]::IsNullOrEmpty($originUri.UserInfo)) {
+                throw 'The Edge policy preview contains an invalid external protocol origin.'
+            }
+        }
+
+        [pscustomobject][ordered]@{
+            allowed_origins = @($allowedOrigins)
+            protocol = [string]$rule.protocol
+        }
+    }
+    $autoLaunchPolicyValue = ConvertTo-Json `
+        -InputObject @($normalizedAutoLaunchRules) `
+        -Depth 4 `
+        -Compress
 
     Set-ExamEdgePolicyValues `
         -PolicyRoot $PolicyRoot `
@@ -212,6 +296,16 @@ function Set-ExamEdgePolicy {
         -PolicyRoot $PolicyRoot `
         -PolicyName 'URLAllowlist' `
         -Values @($urlAllowlist)
+    if (-not (Test-Path -LiteralPath $PolicyRoot -PathType Container)) {
+        New-Item -ItemType Directory -Path $PolicyRoot -Force | Out-Null
+    }
+    New-ItemProperty `
+        -LiteralPath $PolicyRoot `
+        -Name 'AutoLaunchProtocolsFromOrigins' `
+        -Value $autoLaunchPolicyValue `
+        -PropertyType String `
+        -Force |
+        Out-Null
     Assert-ExamEdgePolicyValues `
         -PolicyRoot $PolicyRoot `
         -PolicyName 'URLBlocklist' `
@@ -220,6 +314,13 @@ function Set-ExamEdgePolicy {
         -PolicyRoot $PolicyRoot `
         -PolicyName 'URLAllowlist' `
         -ExpectedValues @($urlAllowlist)
+    $actualAutoLaunchPolicyValue = Get-ItemPropertyValue `
+        -LiteralPath $PolicyRoot `
+        -Name 'AutoLaunchProtocolsFromOrigins'
+    if ([string]$actualAutoLaunchPolicyValue -cne
+        [string]$autoLaunchPolicyValue) {
+        throw "The Edge policy 'AutoLaunchProtocolsFromOrigins' does not match."
+    }
 }
 
 function Restore-ExamEdgePolicyBackup {
@@ -238,8 +339,10 @@ function Restore-ExamEdgePolicyBackup {
 
     $backup = Get-Content -LiteralPath $BackupPath -Raw |
         ConvertFrom-Json
-    if ($backup.schemaVersion -ne 1 -or
-        @($backup.policies).Count -ne $script:ExamEdgePolicyNames.Count) {
+    if ($backup.schemaVersion -ne 2 -or
+        @($backup.policies).Count -ne $script:ExamEdgePolicyNames.Count -or
+        @($backup.registryValues).Count -ne
+            $script:ExamEdgePolicyValueNames.Count) {
         throw 'The Exam Kiosk Edge policy backup is invalid.'
     }
 
@@ -268,6 +371,35 @@ function Restore-ExamEdgePolicyBackup {
                     -Force |
                     Out-Null
             }
+        }
+    }
+
+    foreach ($valueName in $script:ExamEdgePolicyValueNames) {
+        $savedValue = @($backup.registryValues |
+            Where-Object { $_.name -ceq $valueName })
+        if ($savedValue.Count -ne 1) {
+            throw "The Edge policy backup does not contain exactly one '$valueName' value."
+        }
+
+        if (Test-Path -LiteralPath $PolicyRoot -PathType Container) {
+            Remove-ItemProperty `
+                -LiteralPath $PolicyRoot `
+                -Name $valueName `
+                -Force `
+                -ErrorAction SilentlyContinue
+        }
+        if ($savedValue[0].existed) {
+            if (-not (Test-Path -LiteralPath $PolicyRoot -PathType Container)) {
+                New-Item -ItemType Directory -Path $PolicyRoot -Force |
+                    Out-Null
+            }
+            New-ItemProperty `
+                -LiteralPath $PolicyRoot `
+                -Name $valueName `
+                -Value $savedValue[0].data `
+                -PropertyType ([string]$savedValue[0].kind) `
+                -Force |
+                Out-Null
         }
     }
 

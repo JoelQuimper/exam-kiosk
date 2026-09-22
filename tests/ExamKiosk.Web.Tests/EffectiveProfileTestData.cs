@@ -15,5 +15,6 @@ internal static class EffectiveProfileTestData
                 "exam",
                 new Uri("https://example.com/exam")),
             [],
-            ["https://example.com"]);
+            ["https://example.com"],
+            []);
 }

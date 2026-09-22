@@ -216,6 +216,10 @@ public sealed class TransitionManagerTests
                 .GetProperty("urlAllowlist")
                 .EnumerateArray()
                 .Select(item => item.GetString()));
+        Assert.Empty(
+            preview.RootElement
+                .GetProperty("autoLaunchProtocolsFromOrigins")
+                .EnumerateArray());
         Assert.False(File.Exists(previewPath + ".tmp"));
         Assert.Equal(
             [

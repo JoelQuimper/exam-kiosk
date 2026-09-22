@@ -288,6 +288,12 @@ The Agent writes every declared Web tool to a generated shortcut manifest.
 shortcuts, and then applies Assigned Access. `Stop-Exam.ps1` removes Assigned
 Access, restores the Edge policy backup, and removes only the Agent-owned
 dynamic `tool-*.lnk` files during normal exam completion.
+Desktop tools can also declare self-contained external protocol launch rules.
+Each rule supplies the protocol and its allowed origins; `AllowedUrls` remains
+HTTP/HTTPS-only. The generated Edge policy derives the matching protocol URL
+filter and allows the external launch only from the declared origins, so
+actions such as SharePoint's **Open in app** can launch Word without an Edge
+prompt.
 
 For this PoC, the Web is a controlled stub and its hard-coded exam intent is
 treated as valid. The Device Agent's self-contained Windows configuration

@@ -18,7 +18,8 @@ internal static class WindowsConfigurationTestData
                 "calculator",
                 new Uri("https://example.com/exam")),
             [],
-            ["https://example.com"]);
+            ["https://example.com"],
+            []);
 
     internal static WindowsClientVersion SupportedVersion() =>
         new(10, 0, 22621);

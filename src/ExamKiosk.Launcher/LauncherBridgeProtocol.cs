@@ -113,6 +113,7 @@ public static class LauncherBridgeProtocol
                     || profile.Exam is null
                     || profile.Tools is null
                     || profile.AllowedUrls is null
+                    || profile.ExternalProtocolLaunchRules is null
                     || !string.Equals(
                         profile.Exam.Title,
                         examTitle,

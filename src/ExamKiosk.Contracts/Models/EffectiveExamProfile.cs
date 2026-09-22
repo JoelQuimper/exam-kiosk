@@ -6,4 +6,5 @@ public sealed record EffectiveExamProfile(
     EffectiveStudent Student,
     EffectiveExam Exam,
     IReadOnlyList<ToolDefinition> Tools,
-    IReadOnlyList<string> AllowedUrls);
+    IReadOnlyList<string> AllowedUrls,
+    IReadOnlyList<ExternalProtocolLaunchRule> ExternalProtocolLaunchRules);
