@@ -121,21 +121,13 @@ public sealed class WindowsConfigurationCompilerTests
     }
 
     [Fact]
-    public void Compile_DescribesOnlyToolShortcutArtifacts()
+    public void Compile_WithDirectLaunchTargets_DoesNotCreateShortcuts()
     {
         var shortcuts = compiler
             .Compile(SupportedVersion(), CreateProfile())
             .Shortcuts;
 
-        Assert.DoesNotContain(
-            shortcuts,
-            shortcut => shortcut.ShortcutId == "exam");
-        Assert.DoesNotContain(
-            shortcuts,
-            shortcut => shortcut.ShortcutId == "tool-word");
-        Assert.DoesNotContain(
-            shortcuts,
-            shortcut => shortcut.ShortcutId == "tool-calculator");
+        Assert.Empty(shortcuts);
     }
 
     [Fact]
@@ -168,7 +160,7 @@ public sealed class WindowsConfigurationCompilerTests
                     ?.EndsWith(@"\Microsoft Word.lnk", StringComparison.Ordinal)
                     == true);
 
-        var word = Assert.IsType<DesktopWindowsShortcutArtifact>(
+        Assert.IsType<DesktopWindowsShortcutArtifact>(
             configuration.Shortcuts.Single(
                 shortcut => shortcut.ShortcutId == "tool-word"));
     }
