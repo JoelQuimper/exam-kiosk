@@ -184,6 +184,7 @@ public sealed class TransitionManager
             await sessionJournal.BeginAsync(
                 startExam.SessionId,
                 profileSha256,
+                startExam.Profile.Student.UserPrincipalName,
                 startExam.Profile.Exam.Title,
                 startExam.Profile.Exam.ExamTarget,
                 cancellationToken);
@@ -510,6 +511,8 @@ public sealed class TransitionManager
             || journal is null
             || journal.SessionId == Guid.Empty
             || string.IsNullOrWhiteSpace(journal.ProfileSha256)
+            || string.IsNullOrWhiteSpace(
+                journal.StudentUserPrincipalName)
             || string.IsNullOrWhiteSpace(journal.ExamTitle)
             || journal.ExamEntryUrl is null)
         {
@@ -532,6 +535,7 @@ public sealed class TransitionManager
             activeExam: new ActiveExamReference(
                 journal.SessionId,
                 journal.ExamTitle,
+                journal.StudentUserPrincipalName,
                 journal.ExamEntryUrl));
     }
 

@@ -299,6 +299,7 @@ public sealed class TransitionManagerTests
         await journal.BeginAsync(
             sessionId,
             "profile-sha256",
+            "student@example.com",
             "Exam title",
             entryUrl,
             CancellationToken.None);
@@ -330,6 +331,9 @@ public sealed class TransitionManagerTests
         Assert.Equal(AgentState.InExam, response.State);
         Assert.Equal(sessionId, response.ActiveExam?.SessionId);
         Assert.Equal("Exam title", response.ActiveExam?.Title);
+        Assert.Equal(
+            "student@example.com",
+            response.ActiveExam?.StudentUserPrincipalName);
         Assert.Equal(entryUrl, response.ActiveExam?.EntryUrl);
         Assert.Equal(
             [(sessionId, "profile-sha256")],

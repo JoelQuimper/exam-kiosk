@@ -62,6 +62,7 @@ public sealed class SessionJournalTests
         await journal.BeginAsync(
             sessionId,
             "abc123",
+            "student@example.com",
             "Exam title",
             new Uri("https://example.com/exam"),
             CancellationToken.None);
@@ -70,6 +71,9 @@ public sealed class SessionJournalTests
         Assert.NotNull(reloaded);
         Assert.Equal(sessionId, reloaded.SessionId);
         Assert.Equal("abc123", reloaded.ProfileSha256);
+        Assert.Equal(
+            "student@example.com",
+            reloaded.StudentUserPrincipalName);
         Assert.Equal("Exam title", reloaded.ExamTitle);
         Assert.Equal(
             new Uri("https://example.com/exam"),

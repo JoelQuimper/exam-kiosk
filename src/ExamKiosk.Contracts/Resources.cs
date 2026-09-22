@@ -16,6 +16,7 @@ public static class Resources
     public static string ExamInProgress => Get(nameof(ExamInProgress));
     public static string ExamOpened => Get(nameof(ExamOpened));
     public static string ExamSessionReady => Get(nameof(ExamSessionReady));
+    public static string ExamForStudent => Get(nameof(ExamForStudent));
     public static string FinishWarning => Get(nameof(FinishWarning));
     public static string FinishWarningTitle => Get(nameof(FinishWarningTitle));
     public static string KioskTitle => Get(nameof(KioskTitle));

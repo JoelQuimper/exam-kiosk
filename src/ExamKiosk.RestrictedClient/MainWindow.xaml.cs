@@ -110,6 +110,7 @@ public partial class MainWindow : Window
             {
                 activeExam = null;
                 ExamTitle.Visibility = Visibility.Collapsed;
+                StudentIdentity.Visibility = Visibility.Collapsed;
                 OpenExamButton.Visibility = Visibility.Collapsed;
                 FinishButton.Visibility = Visibility.Collapsed;
                 StatusMessage.Text = AppResources.LeavingExam;
@@ -160,6 +161,10 @@ public partial class MainWindow : Window
             activeExam = exam;
             ExamTitle.Text = exam.Title;
             ExamTitle.Visibility = Visibility.Visible;
+            StudentIdentity.Text = string.Format(
+                AppResources.ExamForStudent,
+                exam.StudentUserPrincipalName);
+            StudentIdentity.Visibility = Visibility.Visible;
             StatusMessage.Text = AppResources.ExamSessionReady;
             OpenExamButton.Visibility = Visibility.Visible;
             FinishButton.Visibility = Visibility.Visible;
@@ -179,6 +184,7 @@ public partial class MainWindow : Window
     {
         activeExam = null;
         ExamTitle.Visibility = Visibility.Collapsed;
+        StudentIdentity.Visibility = Visibility.Collapsed;
         OpenExamButton.Visibility = Visibility.Collapsed;
         FinishButton.Visibility = Visibility.Collapsed;
         RetryButton.Visibility = Visibility.Visible;

@@ -11,6 +11,7 @@
   <data name="ExamInProgress" xml:space="preserve"><value>EXAM IN PROGRESS</value></data>
   <data name="ExamOpened" xml:space="preserve"><value>The exam was opened.</value></data>
   <data name="ExamSessionReady" xml:space="preserve"><value>Your restricted exam session is ready.</value></data>
+  <data name="ExamForStudent" xml:space="preserve"><value>For {0}</value></data>
   <data name="FinishWarning" xml:space="preserve"><value>Finishing the exam will remove the restricted session and restart Windows. Make sure your exam work has been saved.
 
 Do you want to finish?</value></data>

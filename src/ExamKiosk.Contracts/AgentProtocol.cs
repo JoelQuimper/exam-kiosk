@@ -110,6 +110,7 @@ public sealed record AgentResponse(
 public sealed record ActiveExamReference(
     Guid SessionId,
     string Title,
+    string StudentUserPrincipalName,
     Uri EntryUrl);
 
 public static class AgentClient

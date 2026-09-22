@@ -11,6 +11,7 @@
   <data name="ExamInProgress" xml:space="preserve"><value>EXAMEN EN COURS</value></data>
   <data name="ExamOpened" xml:space="preserve"><value>L'examen a été ouvert.</value></data>
   <data name="ExamSessionReady" xml:space="preserve"><value>Votre session d'examen restreinte est prête.</value></data>
+  <data name="ExamForStudent" xml:space="preserve"><value>Pour {0}</value></data>
   <data name="FinishWarning" xml:space="preserve"><value>Terminer l'examen supprimera la session restreinte et redémarrera Windows. Assurez-vous d'avoir enregistré votre travail.
 
 Voulez-vous terminer ?</value></data>
