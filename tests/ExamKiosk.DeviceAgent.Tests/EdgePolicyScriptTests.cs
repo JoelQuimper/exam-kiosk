@@ -35,9 +35,11 @@ public sealed class EdgePolicyScriptTests
             New-Item -ItemType Directory -Path (Join-Path $policyRoot 'URLAllowlist') -Force | Out-Null
             New-ItemProperty -LiteralPath (Join-Path $policyRoot 'URLAllowlist') -Name '1' -Value 'https://allowed.example/' -PropertyType String | Out-Null
             New-ItemProperty -LiteralPath $policyRoot -Name 'UnrelatedPolicy' -Value 'preserve-me' -PropertyType String | Out-Null
+            $allowedUrls = @(1..12 | ForEach-Object { "https://allowed$_.example/" })
+            $allowedUrls += 'ms-word:*'
             [pscustomobject]@{
                 urlBlocklist = @('*')
-                urlAllowlist = @(1..12 | ForEach-Object { "https://allowed$_.example/" })
+                urlAllowlist = $allowedUrls
             } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $policyPath -Encoding UTF8
 
             Save-ExamEdgePolicyBackup -BackupPath $backupPath -PolicyRoot $policyRoot

@@ -54,6 +54,7 @@ public sealed class WindowsConfigurationCompilerTests
             [
                 "https://example.com/exam",
                 "https://cdn.example.com/",
+                "ms-word:*",
                 "https://EXAMPLE.com/exam",
             ],
         };
@@ -67,6 +68,7 @@ public sealed class WindowsConfigurationCompilerTests
             [
                 "https://example.com/exam",
                 "https://cdn.example.com/",
+                "ms-word:*",
             ],
             policy.UrlAllowlist);
     }
@@ -242,7 +244,8 @@ public sealed class WindowsConfigurationCompilerTests
                             @"%ProgramFiles%\Microsoft Office\root\Office16\WINWORD.EXE",
                             wordDesktopApplicationId),
                     ],
-                    new DesktopLaunchTarget("word", "Microsoft Word", true, true))),
+                    new DesktopLaunchTarget("word", "Microsoft Word", true, true),
+                    ["ms-word:*"])),
             new DesktopToolDefinition(
                 "calculator",
                 "Calculator",
@@ -257,7 +260,8 @@ public sealed class WindowsConfigurationCompilerTests
                         "calculator",
                         "Calculator",
                         true,
-                        true))),
+                        true),
+                    [])),
         ];
 
         return new EffectiveExamProfile(

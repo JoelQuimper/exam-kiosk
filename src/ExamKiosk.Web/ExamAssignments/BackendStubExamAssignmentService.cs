@@ -46,7 +46,8 @@ public sealed class BackendStubExamAssignmentService : IExamAssignmentService
                         "word",
                         "Microsoft Word",
                         true,
-                        true))),
+                        true),
+                    ["ms-word:*"])),
             new DesktopToolDefinition(
                 "windows-calculator",
                 "Calculator",
@@ -61,7 +62,8 @@ public sealed class BackendStubExamAssignmentService : IExamAssignmentService
                         "calculator",
                         "Calculator",
                         true,
-                        true))),
+                        true),
+                    [])),
             new WebToolDefinition(
                 "usito-dictionary",
                 "Dictionnaire Usito",

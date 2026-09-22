@@ -188,14 +188,18 @@ function Set-ExamEdgePolicy {
     }
     foreach ($allowedUrl in $urlAllowlist) {
         $uri = $null
+        $isExternalProtocolFilter =
+            $allowedUrl -is [string] -and
+            $allowedUrl -match '^[a-z][a-z0-9+.-]*:\*$'
         if ($allowedUrl -isnot [string] -or
             [string]::IsNullOrWhiteSpace([string]$allowedUrl) -or
-            -not [Uri]::TryCreate(
-                [string]$allowedUrl,
-                [UriKind]::Absolute,
-                [ref]$uri) -or
-            ($uri.Scheme -cne 'https' -and
-                $uri.Scheme -cne 'http')) {
+            (-not $isExternalProtocolFilter -and
+                (-not [Uri]::TryCreate(
+                    [string]$allowedUrl,
+                    [UriKind]::Absolute,
+                    [ref]$uri) -or
+                    ($uri.Scheme -cne 'https' -and
+                        $uri.Scheme -cne 'http')))) {
             throw 'The Edge policy preview contains an invalid allowed URL.'
         }
     }

@@ -27,10 +27,7 @@ public sealed class ExamProfileOrchestrator
         var allowedUrls = BaselineAllowedUrls
             .Append(assignment.ExamTarget.AbsoluteUri)
             .Concat(assignment.AllowedUrls)
-            .Concat(
-                tools
-                    .OfType<WebToolDefinition>()
-                    .SelectMany(tool => tool.Configuration.AllowedUrls))
+            .Concat(tools.SelectMany(GetToolAllowedUrls))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
         var student = new EffectiveStudent(userPrincipalName.Trim());
@@ -43,4 +40,16 @@ public sealed class ExamProfileOrchestrator
             tools,
             allowedUrls);
     }
+
+    private static IReadOnlyList<string> GetToolAllowedUrls(
+        ToolDefinition tool) =>
+        tool switch
+        {
+            DesktopToolDefinition desktop =>
+                desktop.Configuration.AllowedUrls,
+            WebToolDefinition web =>
+                web.Configuration.AllowedUrls,
+            _ => throw new InvalidOperationException(
+                $"Tool '{tool.ToolId}' has an unsupported definition type."),
+        };
 }

@@ -13,16 +13,20 @@ internal static class EdgePolicyCompiler
         var seenUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var allowedUrl in allowedUrls)
         {
-            if (string.IsNullOrWhiteSpace(allowedUrl)
-                || !Uri.TryCreate(
+            var isWebUrl = Uri.TryCreate(
                     allowedUrl,
                     UriKind.Absolute,
                     out var uri)
-                || (uri.Scheme != Uri.UriSchemeHttps
-                    && uri.Scheme != Uri.UriSchemeHttp))
+                && (uri.Scheme == Uri.UriSchemeHttps
+                    || uri.Scheme == Uri.UriSchemeHttp);
+            var isExternalProtocolFilter =
+                allowedUrl?.EndsWith(":*", StringComparison.Ordinal) == true
+                && Uri.CheckSchemeName(allowedUrl[..^2]);
+            if (string.IsNullOrWhiteSpace(allowedUrl)
+                || (!isWebUrl && !isExternalProtocolFilter))
             {
                 throw new WindowsConfigurationException(
-                    $"Allowed URL '{allowedUrl}' is not an absolute HTTP or HTTPS URL.");
+                    $"Allowed URL filter '{allowedUrl}' is not supported.");
             }
 
             if (seenUrls.Add(allowedUrl))

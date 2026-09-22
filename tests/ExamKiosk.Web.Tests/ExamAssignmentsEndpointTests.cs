@@ -185,6 +185,26 @@ public sealed class ExamAssignmentsEndpointTests
     }
 
     [Fact]
+    public async Task StartSession_IncludesDesktopToolAllowedUrls()
+    {
+        await using var application = CreateApplication(
+            authenticated: true,
+            "student3@jqdev.onmicrosoft.com");
+        using var client = application.CreateClient();
+        var antiforgeryToken = await GetAntiforgeryTokenAsync(client);
+
+        using var response = await PostStartSessionAsync(
+            client,
+            "student3-exam2",
+            antiforgeryToken);
+        var session = await response.Content.ReadFromJsonAsync<ExamSession>();
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.NotNull(session);
+        Assert.Contains("ms-word:*", session.Profile.AllowedUrls);
+    }
+
+    [Fact]
     public async Task StartSession_WhenStudentAlreadyHasSession_ReplacesIt()
     {
         await using var application = CreateApplication(
