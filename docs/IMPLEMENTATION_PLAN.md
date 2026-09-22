@@ -50,9 +50,8 @@ normal maintenance uses Reset, installation, or uninstallation.
 - Successful recovery prints the explicit Windows restart command and leaves
   the Agent stopped.
 
-When dynamic Edge policy and shortcuts are introduced, this step must be
-extended to restore the Agent-owned Edge-policy backup and remove only the
-shortcuts recorded in the enforcement receipt.
+Recovery now restores the Agent-owned Edge-policy backup when present.
+Generated shortcut cleanup remains part of the normal Stop or Reset flow.
 
 ## Step 1 - Atomic Web session creation
 
@@ -129,8 +128,9 @@ remains gated on all pre-profile controls in that plan.
 - **Implemented for Web tools:** write every declared Web tool to a generated
   manifest. `Start-Exam.ps1` creates the shortcuts before applying Assigned
   Access and rolls them back on failure; `Stop-Exam.ps1` removes Assigned Access
-  and only the Agent-owned `tool-*.lnk` shortcuts. Emergency Recovery remains
-  limited to Assigned Access. The exam itself is opened by the auto-launched
+  and only the Agent-owned `tool-*.lnk` shortcuts. Emergency Recovery restores
+  Assigned Access and the Agent-owned Edge-policy backup. The exam itself is
+  opened by the auto-launched
   Restricted Client and is not represented by a persistent `.lnk` file. Desktop
   tools with a Desktop Application ID are pinned directly; a `.lnk` is declared
   only as their fallback.
@@ -149,18 +149,16 @@ to `/sites/ExamSite/`; it does not allow the tenant root, other SharePoint
 sites, or the student's OneDrive host. Browser and Office telemetry hosts
 observed during the same captures are intentionally excluded.
 
-- **Implemented as a non-enforcing preview:** compile the profile's generic
+- **Implemented:** compile the profile's generic
   `AllowedUrls` into deterministic `URLBlocklist = ["*"]` and `URLAllowlist`
-  values, then atomically write `EdgePolicy.generated.temp.json`. The preview
-  is not passed to a script and does not modify the registry.
-- Back up only the Edge policy values that Exam Kiosk will replace.
-- Apply an Agent-owned deny-all baseline and allow the profile's generic
-  `AllowedUrls`.
-- Verify the written policy values.
-- Record ownership and backup information in the enforcement receipt.
-- Restore the previous values during finish, rollback, and administrator
-  recovery.
-- Never delete unrelated administrator or MDM policies.
+  values, then atomically write `EdgePolicy.generated.temp.json`.
+- **Implemented:** `Start-Exam.ps1` backs up only `URLBlocklist` and
+  `URLAllowlist`, applies the deny-all baseline and profile allowlist, and
+  verifies the written values.
+- **Implemented:** `Stop-Exam.ps1` restores and verifies the backup during
+  normal completion. Administrator Recovery does the same when a failed
+  transition leaves the backup behind.
+- Other Edge policies are not modified.
 
 ## Step 7 - Restricted Client session activation
 

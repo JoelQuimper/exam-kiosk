@@ -6,7 +6,14 @@ param(
 
     [Parameter(Mandatory)]
     [ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })]
-    [string]$WebShortcutsPath
+    [string]$WebShortcutsPath,
+
+    [Parameter(Mandatory)]
+    [ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })]
+    [string]$EdgePolicyPath,
+
+    [Parameter(Mandatory)]
+    [string]$EdgePolicyBackupPath
 )
 
 $ErrorActionPreference = 'Stop'
@@ -15,6 +22,9 @@ if ([Security.Principal.WindowsIdentity]::GetCurrent().Name -ne 'NT AUTHORITY\SY
     throw 'Starting an exam through the MDM Bridge must run as LocalSystem.'
 }
 
+. (Join-Path $PSScriptRoot 'EdgePolicy.ps1')
+
+$edgePolicyRoot = 'HKLM:\SOFTWARE\Policies\Microsoft\Edge'
 $shortcutRoot = Join-Path `
     $env:ProgramData `
     'Microsoft\Windows\Start Menu\Programs\Exam Kiosk\Tools'
@@ -41,7 +51,16 @@ if ($webShortcuts.Count -gt 0 -and -not $edgePath) {
 }
 
 $createdShortcutPaths = [Collections.Generic.List[string]]::new()
+$edgePolicyBackupCreated = $false
 try {
+    Save-ExamEdgePolicyBackup `
+        -BackupPath $EdgePolicyBackupPath `
+        -PolicyRoot $edgePolicyRoot
+    $edgePolicyBackupCreated = $true
+    Set-ExamEdgePolicy `
+        -PolicyPath $EdgePolicyPath `
+        -PolicyRoot $edgePolicyRoot
+
     foreach ($webShortcut in $webShortcuts) {
         $entryUrl = $null
         $entryUrlValue = [string]$webShortcut.entryUrl
@@ -126,14 +145,38 @@ try {
     Set-CimInstance -CimInstance $assignedAccess | Out-Null
 }
 catch {
+    $startFailure = $_
+    $cleanupFailures = [Collections.Generic.List[string]]::new()
     foreach ($createdShortcutPath in $createdShortcutPaths) {
-        if (Test-Path -LiteralPath $createdShortcutPath -PathType Leaf) {
-            Remove-Item -LiteralPath $createdShortcutPath -Force
+        try {
+            if (Test-Path -LiteralPath $createdShortcutPath -PathType Leaf) {
+                Remove-Item -LiteralPath $createdShortcutPath -Force
+            }
+        }
+        catch {
+            $cleanupFailures.Add($_.Exception.Message)
         }
     }
-    throw
+    if ($edgePolicyBackupCreated) {
+        try {
+            Restore-ExamEdgePolicyBackup `
+                -BackupPath $EdgePolicyBackupPath `
+                -PolicyRoot $edgePolicyRoot
+        }
+        catch {
+            $cleanupFailures.Add($_.Exception.Message)
+        }
+    }
+
+    if ($cleanupFailures.Count -gt 0) {
+        throw (
+            "Exam mode start failed: {0} Cleanup also failed: {1}" -f
+            $startFailure.Exception.Message,
+            [string]::Join(' ', $cleanupFailures))
+    }
+    throw $startFailure
 }
 
 Write-Output (
-    'Exam mode started: {0} web shortcut(s) created and Assigned Access applied successfully.' -f
+    'Exam mode started: Edge policy applied, {0} web shortcut(s) created, and Assigned Access applied successfully.' -f
     $createdShortcutPaths.Count)

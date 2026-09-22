@@ -14,6 +14,7 @@ $VerbosePreference = 'Continue'
 $serviceName = 'ExamKioskDeviceAgent'
 $dataRoot = Join-Path $env:ProgramData 'ExamKiosk'
 $recoveryRoot = Join-Path $dataRoot 'Recovery'
+$edgePolicyBackupPath = Join-Path $dataRoot 'edge-policy-backup.json'
 $profileId = '{9A2A490F-10F6-4764-974A-43B19E722C23}'
 
 function Write-WorkerResult {
@@ -47,42 +48,75 @@ function Invoke-SystemRecovery {
         $assignedAccess = Get-CimInstance `
             -Namespace 'root\cimv2\mdm\dmmap' `
             -ClassName 'MDM_AssignedAccess'
-        if ([string]::IsNullOrWhiteSpace($assignedAccess.Configuration)) {
-            Write-WorkerResult `
-                -Success $true `
-                -Status 'AlreadyClear' `
-                -Message 'Assigned Access was already clear.'
-            return
+        $assignedAccessRemoved = $false
+        if (-not [string]::IsNullOrWhiteSpace($assignedAccess.Configuration)) {
+            $configuration = [System.Net.WebUtility]::HtmlDecode(
+                $assignedAccess.Configuration)
+            $isExamKioskProfile = $configuration.IndexOf(
+                $profileId,
+                [StringComparison]::OrdinalIgnoreCase) -ge 0
+            if (-not $isExamKioskProfile -and -not $ForceForeignAssignedAccess) {
+                throw (
+                    'Assigned Access contains a profile that is not owned by Exam Kiosk. ' +
+                    'No configuration was removed. Use -ForceForeignAssignedAccess only ' +
+                    'after an administrator verifies that removing it is appropriate.')
+            }
+
+            Write-Verbose 'Clearing the Assigned Access configuration.'
+            $assignedAccess.Configuration = $null
+            Set-CimInstance -CimInstance $assignedAccess | Out-Null
+
+            Write-Verbose 'Verifying that Assigned Access is clear.'
+            $verification = Get-CimInstance `
+                -Namespace 'root\cimv2\mdm\dmmap' `
+                -ClassName 'MDM_AssignedAccess'
+            if (-not [string]::IsNullOrWhiteSpace($verification.Configuration)) {
+                throw 'Assigned Access remained configured after the recovery attempt.'
+            }
+            $assignedAccessRemoved = $true
         }
 
-        $configuration = [System.Net.WebUtility]::HtmlDecode(
-            $assignedAccess.Configuration)
-        $isExamKioskProfile = $configuration.IndexOf(
-            $profileId,
-            [StringComparison]::OrdinalIgnoreCase) -ge 0
-        if (-not $isExamKioskProfile -and -not $ForceForeignAssignedAccess) {
-            throw (
-                'Assigned Access contains a profile that is not owned by Exam Kiosk. ' +
-                'No configuration was removed. Use -ForceForeignAssignedAccess only ' +
-                'after an administrator verifies that removing it is appropriate.')
+        $edgePolicyRestored = $false
+        if (Test-Path -LiteralPath $edgePolicyBackupPath -PathType Leaf) {
+            $installedHelperPath = Join-Path `
+                $env:ProgramFiles `
+                'ExamKiosk\Agent\Scripts\EdgePolicy.ps1'
+            $repositoryHelperPath = [IO.Path]::GetFullPath(
+                (Join-Path `
+                    $PSScriptRoot `
+                    '..\..\..\src\ExamKiosk.DeviceAgent\Scripts\EdgePolicy.ps1'))
+            $edgePolicyHelperPath = @(
+                $installedHelperPath
+                $repositoryHelperPath
+            ) |
+                Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
+                Select-Object -First 1
+            if (-not $edgePolicyHelperPath) {
+                throw 'The Edge policy recovery helper could not be found.'
+            }
+
+            . $edgePolicyHelperPath
+            Write-Verbose 'Restoring the Exam Kiosk Edge policy backup.'
+            Restore-ExamEdgePolicyBackup `
+                -BackupPath $edgePolicyBackupPath `
+                -PolicyRoot 'HKLM:\SOFTWARE\Policies\Microsoft\Edge'
+            $edgePolicyRestored = $true
         }
 
-        Write-Verbose 'Clearing the Assigned Access configuration.'
-        $assignedAccess.Configuration = $null
-        Set-CimInstance -CimInstance $assignedAccess | Out-Null
-
-        Write-Verbose 'Verifying that Assigned Access is clear.'
-        $verification = Get-CimInstance `
-            -Namespace 'root\cimv2\mdm\dmmap' `
-            -ClassName 'MDM_AssignedAccess'
-        if (-not [string]::IsNullOrWhiteSpace($verification.Configuration)) {
-            throw 'Assigned Access remained configured after the recovery attempt.'
+        $status = if ($assignedAccessRemoved -or $edgePolicyRestored) {
+            'Removed'
         }
-
+        else {
+            'AlreadyClear'
+        }
+        $message = (
+            'Recovery completed. Assigned Access: {0}. Edge policy: {1}.' -f
+            $(if ($assignedAccessRemoved) { 'removed' } else { 'already clear' }),
+            $(if ($edgePolicyRestored) { 'restored' } else { 'no backup present' }))
         Write-WorkerResult `
             -Success $true `
-            -Status 'Removed' `
-            -Message 'Assigned Access was removed and verified.'
+            -Status $status `
+            -Message $message
     }
     catch {
         Write-WorkerResult `

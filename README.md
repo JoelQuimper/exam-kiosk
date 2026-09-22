@@ -269,10 +269,10 @@ Desktop tool definitions may provide a Desktop Application ID for Start and
 taskbar pins. The Agent uses that ID directly, as it does for Microsoft Word,
 and declares a `.lnk` shortcut artifact only when a desktop tool has no such ID.
 The Agent writes every declared Web tool to a generated shortcut manifest.
-`Start-Exam.ps1` creates those shortcuts before applying Assigned Access and
-rolls them back if application fails. `Stop-Exam.ps1` removes only the
-Agent-owned dynamic `tool-*.lnk` files during normal exam completion. Emergency
-Recovery intentionally removes only Assigned Access.
+`Start-Exam.ps1` backs up and applies the generated Edge policy, creates those
+shortcuts, and then applies Assigned Access. `Stop-Exam.ps1` removes Assigned
+Access, restores the Edge policy backup, and removes only the Agent-owned
+dynamic `tool-*.lnk` files during normal exam completion.
 
 For this PoC, the Web is a controlled stub and its hard-coded exam intent is
 treated as valid. The Device Agent's self-contained Windows configuration
@@ -297,10 +297,12 @@ menu, or run:
 
 The script stops and leaves stopped the Device Agent, runs a one-time recovery
 worker as `LocalSystem`, and removes and verifies only the known Exam Kiosk
-Assigned Access profile. It does not modify Agent state or session history;
-use the normal Reset, installation, or uninstallation script afterward. It
-writes a bounded recovery result under `%ProgramData%\ExamKiosk\Recovery`. It
-does not restart Windows automatically; after successful recovery, run:
+Assigned Access profile. When an Agent-owned Edge policy backup exists, it
+also restores and verifies that backup. It does not modify Agent state or
+session history; use the normal Reset, installation, or uninstallation script
+afterward. It writes a bounded recovery result under
+`%ProgramData%\ExamKiosk\Recovery`. It does not restart Windows automatically;
+after successful recovery, run:
 
 ```powershell
 shutdown.exe /r /t 0
@@ -312,9 +314,9 @@ for the execution order, engine separation, and emergency override procedure.
 If the configured Assigned Access profile is not owned by Exam Kiosk, the
 script refuses to remove it. `-ForceForeignAssignedAccess` is an emergency
 override for administrators who have independently verified that the foreign
-configuration must be removed. Future Edge-policy work must extend this
-recovery script to restore the Agent-owned policy backup rather than deleting
-machine policies indiscriminately.
+configuration must be removed. Recovery restores only the two Edge URL-policy
+lists recorded in the Agent-owned backup and does not delete other machine
+policies.
 
 The PoC states are `available`, `enteringExam`, `inExam`, `exitingExam`, and
 `failed`. The agent remains in `enteringExam` or `exitingExam` throughout the

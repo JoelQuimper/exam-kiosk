@@ -1,5 +1,8 @@
 [CmdletBinding()]
-param()
+param(
+    [Parameter(Mandatory)]
+    [string]$EdgePolicyBackupPath
+)
 
 $ErrorActionPreference = 'Stop'
 
@@ -7,11 +10,18 @@ if ([Security.Principal.WindowsIdentity]::GetCurrent().Name -ne 'NT AUTHORITY\SY
     throw 'Stopping an exam through the MDM Bridge must run as LocalSystem.'
 }
 
+. (Join-Path $PSScriptRoot 'EdgePolicy.ps1')
+
 $assignedAccess = Get-CimInstance `
     -Namespace 'root\cimv2\mdm\dmmap' `
     -ClassName 'MDM_AssignedAccess'
 $assignedAccess.Configuration = $null
 Set-CimInstance -CimInstance $assignedAccess | Out-Null
+
+$edgePolicyRoot = 'HKLM:\SOFTWARE\Policies\Microsoft\Edge'
+Restore-ExamEdgePolicyBackup `
+    -BackupPath $EdgePolicyBackupPath `
+    -PolicyRoot $edgePolicyRoot
 
 $shortcutRoot = Join-Path `
     $env:ProgramData `
@@ -41,5 +51,5 @@ if (Test-Path -LiteralPath $shortcutRoot -PathType Container) {
 }
 
 Write-Output (
-    'Exam mode stopped: Assigned Access removed and {0} web shortcut(s) deleted.' -f
+    'Exam mode stopped: Assigned Access removed, Edge policy restored, and {0} web shortcut(s) deleted.' -f
     $removedShortcutCount)

@@ -45,10 +45,12 @@ verified the configuration. Only then use:
 4. The task starts the same script in its internal `-SystemWorker` mode.
 5. The LocalSystem mode reads Assigned Access through the MDM Bridge,
    verifies Exam Kiosk ownership, and clears and verifies the configuration.
-6. The LocalSystem mode writes a bounded result under
+6. If `%ProgramData%\ExamKiosk\edge-policy-backup.json` exists, it restores
+   and verifies the saved `URLBlocklist` and `URLAllowlist`.
+7. The LocalSystem mode writes a bounded result under
    `%ProgramData%\ExamKiosk\Recovery`.
-7. The recovery orchestrator reads that result and removes the temporary task.
-8. The administrator restarts Windows, then uses the normal Reset,
+8. The recovery orchestrator reads that result and removes the temporary task.
+9. The administrator restarts Windows, then uses the normal Reset,
    installation, or uninstallation script as appropriate.
 
 ## Why the script has two execution modes
@@ -68,7 +70,8 @@ by the device-scoped MDM Bridge.
 Recovery currently:
 
 - stops and leaves the Device Agent service stopped;
-- removes and verifies Assigned Access.
+- removes and verifies Assigned Access;
+- restores and verifies the Agent-owned Edge URL-policy backup when present.
 
 Recovery does not modify `agent-state.json`, `session-journal.json`, generated
 shortcuts, or backend session state. After the device is accessible again,
@@ -78,8 +81,5 @@ use `Reset-ExamKioskPoc.ps1`, `Install-ExamKioskPoc.ps1`, or
 Do not use Recovery as a substitute for those normal scripts when the
 administrator can already access the device.
 
-The current Device Agent does not apply temporary Edge policy, so there is no
-Edge policy backup to restore yet. When Step 6 introduces Agent-owned Edge
-policy values and their backup, this recovery path must restore only those
-recorded values and verify the result. It must never delete unrelated
-administrator or MDM policies.
+Recovery changes only `URLBlocklist` and `URLAllowlist` when the Agent-owned
+backup exists. It does not delete other administrator or MDM Edge policies.

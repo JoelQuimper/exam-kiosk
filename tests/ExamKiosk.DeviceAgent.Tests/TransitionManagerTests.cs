@@ -62,6 +62,12 @@ public sealed class TransitionManagerTests
                 "Get-ExamMode.ps1",
             ],
             scripts.Calls);
+        Assert.Equal(
+            [
+                "-EdgePolicyBackupPath",
+                Path.Combine(directory.Path, "edge-policy-backup.json"),
+            ],
+            scripts.Invocations[2].Arguments);
         AssertRecoveryJournal(directory.Path, "completed", AgentState.Available);
     }
 
@@ -211,6 +217,24 @@ public sealed class TransitionManagerTests
                 .EnumerateArray()
                 .Select(item => item.GetString()));
         Assert.False(File.Exists(previewPath + ".tmp"));
+        Assert.Equal(
+            [
+                "-ConfigurationPath",
+                Path.Combine(
+                    directory.Path,
+                    "Configuration",
+                    "AssignedAccess.generated.temp.xml"),
+                "-WebShortcutsPath",
+                Path.Combine(
+                    directory.Path,
+                    "Configuration",
+                    "WebShortcuts.generated.temp.json"),
+                "-EdgePolicyPath",
+                previewPath,
+                "-EdgePolicyBackupPath",
+                Path.Combine(directory.Path, "edge-policy-backup.json"),
+            ],
+            scripts.Invocations[0].Arguments);
         Assert.Equal(
             "GeneratedEdgePolicyPreview",
             new SessionJournal(

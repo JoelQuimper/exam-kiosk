@@ -14,6 +14,7 @@ public sealed class TransitionManager
     private readonly SemaphoreSlim transitionLock = new(1, 1);
     private readonly ILogger<TransitionManager> logger;
     private readonly string configurationDirectory;
+    private readonly string edgePolicyBackupPath;
     private readonly string statePath;
     private readonly SessionJournal sessionJournal;
     private readonly IDeviceExamSessionClient deviceExamSessionClient;
@@ -67,6 +68,9 @@ public sealed class TransitionManager
             windowsClientVersionProvider ?? GetCurrentWindowsClientVersion;
         this.configurationDirectory = configurationDirectory
             ?? Path.Combine(dataDirectory, "Configuration");
+        edgePolicyBackupPath = Path.Combine(
+            dataDirectory,
+            "edge-policy-backup.json");
         Directory.CreateDirectory(dataDirectory);
         statePath = Path.Combine(dataDirectory, "agent-state.json");
         sessionJournal = new SessionJournal(Path.Combine(dataDirectory, "session-journal.json"));
@@ -262,6 +266,9 @@ public sealed class TransitionManager
             var configurationPath = Path.Combine(
                 configurationDirectory,
                 "AssignedAccess.generated.temp.xml");
+            var edgePolicyPath = Path.Combine(
+                configurationDirectory,
+                "EdgePolicy.generated.temp.json");
             await RunPowerShellAsync(
                 "Start-Exam.ps1",
                 [
@@ -269,6 +276,10 @@ public sealed class TransitionManager
                     configurationPath,
                     "-WebShortcutsPath",
                     webShortcutsPath,
+                    "-EdgePolicyPath",
+                    edgePolicyPath,
+                    "-EdgePolicyBackupPath",
+                    edgePolicyBackupPath,
                 ],
                 cancellationToken);
             if (!await IsExamModeConfiguredAsync(cancellationToken))
@@ -331,7 +342,10 @@ public sealed class TransitionManager
             {
                 await RunPowerShellAsync(
                     "Stop-Exam.ps1",
-                    [],
+                    [
+                        "-EdgePolicyBackupPath",
+                        edgePolicyBackupPath,
+                    ],
                     CancellationToken.None);
                 if (await IsExamModeConfiguredAsync(CancellationToken.None))
                 {
@@ -432,7 +446,13 @@ public sealed class TransitionManager
                 "started",
                 null,
                 cancellationToken);
-            await RunPowerShellAsync("Stop-Exam.ps1", [], cancellationToken);
+            await RunPowerShellAsync(
+                "Stop-Exam.ps1",
+                [
+                    "-EdgePolicyBackupPath",
+                    edgePolicyBackupPath,
+                ],
+                cancellationToken);
             await sessionJournal.RecordStepAsync(
                 "AssignedAccessRemove",
                 "completed",
