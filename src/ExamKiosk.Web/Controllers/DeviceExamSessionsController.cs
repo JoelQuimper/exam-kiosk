@@ -31,16 +31,16 @@ public sealed class DeviceExamSessionsController(
             return BadRequest();
         }
 
-        var result = examSessionStore.ActivateForDevice(
+        var status = examSessionStore.ActivateForDevice(
             sessionId,
             request.ProfileSha256);
-        return result.Status switch
+        return status switch
         {
             ExamSessionActivationStatus.Activated => NoContent(),
             ExamSessionActivationStatus.NotFound => NotFound(),
             ExamSessionActivationStatus.Conflict => Conflict(),
             _ => throw new InvalidOperationException(
-                $"Unknown activation status '{result.Status}'."),
+                $"Unknown activation status '{status}'."),
         };
     }
 
@@ -61,16 +61,16 @@ public sealed class DeviceExamSessionsController(
             return BadRequest();
         }
 
-        var result = examSessionStore.CompleteForDevice(
+        var status = examSessionStore.CompleteForDevice(
             sessionId,
             request.ProfileSha256);
-        return result.Status switch
+        return status switch
         {
             ExamSessionCompletionStatus.Completed => NoContent(),
             ExamSessionCompletionStatus.NotFound => NotFound(),
             ExamSessionCompletionStatus.Conflict => Conflict(),
             _ => throw new InvalidOperationException(
-                $"Unknown completion status '{result.Status}'."),
+                $"Unknown completion status '{status}'."),
         };
     }
 }

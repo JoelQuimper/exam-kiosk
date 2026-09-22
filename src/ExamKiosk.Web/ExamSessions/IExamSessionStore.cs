@@ -10,11 +10,11 @@ public interface IExamSessionStore
 
     ExamSession? Get(Guid sessionId);
 
-    ExamSessionActivationResult ActivateForDevice(
+    ExamSessionActivationStatus ActivateForDevice(
         Guid sessionId,
         string profileSha256);
 
-    ExamSessionCompletionResult CompleteForDevice(
+    ExamSessionCompletionStatus CompleteForDevice(
         Guid sessionId,
         string profileSha256);
 }
@@ -26,17 +26,9 @@ public enum ExamSessionActivationStatus
     Conflict,
 }
 
-public sealed record ExamSessionActivationResult(
-    ExamSessionActivationStatus Status,
-    ExamSession? Session);
-
 public enum ExamSessionCompletionStatus
 {
     Completed,
     NotFound,
     Conflict,
 }
-
-public sealed record ExamSessionCompletionResult(
-    ExamSessionCompletionStatus Status,
-    ExamSession? Session);

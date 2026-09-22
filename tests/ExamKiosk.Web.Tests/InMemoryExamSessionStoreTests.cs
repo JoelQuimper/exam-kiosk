@@ -38,16 +38,18 @@ public sealed class InMemoryExamSessionStoreTests
         var profileSha256 = EffectiveProfileDigest.Compute(profile);
         var started = store.Start("student@example.com", profile);
 
-        var first = store.ActivateForDevice(
+        var firstStatus = store.ActivateForDevice(
             started.SessionId,
             profileSha256);
-        var second = store.ActivateForDevice(
+        var secondStatus = store.ActivateForDevice(
             started.SessionId,
             profileSha256);
 
-        Assert.Equal(ExamSessionActivationStatus.Activated, first.Status);
-        Assert.Equal(ExamSessionState.Active, first.Session?.State);
-        Assert.Equal(first.Session, second.Session);
+        Assert.Equal(ExamSessionActivationStatus.Activated, firstStatus);
+        Assert.Equal(ExamSessionActivationStatus.Activated, secondStatus);
+        Assert.Equal(
+            ExamSessionState.Active,
+            store.Get(started.SessionId)?.State);
     }
 
     [Fact]
@@ -59,16 +61,18 @@ public sealed class InMemoryExamSessionStoreTests
         var started = store.Start("student@example.com", profile);
         store.ActivateForDevice(started.SessionId, profileSha256);
 
-        var first = store.CompleteForDevice(
+        var firstStatus = store.CompleteForDevice(
             started.SessionId,
             profileSha256);
-        var second = store.CompleteForDevice(
+        var secondStatus = store.CompleteForDevice(
             started.SessionId,
             profileSha256);
 
-        Assert.Equal(ExamSessionCompletionStatus.Completed, first.Status);
-        Assert.Equal(ExamSessionState.Completed, first.Session?.State);
-        Assert.Equal(first.Session, second.Session);
+        Assert.Equal(ExamSessionCompletionStatus.Completed, firstStatus);
+        Assert.Equal(ExamSessionCompletionStatus.Completed, secondStatus);
+        Assert.Equal(
+            ExamSessionState.Completed,
+            store.Get(started.SessionId)?.State);
     }
 
     [Fact]
@@ -82,8 +86,8 @@ public sealed class InMemoryExamSessionStoreTests
             started.SessionId,
             EffectiveProfileDigest.Compute(profile));
 
-        Assert.Equal(ExamSessionCompletionStatus.Conflict, result.Status);
-        Assert.Equal(started, result.Session);
+        Assert.Equal(ExamSessionCompletionStatus.Conflict, result);
+        Assert.Equal(started, store.Get(started.SessionId));
     }
 
     [Fact]
@@ -96,8 +100,8 @@ public sealed class InMemoryExamSessionStoreTests
             started.SessionId,
             new string('0', 64));
 
-        Assert.Equal(ExamSessionActivationStatus.NotFound, result.Status);
-        Assert.Null(result.Session);
+        Assert.Equal(ExamSessionActivationStatus.NotFound, result);
+        Assert.Equal(started, store.Get(started.SessionId));
     }
 
     [Fact]

@@ -61,7 +61,7 @@ public sealed class InMemoryExamSessionStore : IExamSessionStore
         }
     }
 
-    public ExamSessionActivationResult ActivateForDevice(
+    public ExamSessionActivationStatus ActivateForDevice(
         Guid sessionId,
         string profileSha256)
     {
@@ -72,34 +72,26 @@ public sealed class InMemoryExamSessionStore : IExamSessionStore
         {
             if (!TryGetMatchingSession(sessionId, profileSha256, out var session))
             {
-                return new ExamSessionActivationResult(
-                    ExamSessionActivationStatus.NotFound,
-                    null);
+                return ExamSessionActivationStatus.NotFound;
             }
 
             if (session.State == ExamSessionState.Active)
             {
-                return new ExamSessionActivationResult(
-                    ExamSessionActivationStatus.Activated,
-                    session);
+                return ExamSessionActivationStatus.Activated;
             }
 
             if (session.State != ExamSessionState.Starting)
             {
-                return new ExamSessionActivationResult(
-                    ExamSessionActivationStatus.Conflict,
-                    session);
+                return ExamSessionActivationStatus.Conflict;
             }
 
             var active = session with { State = ExamSessionState.Active };
             sessions[sessionId] = active;
-            return new ExamSessionActivationResult(
-                ExamSessionActivationStatus.Activated,
-                active);
+            return ExamSessionActivationStatus.Activated;
         }
     }
 
-    public ExamSessionCompletionResult CompleteForDevice(
+    public ExamSessionCompletionStatus CompleteForDevice(
         Guid sessionId,
         string profileSha256)
     {
@@ -110,32 +102,24 @@ public sealed class InMemoryExamSessionStore : IExamSessionStore
         {
             if (!TryGetMatchingSession(sessionId, profileSha256, out var session))
             {
-                return new ExamSessionCompletionResult(
-                    ExamSessionCompletionStatus.NotFound,
-                    null);
+                return ExamSessionCompletionStatus.NotFound;
             }
 
             if (session.State == ExamSessionState.Completed)
             {
-                return new ExamSessionCompletionResult(
-                    ExamSessionCompletionStatus.Completed,
-                    session);
+                return ExamSessionCompletionStatus.Completed;
             }
 
             if (session.State != ExamSessionState.Active)
             {
-                return new ExamSessionCompletionResult(
-                    ExamSessionCompletionStatus.Conflict,
-                    session);
+                return ExamSessionCompletionStatus.Conflict;
             }
 
             var completed = session with { State = ExamSessionState.Completed };
             sessions[sessionId] = completed;
             sessionIdsByStudent.Remove(
                 session.Profile.Student.UserPrincipalName);
-            return new ExamSessionCompletionResult(
-                ExamSessionCompletionStatus.Completed,
-                completed);
+            return ExamSessionCompletionStatus.Completed;
         }
     }
 
