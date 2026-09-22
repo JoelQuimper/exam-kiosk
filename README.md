@@ -162,6 +162,19 @@ animation before validating the kiosk flow:
 This optional machine-wide configuration is kept separate from installation so
 district deployment tooling can own the equivalent policy.
 
+To collect the local PoC state after a managed-device test, run the diagnostic
+collector from an elevated Windows PowerShell 5.1 terminal:
+
+```powershell
+& .\scripts\LocalConfig\Collect-ExamKioskDiagnostics.ps1
+```
+
+It creates an `ExamKiosk-Diagnostics-<computer>-<timestamp>.zip` archive on the
+current administrator's Desktop. The archive includes the local Agent state,
+session journal, Launcher logs, generated Windows artifacts, Edge URL-policy
+state, Recovery results, service state, and basic Windows details. It can
+contain student identity and exam URLs and must not be shared publicly.
+
 ### School-board customization hooks
 
 The agent package includes two administrator-owned PowerShell hooks:
