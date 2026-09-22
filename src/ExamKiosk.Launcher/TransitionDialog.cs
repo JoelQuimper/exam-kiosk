@@ -41,7 +41,7 @@ internal sealed class TransitionDialog : Window
         Width = 520;
         Height = 360;
         ResizeMode = ResizeMode.NoResize;
-        WindowStartupLocation = WindowStartupLocation.CenterOwner;
+        WindowStartupLocation = WindowStartupLocation.CenterScreen;
         WindowStyle = WindowStyle.None;
         ShowInTaskbar = false;
         Topmost = true;
