@@ -139,6 +139,18 @@ try {
         -LiteralPath (Join-Path $PSScriptRoot 'Recovery\README.md') `
         -Destination $recoveryDirectory
 
+    $diagnosticsDirectory = Join-Path $installRoot 'Diagnostics'
+    New-Item -ItemType Directory -Path $diagnosticsDirectory -Force | Out-Null
+    $diagnosticsScriptPath = Join-Path `
+        $diagnosticsDirectory `
+        'Collect-ExamKioskDiagnostics.ps1'
+    Copy-Item `
+        -LiteralPath (
+            Join-Path `
+                $repositoryRoot `
+                'scripts\LocalConfig\Collect-ExamKioskDiagnostics.ps1') `
+        -Destination $diagnosticsScriptPath
+
     [ordered]@{
         webAppUrl = $normalizedWebAppUrl
     } |
@@ -210,10 +222,24 @@ try {
     $resetShortcut.Description = 'Uninstall, install, and launch the Exam Kiosk PoC.'
     $resetShortcut.Save()
 
+    $diagnosticsShortcutPath = Join-Path `
+        ([Environment]::GetFolderPath('Desktop')) `
+        'Collect Exam Kiosk Diagnostics.lnk'
+    $diagnosticsShortcut = $shell.CreateShortcut($diagnosticsShortcutPath)
+    $diagnosticsShortcut.TargetPath = $powerShellPath
+    $diagnosticsShortcut.Arguments = (
+        '-NoProfile -ExecutionPolicy Bypass -File "{0}"' -f
+        $diagnosticsScriptPath)
+    $diagnosticsShortcut.WorkingDirectory = $diagnosticsDirectory
+    $diagnosticsShortcut.Description =
+        'Collect Exam Kiosk diagnostics into a ZIP archive on the Desktop.'
+    $diagnosticsShortcut.Save()
+
     Start-Service -Name $serviceName
     Write-Output "Exam Kiosk PoC installed at $installRoot."
     Write-Output "Native client diagnostics are written under $logsRoot."
     Write-Output 'The normal launcher is available in the Start menu under Exam Kiosk.'
+    Write-Output 'The diagnostic collector is available on the current administrator Desktop.'
 }
 finally {
     if (Test-Path -LiteralPath $stagingRoot) {

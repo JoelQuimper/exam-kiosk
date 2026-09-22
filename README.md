@@ -163,7 +163,9 @@ This optional machine-wide configuration is kept separate from installation so
 district deployment tooling can own the equivalent policy.
 
 To collect the local PoC state after a managed-device test, run the diagnostic
-collector from an elevated Windows PowerShell 5.1 terminal:
+collector from the **Collect Exam Kiosk Diagnostics** shortcut created on the
+installing administrator's Desktop. It requests elevation automatically. The
+equivalent repository command is:
 
 ```powershell
 & .\scripts\LocalConfig\Collect-ExamKioskDiagnostics.ps1

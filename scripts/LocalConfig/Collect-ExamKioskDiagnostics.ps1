@@ -1,8 +1,25 @@
-#Requires -RunAsAdministrator
 [CmdletBinding()]
 param()
 
 $ErrorActionPreference = 'Stop'
+$identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+$principal = [Security.Principal.WindowsPrincipal]::new($identity)
+$administratorRole = [Security.Principal.WindowsBuiltInRole]::Administrator
+if (-not $principal.IsInRole($administratorRole)) {
+    $powershellPath = Join-Path `
+        $env:SystemRoot `
+        'System32\WindowsPowerShell\v1.0\powershell.exe'
+    $process = Start-Process `
+        -FilePath $powershellPath `
+        -ArgumentList (
+            '-NoProfile -ExecutionPolicy Bypass -File "{0}"' -f
+            $MyInvocation.MyCommand.Path) `
+        -Verb RunAs `
+        -Wait `
+        -PassThru
+    exit $process.ExitCode
+}
+
 $timestamp = [DateTimeOffset]::Now.ToString('yyyyMMdd-HHmmss')
 $desktopPath = [Environment]::GetFolderPath(
     [Environment+SpecialFolder]::DesktopDirectory)
