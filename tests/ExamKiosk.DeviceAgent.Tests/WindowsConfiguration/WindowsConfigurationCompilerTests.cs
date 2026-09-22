@@ -202,8 +202,7 @@ public sealed class WindowsConfigurationCompilerTests
                         new DesktopExecutableDefinition(
                             "word",
                             @"%ProgramFiles%\Microsoft Office\root\Office16\WINWORD.EXE",
-                            wordDesktopApplicationId,
-                            new ExecutableValidation("Microsoft Corporation", null)),
+                            wordDesktopApplicationId),
                     ],
                     new DesktopLaunchTarget("word", "Microsoft Word", true, true))),
             new DesktopToolDefinition(

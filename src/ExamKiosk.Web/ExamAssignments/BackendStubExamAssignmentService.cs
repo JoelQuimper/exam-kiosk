@@ -55,10 +55,7 @@ public sealed class BackendStubExamAssignmentService : IExamAssignmentService
                         new DesktopExecutableDefinition(
                             "word",
                             "%ProgramFiles%\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
-                            "Microsoft.Office.WINWORD.EXE.15",
-                            new ExecutableValidation(
-                                "Microsoft Corporation",
-                                null)),
+                            "Microsoft.Office.WINWORD.EXE.15"),
                     ],
                     new DesktopLaunchTarget(
                         "word",
