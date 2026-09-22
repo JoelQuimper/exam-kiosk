@@ -345,17 +345,13 @@ public sealed class TransitionManagerTests
         Assert.Equal(expected, result);
     }
 
-    [Theory]
-    [InlineData(AgentState.Available, true)]
-    [InlineData(AgentState.EnteringExam, false)]
-    [InlineData(AgentState.InExam, false)]
-    [InlineData(AgentState.ExitingExam, false)]
-    [InlineData(AgentState.Failed, false)]
-    public void CanStartExam_ReturnsExpectedResult(AgentState state, bool expected)
+    [Fact]
+    public void CanStartExam_AllowsOnlyAvailable()
     {
-        var result = TransitionManager.CanStartExam(state);
-
-        Assert.Equal(expected, result);
+        Assert.True(TransitionManager.CanStartExam(AgentState.Available));
+        Assert.All(
+            Enum.GetValues<AgentState>().Where(state => state != AgentState.Available),
+            state => Assert.False(TransitionManager.CanStartExam(state)));
     }
 
     [Theory]
