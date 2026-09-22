@@ -6,28 +6,14 @@ namespace ExamKiosk.Web.ExamAssignments;
 
 public sealed class BackendStubExamAssignmentService : IExamAssignmentService
 {
-    private static readonly FrozenDictionary<string, StudentProfile> StudentsByUpn =
-        new[]
+    private static readonly FrozenDictionary<string, string> StudentIdsByUpn =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            new StudentProfile(
-                "student-1",
-                "student1@jqdev.onmicrosoft.com",
-                "Student 1"),
-            new StudentProfile(
-                "student-2",
-                "student2@jqdev.onmicrosoft.com",
-                "Student 2"),
-            new StudentProfile(
-                "student-3",
-                "student3@jqdev.onmicrosoft.com",
-                "Student 3"),
-            new StudentProfile(
-                "student-4",
-                "student4@jqdev.onmicrosoft.com",
-                "Student 4"),
-        }.ToFrozenDictionary(
-            student => student.UserPrincipalName,
-            StringComparer.OrdinalIgnoreCase);
+            ["student1@jqdev.onmicrosoft.com"] = "student-1",
+            ["student2@jqdev.onmicrosoft.com"] = "student-2",
+            ["student3@jqdev.onmicrosoft.com"] = "student-3",
+            ["student4@jqdev.onmicrosoft.com"] = "student-4",
+        }.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
 
     private static readonly FrozenDictionary<string, ExamDefinition> ExamsById =
         new[]
@@ -126,13 +112,15 @@ public sealed class BackendStubExamAssignmentService : IExamAssignmentService
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(userPrincipalName);
 
-        if (!StudentsByUpn.TryGetValue(userPrincipalName.Trim(), out var student))
+        if (!StudentIdsByUpn.TryGetValue(
+                userPrincipalName.Trim(),
+                out var studentId))
         {
             return [];
         }
 
         return Assignments
-            .Where(assignment => assignment.StudentId == student.StudentId)
+            .Where(assignment => assignment.StudentId == studentId)
             .Select(CreateAssignedExam)
             .ToArray();
     }
