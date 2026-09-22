@@ -24,8 +24,7 @@ public static class AssignedAccessArtifactValidator
     {
         ArgumentNullException.ThrowIfNull(profile);
         ArgumentNullException.ThrowIfNull(configuration);
-        if (configuration.ClientVersion is null
-            || configuration.AssignedAccess is null
+        if (configuration.AssignedAccess is null
             || configuration.Shortcuts is null)
         {
             throw new WindowsConfigurationException(

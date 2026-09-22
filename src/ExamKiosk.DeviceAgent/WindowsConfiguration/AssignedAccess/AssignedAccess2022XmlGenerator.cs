@@ -120,7 +120,6 @@ internal sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerat
         var sha256 = Convert.ToHexStringLower(SHA256.HashData(xmlBytes));
 
         return new EffectiveWindowsConfiguration(
-            clientVersion,
             new AssignedAccessArtifact(
                 sha256,
                 xml),
@@ -186,8 +185,7 @@ internal sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerat
                     new DesktopWindowsShortcutArtifact(
                         $"tool-{tool.ToolId}",
                         LinkPath(desktop.Configuration.LaunchTarget.Label),
-                        desktop.Configuration.LaunchTarget.Label,
-                        desktop.Configuration.LaunchTarget.ApplicationId),
+                        desktop.Configuration.LaunchTarget.Label),
                 WebToolDefinition web
                     when web.Configuration.LaunchTarget.PinToStart
                         || web.Configuration.LaunchTarget.PinToTaskbar =>

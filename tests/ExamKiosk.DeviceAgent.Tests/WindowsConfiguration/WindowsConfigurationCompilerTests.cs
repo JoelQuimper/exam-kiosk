@@ -35,7 +35,6 @@ public sealed class WindowsConfigurationCompilerTests
             Convert.ToHexStringLower(
                 SHA256.HashData(Encoding.UTF8.GetBytes(artifact.Xml))),
             artifact.Sha256);
-        Assert.Equal(first.ClientVersion, second.ClientVersion);
         Assert.Equal(first.AssignedAccess, second.AssignedAccess);
         Assert.Equal(first.Shortcuts, second.Shortcuts);
     }
@@ -172,7 +171,6 @@ public sealed class WindowsConfigurationCompilerTests
         var word = Assert.IsType<DesktopWindowsShortcutArtifact>(
             configuration.Shortcuts.Single(
                 shortcut => shortcut.ShortcutId == "tool-word"));
-        Assert.Equal("word", word.ApplicationId);
     }
 
     [Fact]
