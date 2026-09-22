@@ -1,3 +1,4 @@
+using static ExamKiosk.Web.Tests.EffectiveProfileTestData;
 using ExamKiosk.Contracts;
 using ExamKiosk.Web.ExamSessions;
 
@@ -112,17 +113,4 @@ public sealed class InMemoryExamSessionStoreTests
         Assert.Throws<ArgumentException>(
             () => store.Start("other@example.com", CreateProfile()));
     }
-
-    private static EffectiveExamProfile CreateProfile() =>
-        new(
-            1,
-            "assignment-1",
-            new EffectiveStudent("student@example.com"),
-            new EffectiveExam(
-                "exam-1",
-                "Exam",
-                "exam",
-                new Uri("https://example.com/exam")),
-            [],
-            ["https://example.com"]);
 }
