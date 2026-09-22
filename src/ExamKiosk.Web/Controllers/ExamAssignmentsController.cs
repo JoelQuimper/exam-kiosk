@@ -14,7 +14,7 @@ namespace ExamKiosk.Web.Controllers;
 [Route("api/v1/exam-assignments")]
 public sealed class ExamAssignmentsController(
     IExamAssignmentService examAssignmentService,
-    IExamProfileOrchestrator examProfileOrchestrator,
+    ExamProfileOrchestrator examProfileOrchestrator,
     IExamSessionStore examSessionStore,
     IAntiforgery antiforgery) : ControllerBase
 {

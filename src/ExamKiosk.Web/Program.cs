@@ -57,9 +57,7 @@ builder.Services.AddRazorComponents();
 builder.Services.AddSingleton<
     IExamAssignmentService,
     BackendStubExamAssignmentService>();
-builder.Services.AddSingleton<
-    IExamProfileOrchestrator,
-    ExamProfileOrchestrator>();
+builder.Services.AddSingleton<ExamProfileOrchestrator>();
 builder.Services.AddSingleton<IExamSessionStore, InMemoryExamSessionStore>();
 builder.Services.AddSingleton<
     IAuthorizationMiddlewareResultHandler,

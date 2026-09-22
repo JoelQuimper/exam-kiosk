@@ -3,7 +3,7 @@ using ExamKiosk.Web.ExamAssignments.Models;
 
 namespace ExamKiosk.Web.ExamAssignments;
 
-public sealed class ExamProfileOrchestrator : IExamProfileOrchestrator
+public sealed class ExamProfileOrchestrator
 {
     private const int SchemaVersion = 1;
     private static readonly string[] BaselineAllowedUrls =
