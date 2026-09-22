@@ -201,7 +201,6 @@ public sealed class WindowsConfigurationCompilerTests
                     [
                         new DesktopExecutableDefinition(
                             "word",
-                            ApplicationRole.Primary,
                             @"%ProgramFiles%\Microsoft Office\root\Office16\WINWORD.EXE",
                             wordDesktopApplicationId,
                             new ExecutableValidation("Microsoft Corporation", null)),
@@ -216,7 +215,6 @@ public sealed class WindowsConfigurationCompilerTests
                     [
                         new PackagedApplicationDefinition(
                             "calculator",
-                            ApplicationRole.Primary,
                             "Microsoft.WindowsCalculator_8wekyb3d8bbwe!App"),
                     ],
                     new DesktopLaunchTarget(

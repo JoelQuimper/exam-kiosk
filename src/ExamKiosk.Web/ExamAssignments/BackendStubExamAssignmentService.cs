@@ -54,7 +54,6 @@ public sealed class BackendStubExamAssignmentService : IExamAssignmentService
                     [
                         new DesktopExecutableDefinition(
                             "word",
-                            ApplicationRole.Primary,
                             "%ProgramFiles%\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
                             "Microsoft.Office.WINWORD.EXE.15",
                             new ExecutableValidation(
@@ -75,7 +74,6 @@ public sealed class BackendStubExamAssignmentService : IExamAssignmentService
                     [
                         new PackagedApplicationDefinition(
                             "calculator",
-                            ApplicationRole.Primary,
                             "Microsoft.WindowsCalculator_8wekyb3d8bbwe!App"),
                     ],
                     new DesktopLaunchTarget(

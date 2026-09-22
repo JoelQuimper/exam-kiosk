@@ -6,5 +6,4 @@ namespace ExamKiosk.Contracts;
 [JsonDerivedType(typeof(DesktopExecutableDefinition), "desktopExecutable")]
 [JsonDerivedType(typeof(PackagedApplicationDefinition), "packagedApp")]
 public abstract record ApplicationDefinition(
-    string ApplicationId,
-    ApplicationRole Role);
+    string ApplicationId);
