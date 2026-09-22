@@ -210,7 +210,7 @@ try {
     Write-DiagnosticJson `
         -RelativePath 'manifest.json' `
         -Value ([ordered]@{
-            createdAt = [DateTimeOffset]::Now
+            createdAt = [DateTimeOffset]::Now.ToString('o')
             computerName = $env:COMPUTERNAME
             collected = @($collected)
             missing = @($missing)
