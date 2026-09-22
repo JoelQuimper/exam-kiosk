@@ -170,6 +170,7 @@ public sealed class ExamAssignmentsEndpointTests
                 "https://login.microsoftonline.com/",
                 "https://jqdev.sharepoint.com/sites/ExamSite/Shared%20Documents/Student1-Exam1",
                 "https://jqdev.sharepoint.com/sites/ExamSite/",
+                "https://jqdev.sharepoint.com/_forms/",
                 "https://oauth.officeapps.live.com/",
                 "https://owl.officeapps.live.com/",
                 "https://cac-word-edit.officeapps.live.com/",

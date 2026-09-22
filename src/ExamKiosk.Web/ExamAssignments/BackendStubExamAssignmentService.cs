@@ -79,6 +79,7 @@ public sealed class BackendStubExamAssignmentService : IExamAssignmentService
     private static readonly string[] ExamSiteAllowedUrls =
     [
         "https://jqdev.sharepoint.com/sites/ExamSite/",
+        "https://jqdev.sharepoint.com/_forms/",
         "https://oauth.officeapps.live.com/",
         "https://owl.officeapps.live.com/",
         "https://cac-word-edit.officeapps.live.com/",
