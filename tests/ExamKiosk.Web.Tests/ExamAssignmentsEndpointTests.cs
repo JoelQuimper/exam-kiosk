@@ -169,6 +169,7 @@ public sealed class ExamAssignmentsEndpointTests
             [
                 "https://login.microsoftonline.com/",
                 "https://jqdev.sharepoint.com/sites/ExamSite/Shared%20Documents/Student1-Exam1",
+                "https://jqdev.sharepoint.com/sites/ExamSite/",
             ],
             session.Profile.AllowedUrls);
     }

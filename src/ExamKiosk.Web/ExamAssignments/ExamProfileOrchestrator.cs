@@ -26,6 +26,7 @@ public sealed class ExamProfileOrchestrator
         var tools = assignment.Tools.ToArray();
         var allowedUrls = BaselineAllowedUrls
             .Append(assignment.ExamTarget.AbsoluteUri)
+            .Concat(assignment.AllowedUrls)
             .Concat(
                 tools
                     .OfType<WebToolDefinition>()

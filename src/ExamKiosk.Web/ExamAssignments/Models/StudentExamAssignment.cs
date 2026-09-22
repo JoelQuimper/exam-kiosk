@@ -5,4 +5,5 @@ internal sealed record StudentExamAssignment(
     string StudentId,
     string ExamId,
     Uri ExamTarget,
+    IReadOnlyList<string> AllowedUrls,
     IReadOnlyList<string> ToolIds);

@@ -76,6 +76,11 @@ public sealed class BackendStubExamAssignmentService : IExamAssignmentService
                     "%SystemRoot%\\System32\\url.dll,0")),
         }.ToFrozenDictionary(tool => tool.ToolId, StringComparer.Ordinal);
 
+    private static readonly string[] ExamSiteAllowedUrls =
+    [
+        "https://jqdev.sharepoint.com/sites/ExamSite/",
+    ];
+
     private static readonly IReadOnlyList<StudentExamAssignment> Assignments =
     [
         new(
@@ -84,6 +89,7 @@ public sealed class BackendStubExamAssignmentService : IExamAssignmentService
             "exam-1",
             new Uri(
                 "https://jqdev.sharepoint.com/sites/ExamSite/Shared%20Documents/Student1-Exam1"),
+            ExamSiteAllowedUrls,
             ["windows-calculator"]),
         new(
             "student1-exam2",
@@ -91,6 +97,7 @@ public sealed class BackendStubExamAssignmentService : IExamAssignmentService
             "exam-2",
             new Uri(
                 "https://jqdev.sharepoint.com/sites/ExamSite/Shared%20Documents/Student1-Exam2"),
+            ExamSiteAllowedUrls,
             []),
         new(
             "student2-exam1",
@@ -98,6 +105,7 @@ public sealed class BackendStubExamAssignmentService : IExamAssignmentService
             "exam-1",
             new Uri(
                 "https://jqdev.sharepoint.com/sites/ExamSite/Shared%20Documents/Student2-Exam1"),
+            ExamSiteAllowedUrls,
             ["microsoft-word"]),
         new(
             "student3-exam2",
@@ -105,6 +113,7 @@ public sealed class BackendStubExamAssignmentService : IExamAssignmentService
             "exam-2",
             new Uri(
                 "https://jqdev.sharepoint.com/sites/ExamSite/Shared%20Documents/Student3-Exam2"),
+            ExamSiteAllowedUrls,
             ["microsoft-word", "windows-calculator", "usito-dictionary"]),
     ];
 
@@ -164,6 +173,7 @@ public sealed class BackendStubExamAssignmentService : IExamAssignmentService
             assignment.AssignmentId,
             exam,
             assignment.ExamTarget,
+            assignment.AllowedUrls,
             tools);
     }
 }
