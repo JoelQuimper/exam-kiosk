@@ -139,8 +139,15 @@ remains gated on all pre-profile controls in that plan.
 
 ## Step 6 - Edge policy application and restoration
 
-Deferred until after the Steps 7-8 vertical flow is validated on the managed
+In progress after the Steps 7-8 vertical flow was validated on the managed
 test device.
+
+The PoC SharePoint assignment now includes the minimal functional hosts
+observed while opening a PDF and while opening, modifying, autosaving, and
+reloading Word and Excel documents. The SharePoint permission remains scoped
+to `/sites/ExamSite/`; it does not allow the tenant root, other SharePoint
+sites, or the student's OneDrive host. Browser and Office telemetry hosts
+observed during the same captures are intentionally excluded.
 
 - Back up only the Edge policy values that Exam Kiosk will replace.
 - Apply an Agent-owned deny-all baseline and allow the profile's generic

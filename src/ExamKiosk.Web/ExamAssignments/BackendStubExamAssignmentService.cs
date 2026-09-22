@@ -79,6 +79,15 @@ public sealed class BackendStubExamAssignmentService : IExamAssignmentService
     private static readonly string[] ExamSiteAllowedUrls =
     [
         "https://jqdev.sharepoint.com/sites/ExamSite/",
+        "https://oauth.officeapps.live.com/",
+        "https://owl.officeapps.live.com/",
+        "https://cac-word-edit.officeapps.live.com/",
+        "https://cac-excel.officeapps.live.com/",
+        "https://content.lifecycle.office.net/",
+        "https://res.cdn.office.net/",
+        "https://res-1.cdn.office.net/",
+        "https://res-v-sdf.cdn.office.net/",
+        "https://res.public.onecdn.static.microsoft/",
     ];
 
     private static readonly IReadOnlyList<StudentExamAssignment> Assignments =

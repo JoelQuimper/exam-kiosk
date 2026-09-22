@@ -170,6 +170,15 @@ public sealed class ExamAssignmentsEndpointTests
                 "https://login.microsoftonline.com/",
                 "https://jqdev.sharepoint.com/sites/ExamSite/Shared%20Documents/Student1-Exam1",
                 "https://jqdev.sharepoint.com/sites/ExamSite/",
+                "https://oauth.officeapps.live.com/",
+                "https://owl.officeapps.live.com/",
+                "https://cac-word-edit.officeapps.live.com/",
+                "https://cac-excel.officeapps.live.com/",
+                "https://content.lifecycle.office.net/",
+                "https://res.cdn.office.net/",
+                "https://res-1.cdn.office.net/",
+                "https://res-v-sdf.cdn.office.net/",
+                "https://res.public.onecdn.static.microsoft/",
             ],
             session.Profile.AllowedUrls);
     }
