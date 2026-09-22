@@ -49,7 +49,6 @@ public sealed class BackendStubExamAssignmentService : IExamAssignmentService
                 "microsoft-word",
                 "Microsoft Word",
                 "word",
-                true,
                 new DesktopToolConfiguration(
                     [
                         new DesktopExecutableDefinition(
@@ -66,7 +65,6 @@ public sealed class BackendStubExamAssignmentService : IExamAssignmentService
                 "windows-calculator",
                 "Calculator",
                 "calculator",
-                true,
                 new DesktopToolConfiguration(
                     [
                         new PackagedApplicationDefinition(
@@ -82,7 +80,6 @@ public sealed class BackendStubExamAssignmentService : IExamAssignmentService
                 "usito-dictionary",
                 "Dictionnaire Usito",
                 "dictionary",
-                true,
                 new WebToolConfiguration(
                     ["https://usito.usherbrooke.ca/"],
                     new WebLaunchTarget(

@@ -196,7 +196,6 @@ public sealed class WindowsConfigurationCompilerTests
                 "word",
                 "Microsoft Word",
                 "document",
-                true,
                 new DesktopToolConfiguration(
                     [
                         new DesktopExecutableDefinition(
@@ -209,7 +208,6 @@ public sealed class WindowsConfigurationCompilerTests
                 "calculator",
                 "Calculator",
                 "calculator",
-                true,
                 new DesktopToolConfiguration(
                     [
                         new PackagedApplicationDefinition(

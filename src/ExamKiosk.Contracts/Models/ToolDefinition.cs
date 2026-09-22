@@ -8,5 +8,4 @@ namespace ExamKiosk.Contracts;
 public abstract record ToolDefinition(
     string ToolId,
     string DisplayName,
-    string Icon,
-    bool Enabled);
+    string Icon);

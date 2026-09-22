@@ -4,6 +4,5 @@ public sealed record WebToolDefinition(
     string ToolId,
     string DisplayName,
     string Icon,
-    bool Enabled,
     WebToolConfiguration Configuration)
-    : ToolDefinition(ToolId, DisplayName, Icon, Enabled);
+    : ToolDefinition(ToolId, DisplayName, Icon);

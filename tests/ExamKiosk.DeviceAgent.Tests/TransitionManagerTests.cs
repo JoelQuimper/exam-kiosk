@@ -419,7 +419,6 @@ public sealed class TransitionManagerTests
             toolId,
             label,
             "web",
-            true,
             new WebToolConfiguration(
                 [entryUrl],
                 new WebLaunchTarget(
