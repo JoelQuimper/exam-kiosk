@@ -234,6 +234,14 @@ public sealed class TransitionManager
                 "completed",
                 null,
                 cancellationToken);
+            await WriteGeneratedEdgePolicyPreviewAsync(
+                windowsConfiguration.EdgePolicy,
+                cancellationToken);
+            await sessionJournal.RecordStepAsync(
+                "GeneratedEdgePolicyPreview",
+                "completed",
+                null,
+                cancellationToken);
             var webShortcutsPath = await WriteGeneratedWebShortcutsManifestAsync(
                 windowsConfiguration.Shortcuts,
                 cancellationToken);
@@ -572,6 +580,31 @@ public sealed class TransitionManager
             cancellationToken);
         File.Move(temporaryPath, manifestPath, overwrite: true);
         return manifestPath;
+    }
+
+    private async Task WriteGeneratedEdgePolicyPreviewAsync(
+        EdgePolicyArtifact edgePolicy,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(edgePolicy);
+        Directory.CreateDirectory(configurationDirectory);
+        var previewPath = Path.Combine(
+            configurationDirectory,
+            "EdgePolicy.generated.temp.json");
+        var temporaryPath = previewPath + ".tmp";
+        await File.WriteAllTextAsync(
+            temporaryPath,
+            JsonSerializer.Serialize(
+                edgePolicy,
+                new JsonSerializerOptions(JsonSerializerDefaults.Web)
+                {
+                    WriteIndented = true,
+                }),
+            cancellationToken);
+        File.Move(temporaryPath, previewPath, overwrite: true);
+        logger.LogInformation(
+            "Wrote generated Edge policy preview {PreviewPath}",
+            previewPath);
     }
 
     private static WindowsClientVersion GetCurrentWindowsClientVersion()

@@ -1,5 +1,6 @@
 using ExamKiosk.Contracts;
 using ExamKiosk.DeviceAgent.WindowsConfiguration.AssignedAccess;
+using ExamKiosk.DeviceAgent.WindowsConfiguration.Edge;
 using ExamKiosk.DeviceAgent.WindowsConfiguration.Models;
 
 namespace ExamKiosk.DeviceAgent.WindowsConfiguration;
@@ -30,11 +31,15 @@ public sealed class WindowsConfigurationCompiler
                 $"Multiple Assigned Access generators support Windows version {FormatVersion(clientVersion)}.");
         }
 
-        var configuration = matchingGenerators[0].Generate(
+        var assignedAccessConfiguration = matchingGenerators[0].Generate(
             clientVersion,
             profile.Student,
             profile.Exam,
             profile.Tools);
+        var configuration = new EffectiveWindowsConfiguration(
+            assignedAccessConfiguration.AssignedAccess,
+            assignedAccessConfiguration.Shortcuts,
+            EdgePolicyCompiler.Compile(profile.AllowedUrls));
         AssignedAccessArtifactValidator.Validate(profile, configuration);
         return configuration;
     }

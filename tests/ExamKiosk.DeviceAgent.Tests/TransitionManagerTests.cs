@@ -174,6 +174,48 @@ public sealed class TransitionManagerTests
             new SessionJournal(
                 Path.Combine(directory.Path, "session-journal.json"))
                 .Current!
+                .Steps[4]
+                .Name);
+    }
+
+    [Fact]
+    public async Task StartExam_WritesEdgePolicyPreviewBeforeApply()
+    {
+        using var directory = new TemporaryDirectory();
+        var scripts = new ScriptSequence(
+            ("Start-Exam.ps1", "applied", null),
+            ("Get-ExamMode.ps1", "Configured", null));
+        var manager = CreateManager(directory.Path, scripts);
+
+        var response = await manager.HandleAsync(
+            StartRequest(),
+            CancellationToken.None);
+
+        Assert.True(response.Success);
+        var previewPath = Path.Combine(
+            directory.Path,
+            "Configuration",
+            "EdgePolicy.generated.temp.json");
+        using var preview = JsonDocument.Parse(
+            await File.ReadAllTextAsync(previewPath));
+        Assert.Equal(
+            ["*"],
+            preview.RootElement
+                .GetProperty("urlBlocklist")
+                .EnumerateArray()
+                .Select(item => item.GetString()));
+        Assert.Equal(
+            ["https://example.com"],
+            preview.RootElement
+                .GetProperty("urlAllowlist")
+                .EnumerateArray()
+                .Select(item => item.GetString()));
+        Assert.False(File.Exists(previewPath + ".tmp"));
+        Assert.Equal(
+            "GeneratedEdgePolicyPreview",
+            new SessionJournal(
+                Path.Combine(directory.Path, "session-journal.json"))
+                .Current!
                 .Steps[3]
                 .Name);
     }
@@ -207,7 +249,8 @@ public sealed class TransitionManagerTests
         Assert.Equal("completed", journal.Steps[0].Status);
         Assert.Equal("WindowsConfigurationGenerated", journal.Steps[1].Name);
         Assert.Equal("GeneratedAssignedAccessPreview", journal.Steps[2].Name);
-        Assert.Equal("AssignedAccessApply", journal.Steps[3].Name);
+        Assert.Equal("GeneratedEdgePolicyPreview", journal.Steps[3].Name);
+        Assert.Equal("AssignedAccessApply", journal.Steps[4].Name);
         var previewPath = Path.Combine(
             directory.Path,
             "Configuration",

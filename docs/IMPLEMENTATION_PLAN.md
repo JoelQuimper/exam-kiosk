@@ -149,6 +149,10 @@ to `/sites/ExamSite/`; it does not allow the tenant root, other SharePoint
 sites, or the student's OneDrive host. Browser and Office telemetry hosts
 observed during the same captures are intentionally excluded.
 
+- **Implemented as a non-enforcing preview:** compile the profile's generic
+  `AllowedUrls` into deterministic `URLBlocklist = ["*"]` and `URLAllowlist`
+  values, then atomically write `EdgePolicy.generated.temp.json`. The preview
+  is not passed to a script and does not modify the registry.
 - Back up only the Edge policy values that Exam Kiosk will replace.
 - Apply an Agent-owned deny-all baseline and allow the profile's generic
   `AllowedUrls`.

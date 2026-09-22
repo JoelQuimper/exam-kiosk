@@ -48,7 +48,7 @@ internal sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerat
             && clientVersion.Build >= Windows11Version22H2Build;
     }
 
-    public EffectiveWindowsConfiguration Generate(
+    public AssignedAccessConfiguration Generate(
         WindowsClientVersion clientVersion,
         EffectiveStudent student,
         EffectiveExam exam,
@@ -119,7 +119,7 @@ internal sealed class AssignedAccess2022XmlGenerator : IAssignedAccessXmlGenerat
         var xml = Encoding.UTF8.GetString(xmlBytes);
         var sha256 = Convert.ToHexStringLower(SHA256.HashData(xmlBytes));
 
-        return new EffectiveWindowsConfiguration(
+        return new AssignedAccessConfiguration(
             new AssignedAccessArtifact(
                 sha256,
                 xml),

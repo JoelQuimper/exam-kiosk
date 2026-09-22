@@ -37,6 +37,55 @@ public sealed class WindowsConfigurationCompilerTests
             artifact.Sha256);
         Assert.Equal(first.AssignedAccess, second.AssignedAccess);
         Assert.Equal(first.Shortcuts, second.Shortcuts);
+        Assert.Equal(
+            first.EdgePolicy.UrlBlocklist,
+            second.EdgePolicy.UrlBlocklist);
+        Assert.Equal(
+            first.EdgePolicy.UrlAllowlist,
+            second.EdgePolicy.UrlAllowlist);
+    }
+
+    [Fact]
+    public void Compile_CreatesDenyAllEdgePolicyWithProfileAllowlist()
+    {
+        var profile = CreateProfile() with
+        {
+            AllowedUrls =
+            [
+                "https://example.com/exam",
+                "https://cdn.example.com/",
+                "https://EXAMPLE.com/exam",
+            ],
+        };
+
+        var policy = compiler
+            .Compile(SupportedVersion(), profile)
+            .EdgePolicy;
+
+        Assert.Equal(["*"], policy.UrlBlocklist);
+        Assert.Equal(
+            [
+                "https://example.com/exam",
+                "https://cdn.example.com/",
+            ],
+            policy.UrlAllowlist);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("example.com")]
+    [InlineData("file:///C:/exam.txt")]
+    public void Compile_WhenAllowedUrlIsInvalid_Throws(string allowedUrl)
+    {
+        var profile = CreateProfile() with
+        {
+            AllowedUrls = [allowedUrl],
+        };
+
+        var exception = Assert.Throws<WindowsConfigurationException>(
+            () => compiler.Compile(SupportedVersion(), profile));
+
+        Assert.Contains("Allowed URL", exception.Message);
     }
 
     [Fact]
