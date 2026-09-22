@@ -208,6 +208,16 @@ public sealed class ExamAssignmentsEndpointTests
         Assert.Equal(
             ["https://jqdev.sharepoint.com"],
             rule.AllowedOrigins);
+        var word = Assert.IsType<DesktopToolDefinition>(
+            session.Profile.Tools.Single(
+                tool => tool.ToolId == "microsoft-word"));
+        Assert.Contains(
+            word.Configuration.Applications,
+            application => application is DesktopExecutableDefinition
+            {
+                ApplicationId: "word-protocol-handler",
+                Path: "%ProgramFiles%\\Microsoft Office\\root\\Office16\\protocolhandler.exe",
+            });
     }
 
     [Fact]

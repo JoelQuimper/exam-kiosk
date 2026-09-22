@@ -41,6 +41,10 @@ public sealed class BackendStubExamAssignmentService : IExamAssignmentService
                             "word",
                             "%ProgramFiles%\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
                             "Microsoft.Office.WINWORD.EXE.15"),
+                        new DesktopExecutableDefinition(
+                            "word-protocol-handler",
+                            "%ProgramFiles%\\Microsoft Office\\root\\Office16\\protocolhandler.exe",
+                            null),
                     ],
                     new DesktopLaunchTarget(
                         "word",

@@ -118,6 +118,43 @@ function Get-RegistryListPolicy {
     }
 }
 
+function Get-RegistryValue {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Path,
+
+        [Parameter(Mandatory)]
+        [AllowEmptyString()]
+        [string]$Name
+    )
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Container)) {
+        return [pscustomobject]@{
+            exists = $false
+            kind = $null
+            data = $null
+        }
+    }
+
+    $key = Get-Item -LiteralPath $Path
+    if (@($key.GetValueNames()) -notcontains $Name) {
+        return [pscustomobject]@{
+            exists = $false
+            kind = $null
+            data = $null
+        }
+    }
+
+    return [pscustomobject]@{
+        exists = $true
+        kind = $key.GetValueKind($Name).ToString()
+        data = $key.GetValue(
+            $Name,
+            $null,
+            [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
+    }
+}
+
 try {
     New-Item -ItemType Directory -Path $stagingRoot -Force | Out-Null
 
@@ -197,11 +234,38 @@ try {
                     -Path (Join-Path $edgeRoot 'URLBlocklist')
                 urlAllowlist = Get-RegistryListPolicy `
                     -Path (Join-Path $edgeRoot 'URLAllowlist')
+                autoLaunchProtocolsFromOrigins = Get-RegistryValue `
+                    -Path $edgeRoot `
+                    -Name 'AutoLaunchProtocolsFromOrigins'
             })
     }
     catch {
         $errors.Add(
             "Could not read the Edge URL policies: $($_.Exception.Message)")
+    }
+
+    try {
+        Write-DiagnosticJson `
+            -RelativePath 'System\office-protocol-handler.json' `
+            -Value ([ordered]@{
+                msWordOpenCommand = Get-RegistryValue `
+                    -Path 'Registry::HKEY_CLASSES_ROOT\ms-word\shell\open\command' `
+                    -Name ''
+                expectedProtocolHandler = [ordered]@{
+                    path = Join-Path `
+                        $env:ProgramFiles `
+                        'Microsoft Office\root\Office16\protocolhandler.exe'
+                    exists = Test-Path -LiteralPath (
+                        Join-Path `
+                            $env:ProgramFiles `
+                            'Microsoft Office\root\Office16\protocolhandler.exe') `
+                        -PathType Leaf
+                }
+            })
+    }
+    catch {
+        $errors.Add(
+            "Could not read the Office protocol handler: $($_.Exception.Message)")
     }
 
     try {

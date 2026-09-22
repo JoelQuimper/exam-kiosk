@@ -124,6 +124,10 @@ public sealed class WindowsConfigurationCompilerTests
                 == @"%ProgramFiles%\Microsoft Office\root\Office16\WINWORD.EXE");
         Assert.Contains(
             apps,
+            app => (string?)app.Attribute("DesktopAppPath")
+                == @"%ProgramFiles%\Microsoft Office\root\Office16\protocolhandler.exe");
+        Assert.Contains(
+            apps,
             app => (string?)app.Attribute("AppUserModelId")
                 == "Microsoft.WindowsCalculator_8wekyb3d8bbwe!App");
         Assert.Single(
@@ -258,6 +262,10 @@ public sealed class WindowsConfigurationCompilerTests
                             "word",
                             @"%ProgramFiles%\Microsoft Office\root\Office16\WINWORD.EXE",
                             wordDesktopApplicationId),
+                        new DesktopExecutableDefinition(
+                            "word-protocol-handler",
+                            @"%ProgramFiles%\Microsoft Office\root\Office16\protocolhandler.exe",
+                            null),
                     ],
                     new DesktopLaunchTarget("word", "Microsoft Word", true, true),
                     [],

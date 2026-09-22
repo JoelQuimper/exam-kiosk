@@ -293,7 +293,8 @@ Each rule supplies the protocol and its allowed origins; `AllowedUrls` remains
 HTTP/HTTPS-only. The generated Edge policy derives the matching protocol URL
 filter and allows the external launch only from the declared origins, so
 actions such as SharePoint's **Open in app** can launch Word without an Edge
-prompt.
+prompt. The Word tool also declares Office's `protocolhandler.exe` as an
+Assigned Access dependency; it is allowed but is not pinned as a separate tool.
 
 For this PoC, the Web is a controlled stub and its hard-coded exam intent is
 treated as valid. The Device Agent's self-contained Windows configuration
