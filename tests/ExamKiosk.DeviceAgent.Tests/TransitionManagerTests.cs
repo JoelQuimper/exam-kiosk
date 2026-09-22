@@ -359,31 +359,15 @@ public sealed class TransitionManagerTests
     }
 
     [Theory]
-    [InlineData(AgentState.Available)]
-    [InlineData(AgentState.EnteringExam)]
-    [InlineData(AgentState.InExam)]
-    [InlineData(AgentState.ExitingExam)]
-    [InlineData(AgentState.Failed)]
-    public void ReconcileState_WhenAssignedAccessIsConfigured_ReturnsInExam(
-        AgentState persistedState)
+    [InlineData(true, AgentState.InExam)]
+    [InlineData(false, AgentState.Available)]
+    public void ReconcileState_ReturnsStateForAssignedAccess(
+        bool examModeConfigured,
+        AgentState expected)
     {
-        var result = TransitionManager.ReconcileState(persistedState, true);
+        var result = TransitionManager.ReconcileState(examModeConfigured);
 
-        Assert.Equal(AgentState.InExam, result);
-    }
-
-    [Theory]
-    [InlineData(AgentState.Available)]
-    [InlineData(AgentState.EnteringExam)]
-    [InlineData(AgentState.InExam)]
-    [InlineData(AgentState.ExitingExam)]
-    [InlineData(AgentState.Failed)]
-    public void ReconcileState_WhenAssignedAccessIsNotConfigured_ReturnsAvailable(
-        AgentState persistedState)
-    {
-        var result = TransitionManager.ReconcileState(persistedState, false);
-
-        Assert.Equal(AgentState.Available, result);
+        Assert.Equal(expected, result);
     }
 
     private static TransitionManager CreateManager(

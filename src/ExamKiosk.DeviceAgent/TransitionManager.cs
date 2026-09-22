@@ -105,7 +105,7 @@ public sealed class TransitionManager
                         cancellationToken);
                 }
 
-                var reconciledState = ReconcileState(CurrentState, examModeConfigured);
+                var reconciledState = ReconcileState(examModeConfigured);
                 if (reconciledState != CurrentState)
                 {
                     logger.LogWarning(
@@ -466,13 +466,8 @@ public sealed class TransitionManager
         }
     }
 
-    internal static AgentState ReconcileState(
-        AgentState persistedState,
-        bool examModeConfigured)
-    {
-        _ = persistedState;
-        return examModeConfigured ? AgentState.InExam : AgentState.Available;
-    }
+    internal static AgentState ReconcileState(bool examModeConfigured) =>
+        examModeConfigured ? AgentState.InExam : AgentState.Available;
 
     internal static bool CanStartExam(AgentState state) =>
         state == AgentState.Available;
