@@ -162,6 +162,10 @@ observed during the same captures are intentionally excluded.
 - **Implemented:** `Stop-Exam.ps1` restores and verifies the backup during
   normal completion. Administrator Recovery does the same when a failed
   transition leaves the backup behind.
+- **Validated on the managed device on 2026-09-22:** SharePoint **Open in app**
+  launches Word through `ms-word:`. The Word tool declares both
+  `WINWORD.EXE` and Office's intermediate `protocolhandler.exe`; only Word is
+  pinned, while both executables are allowed by Assigned Access.
 - Other Edge policies are not modified.
 
 ## Step 7 - Restricted Client session activation
