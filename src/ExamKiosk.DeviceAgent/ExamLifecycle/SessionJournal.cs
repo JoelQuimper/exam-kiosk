@@ -1,7 +1,7 @@
 using System.Text.Json;
 using ExamKiosk.Contracts;
 
-namespace ExamKiosk.DeviceAgent;
+namespace ExamKiosk.DeviceAgent.ExamLifecycle;
 
 internal sealed class SessionJournal
 {

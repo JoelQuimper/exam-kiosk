@@ -1,4 +1,4 @@
-namespace ExamKiosk.DeviceAgent;
+namespace ExamKiosk.DeviceAgent.DeviceExamSessions;
 
 public sealed class DeviceExamApiOptions
 {

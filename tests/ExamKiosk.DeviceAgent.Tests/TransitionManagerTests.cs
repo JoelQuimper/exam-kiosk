@@ -1,6 +1,8 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using ExamKiosk.Contracts;
+using ExamKiosk.DeviceAgent.DeviceExamSessions;
+using ExamKiosk.DeviceAgent.ExamLifecycle;
 using ExamKiosk.DeviceAgent.WindowsConfiguration.Models;
 using Microsoft.Extensions.Logging.Abstractions;
 

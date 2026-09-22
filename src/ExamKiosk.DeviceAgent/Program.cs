@@ -1,4 +1,6 @@
-using ExamKiosk.DeviceAgent;
+using ExamKiosk.DeviceAgent.DeviceExamSessions;
+using ExamKiosk.DeviceAgent.ExamLifecycle;
+using ExamKiosk.DeviceAgent.LocalCommunication;
 using ExamKiosk.DeviceAgent.WindowsConfiguration;
 
 var builder = Host.CreateApplicationBuilder(args);

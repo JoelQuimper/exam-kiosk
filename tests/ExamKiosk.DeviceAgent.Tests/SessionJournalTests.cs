@@ -1,4 +1,5 @@
 using ExamKiosk.Contracts;
+using ExamKiosk.DeviceAgent.ExamLifecycle;
 
 namespace ExamKiosk.DeviceAgent.Tests;
 

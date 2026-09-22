@@ -1,4 +1,5 @@
 using ExamKiosk.Contracts;
+using ExamKiosk.DeviceAgent.LocalCommunication;
 
 namespace ExamKiosk.DeviceAgent.Tests;
 

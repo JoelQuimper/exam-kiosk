@@ -1,6 +1,6 @@
 using ExamKiosk.Contracts;
 
-namespace ExamKiosk.DeviceAgent;
+namespace ExamKiosk.DeviceAgent.LocalCommunication;
 
 internal static class ClientCommandAuthorizer
 {

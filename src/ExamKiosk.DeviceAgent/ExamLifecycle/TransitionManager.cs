@@ -2,10 +2,11 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using ExamKiosk.Contracts;
+using ExamKiosk.DeviceAgent.DeviceExamSessions;
 using ExamKiosk.DeviceAgent.WindowsConfiguration;
 using ExamKiosk.DeviceAgent.WindowsConfiguration.Models;
 
-namespace ExamKiosk.DeviceAgent;
+namespace ExamKiosk.DeviceAgent.ExamLifecycle;
 
 public sealed class TransitionManager
 {

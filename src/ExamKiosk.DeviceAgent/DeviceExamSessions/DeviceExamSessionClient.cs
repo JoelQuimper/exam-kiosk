@@ -6,7 +6,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Options;
 using Microsoft.Identity.Client;
 
-namespace ExamKiosk.DeviceAgent;
+namespace ExamKiosk.DeviceAgent.DeviceExamSessions;
 
 public interface IDeviceExamSessionClient
 {

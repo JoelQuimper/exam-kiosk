@@ -6,9 +6,10 @@ using System.Security.Principal;
 using System.Text;
 using System.Text.Json;
 using ExamKiosk.Contracts;
+using ExamKiosk.DeviceAgent.ExamLifecycle;
 using Microsoft.Win32.SafeHandles;
 
-namespace ExamKiosk.DeviceAgent;
+namespace ExamKiosk.DeviceAgent.LocalCommunication;
 
 public sealed class AgentWorker(
     TransitionManager transitionManager,
